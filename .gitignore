@@ -17,6 +17,9 @@
 !memories/**
 !skills/
 !skills/**
+!claw-memory/
+!claw-memory/**
+!README.md
 
 # Always exclude
 .env

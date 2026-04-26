@@ -1,0 +1,39 @@
+# Hermes Agent data sync
+# Only sync SOUL, memories, skills, config
+# DO NOT sync: .env, sessions, state.db, logs, caches
+
+# Exclude everything by default
+*
+!.gitignore
+
+# Whitelist files to sync
+!SOUL.md
+!SOUL_Pro.md
+!SOUL_Edu.md
+!config.yaml
+
+# Whitelist directories
+!memories/
+!memories/**
+!skills/
+!skills/**
+
+# Always exclude
+.env
+*.db
+*.db-shm
+*.db-wal
+*.lock
+logs/
+sessions/
+sandboxes/
+checkpoints/
+bin/
+cron/
+pastes/
+models_dev_cache.json
+.hermes_history
+.skills_prompt_snapshot.json
+interrupt_debug.log
+auth.json
+auth.lock

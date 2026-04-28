@@ -22,5 +22,3 @@
 - 每次切换设备前先 Push 再 Pull
 - GitHub Desktop 选择 hermes-data 仓库 → Push origin / Pull origin
 - .workbuddy 文件夹不要同步（包含敏感路径）
-
-测试一下

@@ -8,8 +8,6 @@
 §
 【工作偏好】务实高效，直接要结果，不需要过度解释。技术操作谨慎细致，偏好逐步确认后再推进。长任务会主动索要进度更新并确认完成状态。提交交付物优先通过文件发送。系统：Windows，E盘为U盘不适合存放持久化项目。
 §
-【Hermes Agent技术笔记（家里电脑）】仓库：NousResearch/hermes-agent（v0.10.0对应tag v2026.4.16）。安装路径：WSL2 Ubuntu 22.04。配置文件：/root/.hermes/.env（DeepSeek+Tavily+GitHub+OpenRouter四个Key）。SOUL.md双模式：Pro赚钱版（默认）+Edu学习版，通过hermes-switch.bat一键切换。image_gen工具需要FAL_KEY（未配置），图片生成建议用Bing Image Creator替代。pip/apt安装容易超时，建议用venv内的pip。Linux环境没有中文字体，Word文档排版建议在Windows侧处理。Hermes具有动态技能生成能力。DeepSeek API Key可多台电脑共用，注意余额即可。GitHub下载技巧：ghproxy.net可作为代理加速，tag用v2026.X.X格式。踩坑记录：setup向导粘贴API Key容易重复，建议用命令行直接写入.env。
-§
 Word OOXML font size pitfall: w:sz uses half-points, so 三号(16pt)=32, 二号(22pt)=44, 四号(14pt)=28. Using font_size='16' for 三号 renders as 8pt — half the intended size. Always double the point value.
 §
 【manager反馈偏好】manager对交付质量满意时会说"OK,你真棒"。偏好直接给结果、可操作的内容。对信息来源要求严格——报告中的信息需要标注来源链接，不能只说"综合知识"。
@@ -17,3 +15,9 @@ Word OOXML font size pitfall: w:sz uses half-points, so 三号(16pt)=32, 二号(
 用户Windows PowerShell已升级到7.6.1版本。
 §
 用户通过 PowerShell 7.6.1 使用 `hermes` 命令启动 Hermes Agent。
+§
+【短视频黄金三秒钩子-知识体系】①重要性：用户平均1.7秒滑动，超六成观众前三秒决定去留。平台算法参考三秒完播率决定推荐量。②六大钩子公式：数字冲击型（如"三天学会"）、冲突悬念型（如"月薪3千vs月薪3万"）、情感共鸣型（如"三十岁迷茫"）、反常识揭秘型（如"别再这样做了"）、利益承诺型、提问好奇型。③使用技巧：口语化带情绪、短句冲击、视觉配合文案。黄金法则：1-3秒内抛出核心，具象化有画面感，直击痛点需求，一个开头只聚焦一个主题。④避坑：冗长自我介绍、专业术语铺垫、标题与内容不符、开场无重点、节奏缓慢空镜头。⑤优化建议：多用反问惊呼命令式语气、配合肢体动作/醒目字幕、多测试不同钩子结合数据择优、严格兑现开头承诺保证内容一致性。
+§
+【输出习惯】每次生成文档类内容，默认同时出Markdown和Word（.docx）两个版本。Word排版：正文小四仿宋、一级标题四号黑体、二级标题小四楷体。不需要再问"要不要Word版"。
+§
+查看memory内容

@@ -26,11 +26,17 @@ wsl -d Ubuntu-22.04 -- bash -c "
   mkdir -p /root/.hermes/skills
   cp -rf /mnt/c/Users/Admin/hermes-sync/skills/* /root/.hermes/skills/
   cp -f /mnt/c/Users/Admin/hermes-sync/config.yaml /root/.hermes/
-  echo 'Done!'
+  echo 'Hermes data done!'
 "
 ```
 
-## 第三步：创建同步脚本（放桌面）
+## 第三步：把 Claw memory 拷贝到工作区
+
+```powershell
+robocopy "C:\Users\Admin\hermes-sync\claw-memory" "C:\Users\Admin\WorkBuddy\20260424224200\.workbuddy\memory" /MIR /R:3 /W:1
+```
+
+## 第四步：创建同步脚本（放桌面）
 
 ### 推送脚本：`Hermes同步-推送.bat`
 ```
@@ -38,13 +44,15 @@ wsl -d Ubuntu-22.04 -- bash -c "
 chcp 65001 >nul
 echo.
 echo ═══════════════════════════════════════
-echo    Hermes 数据同步 - 推送到云端
+echo    Hermes+Claw 数据同步 - 推送到云端
 echo ═══════════════════════════════════════
 echo.
-echo [1/3] 从 WSL 拷贝最新数据...
+echo [1/3] 从 WSL 拷贝 Hermes 数据...
 wsl -d Ubuntu-22.04 -- bash -c "cp -f /root/.hermes/SOUL.md /root/.hermes/SOUL_Pro.md /root/.hermes/SOUL_Edu.md /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; cp -rf /root/.hermes/memories/* /mnt/c/Users/Admin/hermes-sync/memories/ 2>/dev/null; cp -rf /root/.hermes/skills/* /mnt/c/Users/Admin/hermes-sync/skills/ 2>/dev/null; cp -f /root/.hermes/config.yaml /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; echo 'Copy done'"
 echo.
-echo [2/3] 提交并推送...
+echo [2/3] 拷贝 Claw memory...
+robocopy "C:\Users\Admin\WorkBuddy\20260424224200\.workbuddy\memory" "C:\Users\Admin\hermes-sync\claw-memory" /MIR /R:3 /W:1 >nul
+echo 提交并推送...
 cd C:\Users\Admin\hermes-sync
 git add -A
 git commit -m "同步 %date:~0,10% %time:~0,5%"
@@ -52,7 +60,7 @@ wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git push or
 echo.
 echo [3/3] 完成!
 echo.
-echo ✓ 数据已同步到 GitHub
+echo ✓ Hermes + Claw 数据已同步到 GitHub
 echo.
 pause
 ```
@@ -63,7 +71,7 @@ pause
 chcp 65001 >nul
 echo.
 echo ═══════════════════════════════════════
-echo    Hermes 数据同步 - 从云端拉取
+echo    Hermes+Claw 数据同步 - 从云端拉取
 echo ═══════════════════════════════════════
 echo.
 echo [1/3] 从 GitHub 拉取最新数据...
@@ -73,9 +81,12 @@ echo.
 echo [2/3] 拷贝到 WSL Hermes 目录...
 wsl -d Ubuntu-22.04 -- bash -c "cp -f /mnt/c/Users/Admin/hermes-sync/SOUL.md /mnt/c/Users/Admin/hermes-sync/SOUL_Pro.md /mnt/c/Users/Admin/hermes-sync/SOUL_Edu.md /root/.hermes/ 2>/dev/null; mkdir -p /root/.hermes/memories && cp -rf /mnt/c/Users/Admin/hermes-sync/memories/* /root/.hermes/memories/ 2>/dev/null; mkdir -p /root/.hermes/skills && cp -rf /mnt/c/Users/Admin/hermes-sync/skills/* /root/.hermes/skills/ 2>/dev/null; cp -f /mnt/c/Users/Admin/hermes-sync/config.yaml /root/.hermes/ 2>/dev/null; echo 'Copy done'"
 echo.
+echo 拷贝 Claw memory 到工作区...
+robocopy "C:\Users\Admin\hermes-sync\claw-memory" "C:\Users\Admin\WorkBuddy\20260424224200\.workbuddy\memory" /MIR /R:3 /W:1 >nul
+echo.
 echo [3/3] 完成!
 echo.
-echo ✓ 数据已从 GitHub 同步到本地 Hermes
+echo ✓ Hermes + Claw 数据已从 GitHub 同步到本地
 echo.
 pause
 ```

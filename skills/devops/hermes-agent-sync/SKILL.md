@@ -39,10 +39,31 @@ triggers:
 
 ### 不同步（保留本地）
 - `.env` — API Keys（每台电脑不同）
-- `sessions.db` — 会话历史
+- `sessions/` — 会话历史 JSON 文件（增长快，每天 ~200~500KB）
+- `state.db` — 会话搜索索引 SQLite DB（随 sessions 同步增长）
+- `*.db-shm`, `*.db-wal` — SQLite 辅助文件
 - `logs/` — 日志
 - `caches/` — 缓存
 - `checkpoints/` — 检查点
+
+> ⚠️ **为什么不同步 sessions？** 三个月后 sessions 目录可达 50~100MB，git 存二进制大文件效率极低，每次 push 上传整个文件。核心"训练成果"（SOUL.md + memories + skills）一共才 ~120KB，重装后 1 分钟恢复，会话历史只是锦上添花。
+
+## 常见问题 FAQ
+
+### Q: 电脑重装系统了，之前投喂 Hermes 的所有数据还在吗？
+
+**在。** 数据存在 GitHub 私有仓库里，不是本地。重装后：
+1. 装 WSL + Hermes Agent（5 分钟）
+2. `git clone git@github.com:<Owner>/<Repo>.git`（1 分钟）
+3. 把 SOUL.md + memories + skills + config.yaml 复制到 `~/.hermes/`（1 分钟）
+
+然后 Hermes 就是之前投喂完的状态——公司信息、案例、偏好、技能包全在。
+
+**真正丢失的是：**
+- `sessions/`（历史聊天记录）→ 不同步，重装后看不到之前的对话
+- `.env`（API Key）→ 不同步，但从 DeepSeek/OpenAI 后台重新查就行
+
+**所以核心原则：放心训练，GitHub 兜底。**
 
 ## 前置条件
 
@@ -189,6 +210,7 @@ wsl -d <DistroName> -- bash -c "
 ### 路径与网络
 - **Windows 用户名不一致**：`Admin` vs `Administrator` —— 不同电脑可能不同
 - **WSL 发行版名不一致**：`Ubuntu` vs `Ubuntu-22.04` vs `Ubuntu-24.04`，用 `wsl -l -v` 确认
+- **桌面重定向（OneDrive / 360MoveData）**：桌面可能实际位于 `D:\\360MoveData\\Users\\<User>\\Desktop\\` 或 `D:\\OneDrive\\Desktop\\` 而非 `C:\\Users\\<User>\\Desktop\\`。用 `dir /b Desktop` 确认实际路径，或 `find /mnt -name "HermesAgent" -type d` 全局搜索同步目录。同步目录的 .bat 脚本路径必须与 WSL 中的 `/mnt/` 挂载路径一致。
 - **Windows 直连 GitHub 超时**：必须通过 WSL 执行 git push/pull（SSH 方式）
 - **raw.githubusercontent.com 超时**：API (`api.github.com`) 更可靠，内容 CDN 和 API 走不同路由
 - **ghproxy.net 代理**：在中国网络环境下，用 `ghproxy.net/https://github.com/...` 作为下载代理
@@ -204,6 +226,21 @@ wsl -d <DistroName> -- bash -c "
 - **不要覆盖 .env**：每台电脑 API Key 不同，同步脚本必须排除 `.env`
 - **skills 冲突**：如果两台电脑都修改了同一技能文件，手动解决 git merge 冲突
 - **skills 合并策略**：用 `cp -rf` 会覆盖 WSL 自动生成的技能，注意保留
+
+### .gitignore 排除顺序（高频踩坑）
+`.gitignore` 中**排除规则（`*`）在前，白名单规则（`!xxx`）在后**。如果先 `!sessions.db` 后 `*.db`，后写的 `*.db` 会覆盖前面的 `!sessions.db`，导致 sessions.db 仍被排除。**正确顺序：先 `*.db` 再 `!sessions.db`**。
+
+```gitignore
+# ✓ 正确
+*.db
+!sessions.db   # 放在 *.db 之后才生效
+
+# ✗ 错误
+!sessions.db   # 放在前面没用
+*.db            # 这个覆盖了上面的白名单
+```
+
+同理，如果顶层有 `*` 全排除，所有白名单 `!xxx` 必须在 `*` 之后。
 
 ### 首次部署
 - **填充方向**：WSL 数据不全时，先**从同步目录拉到 WSL**，而不是从 WSL 推

@@ -1,4 +1,4 @@
-用户从事财税服务行业（苏州/上海中小微企业客户），对海关监管代码1039（市场采购贸易）有深度研究需求。用户偏好实操级、可直接交付客户的报告。用户使用WSL环境（Ubuntu 22.04, Python 3.10），Windows桌面路径为 /mnt/c/Users/Admin/Desktop/。WSL环境没有pip/python-docx，生成Word文档需用纯Python标准库（xml.etree.ElementTree + zipfile）构建OOXML格式。用户要求政府公文排版：标题二号方正小标宋（黑体替代）、正文三号仿宋_GB2312、一级标题三号黑体、二级标题三号楷体。
+用户从事财税服务行业（苏州/上海中小微企业），偏好实操级、可直接交付客户的报告。本机：WSL Ubuntu 24.04.4 LTS，用户名administrator，Windows用户名Administrator。桌面路径/mnt/c/Users/Administrator/Desktop/。通过PowerShell 7.6.1的`hermes`命令启动。Word排版bug：w:sz用半磅值，三号(16pt)=32，二号(22pt)=44，四号(14pt)=28。
 §
 【公司信息】苏州盈信企业管理有限公司，姑苏区，2009年成立。法定代表人/创始人：江敏（女），2001年入行，24年从业经验，高级会计师（2018年评上，时年37岁，100%用盈信自身业务成果评审通过）。2024年通过高级会计师人才引进落户上海，不到1个月办好，全程线上。子公司：苏州盈信税务服务有限公司（工业园区）、尚艾慧科技（上海）有限公司（闵行区）。协会会员：苏州园区会计学会、苏州会计服务业协会、江苏省代理记账协会。团队：骨干8年以上，C9硕士、注册税务师、会计师。服务数据：累计1000+客户，90%转介绍。知名客户：阿里系企业、京东、高合汽车。外资服务：3-5家日韩外资同行分包业务。品牌释义："盈"为满，"信"为信誉/信用/信任。三面锦旗：专业精湛/财税卫士、敬业专业/财税管家、严谨务实/财税合规。网站：yingxinkuaiji.com。苏州有证财税公司4920家（财政部dljz.mof.gov.cn），含无证约1.5-2万家，老板本人是高级会计师的≤5家。
 §
@@ -10,10 +10,10 @@
 §
 【Hermes Agent技术笔记（家里电脑）】仓库：NousResearch/hermes-agent（v0.10.0对应tag v2026.4.16）。安装路径：WSL2 Ubuntu 22.04。配置文件：/root/.hermes/.env（DeepSeek+Tavily+GitHub+OpenRouter四个Key）。SOUL.md双模式：Pro赚钱版（默认）+Edu学习版，通过hermes-switch.bat一键切换。image_gen工具需要FAL_KEY（未配置），图片生成建议用Bing Image Creator替代。pip/apt安装容易超时，建议用venv内的pip。Linux环境没有中文字体，Word文档排版建议在Windows侧处理。Hermes具有动态技能生成能力。DeepSeek API Key可多台电脑共用，注意余额即可。GitHub下载技巧：ghproxy.net可作为代理加速，tag用v2026.X.X格式。踩坑记录：setup向导粘贴API Key容易重复，建议用命令行直接写入.env。
 §
-Word OOXML font size pitfall: w:sz uses half-points, so 三号(16pt)=32, 二号(22pt)=44, 四号(14pt)=28. Using font_size='16' for 三号 renders as 8pt — half the intended size. Always double the point value.
-§
 【manager反馈偏好】manager对交付质量满意时会说"OK,你真棒"。偏好直接给结果、可操作的内容。对信息来源要求严格——报告中的信息需要标注来源链接，不能只说"综合知识"。
 §
 用户Windows PowerShell已升级到7.6.1版本。
 §
-用户通过 PowerShell 7.6.1 使用 `hermes` 命令启动 Hermes Agent。
+用户偏好主动搜索：希望我主动上网搜最新信息，不只凭已有知识。特别关注：抖音/视频号/小红书的推流机制、算法更新、规则变化。已创建 geo-expert 技能（marketing），基于8份GEO资料。待办：将4个提示词原文存到技能引用文件，以及设定时监控。
+§
+【同步策略确认】Git只同步SOUL.md、memories/、skills/、config.yaml。不同步sessions/和state.db（太大，重装后恢复核心数据即可，历史聊天记录丢了没关系）。【.bat踩坑】cmd.exe运行UTF-8无BOM的.bat会乱码，方案：纯英文+简单符号。本机脚本：C:\Users\Administrator\Desktop\Hermes同步-拉取.bat 和 推送.bat。

@@ -53,10 +53,7 @@ echo.
 echo [2/3] 拷贝 Claw memory...
 robocopy "C:\Users\Admin\WorkBuddy\20260424224200\.workbuddy\memory" "C:\Users\Admin\hermes-sync\claw-memory" /MIR /R:3 /W:1 >nul
 echo 提交并推送...
-cd C:\Users\Admin\hermes-sync
-git add -A
-git commit -m "同步 %date:~0,10% %time:~0,5%"
-wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git push origin main"
+wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git add -A && (git diff --cached --quiet || git commit -m 'sync $(date +%Y-%m-%d)') && git pull --rebase origin main && git push origin main"
 echo.
 echo [3/3] 完成!
 echo.
@@ -75,7 +72,6 @@ echo    Hermes+Claw 数据同步 - 从云端拉取
 echo ═══════════════════════════════════════
 echo.
 echo [1/3] 从 GitHub 拉取最新数据...
-cd C:\Users\Admin\hermes-sync
 wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git pull origin main"
 echo.
 echo [2/3] 拷贝到 WSL Hermes 目录...

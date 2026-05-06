@@ -207,6 +207,12 @@ wsl -d <DistroName> -- bash -c "
 - **Windows 有 Key 但 WSL 没有**：即使 Windows 侧 `~/.ssh/` 有 Key，WSL 侧是独立的，必须显式复制过去并 `chmod 600`
 - **known_hosts**：首次连接 GitHub 需要 `ssh -T -o StrictHostKeyChecking=accept-new git@github.com`
 
+### Batch 脚本编码
+- **中文/特殊字符在 .bat 中会乱码**：`write_file` 写入的文件默认 UTF-8 无 BOM，cmd.exe 会把它当 GBK 解析。中文、边框字符（═┌┐等）会被解析为乱码导致命令被拆碎报错
+- **解决方案1（推荐）**：.bat 文件全用纯英文 + 简单符号（`=` `-`），彻底绕开编码问题
+- **解决方案2**：用 Python 写入文件时加 BOM 头 `b'\xef\xbb\xbf'`，保存为 UTF-8 with BOM
+- **测试方法**：从 WSL 里 `cmd.exe /c xxx.bat` 不一定能正确运行（UNC 路径问题），最好双击桌面文件测试
+
 ### 路径与网络
 - **Windows 用户名不一致**：`Admin` vs `Administrator` —— 不同电脑可能不同
 - **WSL 发行版名不一致**：`Ubuntu` vs `Ubuntu-22.04` vs `Ubuntu-24.04`，用 `wsl -l -v` 确认

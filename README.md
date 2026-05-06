@@ -1,105 +1,153 @@
-# Hermes 数据同步 - 办公室电脑配置指南
+# Hermes 数据同步 - 跨电脑配置指南
 
-## 前提条件
-- 办公室电脑已安装 WSL2 + Ubuntu 22.04 + Hermes Agent
-- 有 GitHub 账号：jsxuaijun-art
-- GitHub Token：YOUR_GITHUB_TOKEN_HERE（到 https://github.com/settings/tokens 创建）
+## 数据流
 
-## 第一步：在办公室电脑克隆数据仓库
+```
+办公室电脑                    GitHub 云端                    家里电脑
+WSL ~/.hermes/                    |                    WSL ~/.hermes/
+     ↓ 推送                        |                         ↑ 拉取
+桌面 HermesAgent/ → git push → GitHub ← git pull ← 桌面 HermesAgent/
+```
 
-打开 PowerShell 或 Windows Terminal，执行：
+## 同步内容
 
+| 同步 | 不同步 |
+|------|--------|
+| SOUL.md, SOUL_Pro.md, SOUL_Edu.md | .env（API Key，每台电脑独立） |
+| config.yaml | sessions.db |
+| memories/MEMORY.md, USER.md | state.db |
+| skills/* | logs/, checkpoints/, cron/ |
+| | .hermes_history, auth.json |
+
+---
+
+## 办公室电脑（本机）设置
+
+### 路径
+- **Windows 同步目录**: `C:\Users\Administrator\Desktop\HermesAgent\`
+- **WSL 用户名**: `administrator`
+- **WSL 发行版**: `Ubuntu`（Ubuntu 24.04）
+- **WSL ~/.hermes/**: `/home/administrator/.hermes/`
+
+### 桌面快捷脚本
+- **推送** → 双击 `Hermes同步-推送.bat`（下班前执行）
+- **拉取** → 双击 `Hermes同步-拉取.bat`（上班后执行）
+
+---
+
+## 家里电脑设置
+
+### 前提条件
+1. WSL2 + Ubuntu 已安装
+2. Hermes Agent 已安装并运行过（有 ~/.hermes/ 目录）
+3. SSH Key 已添加到 GitHub 账号 jsxuaijun-art
+
+### 第一步：克隆仓库
+
+打开 PowerShell：
 ```powershell
-cd C:\Users\Admin
-git clone https://YOUR_GITHUB_TOKEN_HERE@github.com/jsxuaijun-art/hermes-data.git hermes-sync
+cd C:\Users\你的用户名\Desktop
+git clone git@github.com:jsxuaijun-art/hermes-data.git HermesAgent
 ```
 
-## 第二步：把数据拷贝到 Hermes 目录
+### 第二步：创建推送脚本
 
-```powershell
-wsl -d Ubuntu-22.04 -- bash -c "
-  cp -f /mnt/c/Users/Admin/hermes-sync/SOUL.md /root/.hermes/
-  cp -f /mnt/c/Users/Admin/hermes-sync/SOUL_Pro.md /root/.hermes/
-  cp -f /mnt/c/Users/Admin/hermes-sync/SOUL_Edu.md /root/.hermes/
-  mkdir -p /root/.hermes/memories
-  cp -rf /mnt/c/Users/Admin/hermes-sync/memories/* /root/.hermes/memories/
-  mkdir -p /root/.hermes/skills
-  cp -rf /mnt/c/Users/Admin/hermes-sync/skills/* /root/.hermes/skills/
-  cp -f /mnt/c/Users/Admin/hermes-sync/config.yaml /root/.hermes/
-  echo 'Done!'
-"
-```
+将以下内容保存为桌面 `Hermes同步-推送.bat`：
 
-## 第三步：创建同步脚本（放桌面）
-
-### 推送脚本：`Hermes同步-推送.bat`
-```
+```batch
 @echo off
 chcp 65001 >nul
+cls
 echo.
 echo ═══════════════════════════════════════
-echo    Hermes 数据同步 - 推送到云端
+echo    Hermes 数据同步 - 推送到 GitHub
 echo ═══════════════════════════════════════
 echo.
-echo [1/3] 从 WSL 拷贝最新数据...
-wsl -d Ubuntu-22.04 -- bash -c "cp -f /root/.hermes/SOUL.md /root/.hermes/SOUL_Pro.md /root/.hermes/SOUL_Edu.md /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; cp -rf /root/.hermes/memories/* /mnt/c/Users/Admin/hermes-sync/memories/ 2>/dev/null; cp -rf /root/.hermes/skills/* /mnt/c/Users/Admin/hermes-sync/skills/ 2>/dev/null; cp -f /root/.hermes/config.yaml /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; echo 'Copy done'"
+echo [1/4] 从 WSL 拷贝最新数据到桌面目录...
+wsl -d Ubuntu -- bash -c "
+  cp -f ~/.hermes/SOUL.md /mnt/c/Users/你的用户名/Desktop/HermesAgent/
+  cp -f ~/.hermes/SOUL_Pro.md /mnt/c/Users/你的用户名/Desktop/HermesAgent/
+  cp -f ~/.hermes/SOUL_Edu.md /mnt/c/Users/你的用户名/Desktop/HermesAgent/
+  cp -f ~/.hermes/config.yaml /mnt/c/Users/你的用户名/Desktop/HermesAgent/config.yaml
+  cp -f ~/.hermes/memories/MEMORY.md /mnt/c/Users/你的用户名/Desktop/HermesAgent/memories/
+  cp -f ~/.hermes/memories/USER.md /mnt/c/Users/你的用户名/Desktop/HermesAgent/memories/
+  cp -rf ~/.hermes/skills/* /mnt/c/Users/你的用户名/Desktop/HermesAgent/skills/
+  echo 'WSL 数据已拷贝'
+"
 echo.
-echo [2/3] 提交并推送...
-cd C:\Users\Admin\hermes-sync
+echo [2/4] 提交变更到 Git...
+cd /d C:\Users\你的用户名\Desktop\HermesAgent
 git add -A
-git commit -m "同步 %date:~0,10% %time:~0,5%"
-wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git push origin main"
+git commit -m "家里同步 %date:~0,10% %time:~0,5%"
 echo.
-echo [3/3] 完成!
+echo [3/4] 推送到 GitHub...
+wsl -d Ubuntu -- bash -c "cd /mnt/c/Users/你的用户名/Desktop/HermesAgent && git push origin main"
 echo.
-echo ✓ 数据已同步到 GitHub
+echo [4/4] 完成！
+echo.
+echo ┌─────────────────────────────────────┐
+echo │  ✓ 数据已同步到 GitHub 云端         │
+echo └─────────────────────────────────────┘
 echo.
 pause
 ```
 
-### 拉取脚本：`Hermes同步-拉取.bat`
-```
+### 第三步：创建拉取脚本
+
+桌面 `Hermes同步-拉取.bat`：
+
+```batch
 @echo off
 chcp 65001 >nul
+cls
 echo.
 echo ═══════════════════════════════════════
-echo    Hermes 数据同步 - 从云端拉取
+echo    Hermes 数据同步 - 从 GitHub 拉取
 echo ═══════════════════════════════════════
 echo.
 echo [1/3] 从 GitHub 拉取最新数据...
-cd C:\Users\Admin\hermes-sync
-wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git pull origin main"
+wsl -d Ubuntu -- bash -c "cd /mnt/c/Users/你的用户名/Desktop/HermesAgent && git pull origin main"
 echo.
 echo [2/3] 拷贝到 WSL Hermes 目录...
-wsl -d Ubuntu-22.04 -- bash -c "cp -f /mnt/c/Users/Admin/hermes-sync/SOUL.md /mnt/c/Users/Admin/hermes-sync/SOUL_Pro.md /mnt/c/Users/Admin/hermes-sync/SOUL_Edu.md /root/.hermes/ 2>/dev/null; mkdir -p /root/.hermes/memories && cp -rf /mnt/c/Users/Admin/hermes-sync/memories/* /root/.hermes/memories/ 2>/dev/null; mkdir -p /root/.hermes/skills && cp -rf /mnt/c/Users/Admin/hermes-sync/skills/* /root/.hermes/skills/ 2>/dev/null; cp -f /mnt/c/Users/Admin/hermes-sync/config.yaml /root/.hermes/ 2>/dev/null; echo 'Copy done'"
+wsl -d Ubuntu -- bash -c "
+  cp -f /mnt/c/Users/你的用户名/Desktop/HermesAgent/SOUL.md ~/.hermes/
+  cp -f /mnt/c/Users/你的用户名/Desktop/HermesAgent/SOUL_Pro.md ~/.hermes/
+  cp -f /mnt/c/Users/你的用户名/Desktop/HermesAgent/SOUL_Edu.md ~/.hermes/
+  cp -f /mnt/c/Users/你的用户名/Desktop/HermesAgent/config.yaml ~/.hermes/
+  mkdir -p ~/.hermes/memories
+  cp -f /mnt/c/Users/你的用户名/Desktop/HermesAgent/memories/*.md ~/.hermes/memories/
+  mkdir -p ~/.hermes/skills
+  cp -rf /mnt/c/Users/你的用户名/Desktop/HermesAgent/skills/* ~/.hermes/skills/
+  echo 'WSL 数据已更新'
+"
 echo.
-echo [3/3] 完成!
+echo [3/3] 完成！
 echo.
-echo ✓ 数据已从 GitHub 同步到本地 Hermes
+echo ┌─────────────────────────────────────────────┐
+echo │  ✓ GitHub 数据已同步到本机 Hermes           │
+echo └─────────────────────────────────────────────┘
 echo.
 pause
 ```
 
+> ⚠️ **重要**: 把上面脚本里的 `你的用户名` 替换为家里电脑的 Windows 用户名。
+> 如果 WSL 发行版名字不是 `Ubuntu`，用 `wsl -l -v` 查看后也替换掉。
+
+---
+
 ## 日常使用流程
 
-```
-家里电脑用完 Hermes
-    ↓ 双击「Hermes同步-推送.bat」
-GitHub 云端（自动同步）
-    ↓ 到办公室后双击「Hermes同步-拉取.bat」
-办公室电脑 Hermes（数据已同步）
-    ↓
-办公室用完 Hermes
-    ↓ 双击「Hermes同步-推送.bat」
-GitHub 云端（自动同步）
-    ↓ 回家后双击「Hermes同步-拉取.bat」
-家里电脑 Hermes（数据已同步）
+```mermaid
+flowchart LR
+    A[办公室工作] -->|下班前双击推送| B[GitHub 云端]
+    B -->|到家后双击拉取| C[家里电脑 Hermes]
+    C -->|离家前双击推送| B
+    B -->|到办公室双击拉取| A
 ```
 
-## 注意事项
-
-1. **两台电脑不要同时编辑同一文件**，否则会产生冲突
-2. **建议每次换电脑前先推送，换电脑后先拉取**
-3. **Token 过期了**需要去 https://github.com/settings/tokens 重新生成
-4. **不同步的内容**：.env（API Key）、sessions.db（会话记录）、logs
-5. 如果遇到冲突，执行 `git stash` 暂存本地修改，然后 `git pull`，再手动合并
+### 注意事项
+1. **切换设备前先推送**：离开前双击「推送」，确保最新数据在 GitHub
+2. **切换设备后先拉取**：打开新电脑后双击「拉取」，获取最新数据
+3. **不要手动改同步目录**：只通过 WSL ~/.hermes/ 修改数据，脚本会自动同步
+4. **.env 不共享**：每台电脑的 API Key 各自独立配置
+5. **如果冲突**：`git pull` 可能会报冲突，联系管理员处理

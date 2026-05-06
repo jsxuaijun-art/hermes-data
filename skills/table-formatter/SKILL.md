@@ -67,23 +67,23 @@ def make_table(headers: list, rows: list) -> str:
     thick_h = '━'
     thin_h = '─'
     
-    # 顶部粗边框: ┏━┯━┯━┓
-    top = '┏' + '┯'.join([thick_h * w for w in col_widths]) + '┓'
+    # 顶部边框: ┌─┬─┐
+    top = '┌' + '┬'.join(['─' * w for w in col_widths]) + '┐'
     
-    # 表头与数据之间的分隔线: ┠─┼─┼─┨
-    header_sep = '┠' + '┼'.join([thin_h * w for w in col_widths]) + '┨'
+    # 表头与数据之间的分隔线: ├─┼─┤
+    header_sep = '├' + '┼'.join(['─' * w for w in col_widths]) + '┤'
     
-    # 数据行之间的分隔线: ┠─┼─┼─┨
-    row_sep = '┠' + '┼'.join([thin_h * w for w in col_widths]) + '┨'
+    # 数据行之间的分隔线: ├─┼─┤
+    row_sep = '├' + '┼'.join(['─' * w for w in col_widths]) + '┤'
     
-    # 底部粗边框: ┗━┷━┷━┛
-    bottom = '┗' + '┷'.join([thick_h * w for w in col_widths]) + '┛'
+    # 底部边框: └─┴─┘
+    bottom = '└' + '┴'.join(['─' * w for w in col_widths]) + '┘'
     
     lines = [top]
     
     # 表头行
     cells = [pad_cell(h, col_widths[i]) for i, h in enumerate(headers)]
-    lines.append('┃' + '│'.join(cells) + '┃')
+    lines.append('│' + '│'.join(cells) + '│')
     lines.append(header_sep)
     
     # 数据行

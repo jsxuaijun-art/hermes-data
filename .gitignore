@@ -23,10 +23,13 @@
 
 # Always exclude
 .env
-*.db
 *.db-shm
 *.db-wal
 *.lock
+
+# Exclude .db files except sessions.db
+*.db
+!sessions.db
 logs/
 sessions/
 sandboxes/

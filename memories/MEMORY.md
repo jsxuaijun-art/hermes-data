@@ -1,27 +1,19 @@
-同步：Git仓库jsxuaijun-art/hermes-data，路径 /mnt/c/Users/Admin/hermes-sync/。快捷指令——「推送github」：cd该路径→cp WSL最新文件→add→commit→push。<br>「拉取github」：cd该路径→pull→cp到~/.hermes/。SOUL双模式：Pro版（财税）、Edu版（辅导）。
+设备：家里电脑 + 办公室电脑 + 笔记本 + 江敏笔记本（共4台），全部安装 Hermes Agent 和 WordBuddy，通过 GitHub 仓库 hermes-data 同步数据
 §
-财税回复纪律（江姐2026.5.4定）：
-1. 所有会计、税务类回复必须以政府官方来源为主要依据（税务总局、财政部、中国政府网等），其他来源仅作辅助参考。
-2. 严格禁止AI幻觉：不做无根据联想，不创造事实，不张冠李戴，不自信犯错，不编造条文。
-3. 回答必须实事求是，依据明确可查。
-4. 群成员有权要求展示思考过程并列出引用来源链接以验证准确性。
+Tirith security scanner binary installed at ~/.hermes/bin/tirith, config updated to use absolute path. Downloaded v0.3.0 from sheeki03/tirith GitHub releases. Also patched prompt_toolkit application.py _handle_exception to check for running event loop before ensure_future() — fixes the "no current event loop" RuntimeError on shutdown.
 §
-短视频运营 — 黄金三秒钩子（2026.5.5江姐输入）：\n核心数据：用户平均1.7秒滑动切换，六成观众3秒内决定去留。平台算法以3秒完播率为核心指标决定是否继续推送。\n六大开头钩子公式：\n1. 数字冲击型 — 具体数字展示结果（例：三天学会剪辑）\n2. 冲突悬念型 — 制造反差矛盾（例：月薪三千vs三万）\n3. 情感共鸣型 — 贴合大众情绪场景（例：三十岁你是否也迷茫）\n4. 反常识揭秘型 — 颠覆认知（例：别再用这种方式减肥）\n5. 利益承诺型 — 直白告知观看收获\n6. 提问好奇型 — 抛出问题勾起探索欲\n使用技巧：口语化、带情绪、短句抓人；视觉配合文案；搭配具体场景和数据。\n避坑：不要冗长自我介绍、不要晦涩术语铺垫、不要噱头与内容不符、不要开场无重点。\n优化：多用反问/惊呼/命令式语气；多测试不同钩子；严格兑现开头价值承诺。\n该原则作为四类文案创作技能的"共同前件"——无论写哪类文案，开头都必须先按此规则设计。
+Windows batch files (.bat) with non-ASCII characters (Chinese, box-drawing symbols, Unicode symbols) break on Chinese Windows systems when saved as UTF-8. Both UTF-8 without BOM AND with BOM can fail — BOM bytes get read as literal text (锘緻echo). The only reliable fix is to rewrite with pure ASCII only: English text, `=/-` for separators, `[OK]/[FAIL]/[INFO]` for status indicators. Applies to Hermes同步-拉取.bat and Hermes同步-推送.bat on all 4 machines.
 §
-短视频运营四大分类框架（2026.5.6更新）：
-1. 范话题类（技能：short-video-general）— 与业务无关的泛话题，追求爆款，不受财税纪律约束。
-2. 行业自然流（技能：short-video-industry-flow）— 泛话题与财税自然融合，双角色整合，文案必须含财税要素。
-3. 纯广告类（技能：short-video-ad）— 精准筛选，五句结构（直击→钩子→秀价值→打消顾虑→引导行动）。
-4. 趣味破播类（技能：short-video-fun-breakout）— 独立交互询问式智能体。用户给文案后，先问观点/目的，再问是否关联财税业务；如需则追问具体业务（公司注册/代理记账/税务合规/会计服务/高端财务咨询/税务筹划/企业经营 可多选），然后按固定六模块格式输出（标题→话题→文案→神评→配乐→文生图提示词）。关联业务必须自然植入、无缝过渡。
-通用前置规则：所有文案开头必须按「黄金三秒钩子」设计。
-持续关注平台算法更新，主动提出修改建议。
+江敏笔记本 WSL distro 名是 Ubuntu22.04（无短横线），不是 Ubuntu-22.04。Windows 上跑着代理 127.0.0.1:7890（Clash/同类工具）。Hermes 同步脚本在 C:\Users\jiangmin\Desktop\CLAW\ 下，已改为纯 ASCII + fetch/reset 策略避免合并冲突。
 §
-承诺：主动追踪各短视频平台（抖音、视频号、快手等）的算法更新和推流机制变化，不等江姐提醒。发现影响现行创作原则的变化，立即提出修改建议。每两周至少主动检查一次平台动态。前三类技能（范话题类/行业自然流/纯广告类）的复盘提醒已设cronjob，2026年5月21日上午9点触发。
-§
-WorkBuddy风格表格输出原则：表格必须有至少2条横线（├──┤）和至少2条竖线（│），形成真正的"格子"结构。所有行的右侧竖线必须严格对齐同一列。使用wcwidth算法精确计算CJK/emoji显示宽度，确保对齐精度。不可用无横线分割的纯方框替代表格。
-§
-2026.5.7 表格规则终版：脚本+wcwidth生成，须有├┤横线和│竖线，右竖线对齐。单元格公式 = " " + text + " "*(cw-1-dw(text))，cw = max_dw+2。严禁裸hex作OR条件，必须cp==0x26CE形式。
-§
-2026.5.6 修复鼠标支持：cli.py中mouse_support原为硬编码False，改为读取config.yaml的display.mouse_support配置（默认True），实现左键点击定位光标和右键功能。已修改三个位置：(1) hermes_cli/config.py DEFAULT_CONFIG["display"]加mouse_support默认值True；(2) cli.py __init__读取配置；(3) cli.py Application改为self.mouse_support。重启后生效。
-§
-WSL 用户名是 dmin（不是 admin），路径 /home/dmin/.hermes/。同步问题排查要点：(1) 中文SOUL.md在Git仓库，需要时拷回WSL；(2) 默认英文SOUL.md不需要备份，Hermes自带；(3) git force push经解释后用户可接受。同步bat脚本已改为全WSL内部命令链。GitHub Push Protection拦截历史中的Token，解决方案是用git rebase -i --rebase-merges重写历史删除明文Token后用force push推送。
+江敏笔记本（Windows 用户 jiangmin）的 Hermes 同步脚本已修复：
+- 文件在 C:\Users\jiangmin\Desktop\CLAW\Hermes同步-拉取.bat 和 推送.bat
+- 纯 ASCII 编码（无中文字符），Windows 侧跑 git，WSL 只负责 cp 文件
+- WSL 发行版名称：Ubuntu22.04
+- Windows 有代理 127.0.0.1:7890（Clash），git 在 Windows 侧跑所以代理生效
+- Token 已保存在 hermes-sync/.git/credentials
+- 仓库：jsxuaijun-art/hermes-data（脚本模板在 scripts/ 目录下）
+
+还有 3 台电脑待配：家里电脑、办公室电脑、笔记本
+- 每台需要修改：Windows 用户名、WSL 发行版名称、设备名
+- 下次用户告知信息后生成对应脚本

@@ -50,7 +50,18 @@ triggers:
 
 ## 常见问题 FAQ
 
-### Q: 电脑重装系统了，之前投喂 Hermes 的所有数据还在吗？
+### Q: 拉取同步后需要重启 Hermes 吗？
+
+取决于同步了什么文件：
+
+| 同步的文件 | 需要重启？ |
+|-----------|-----------|
+| SOUL.md / SOUL_Pro.md / SOUL_Edu.md | 否，每轮对话自动重读 |
+| config.yaml | 是，必须重启 |
+| memories/MEMORY.md / USER.md | 否，但开新会话（/new）才加载新记忆 |
+| skills/（新增技能包） | 是，必须重启 |
+
+**经验法则：** 只改角色描述（SOUL）和记忆不用重启；改配置或加技能需要重启。
 
 **在。** 数据存在 GitHub 私有仓库里，不是本地。重装后：
 1. 装 WSL + Hermes Agent（5 分钟）
@@ -226,6 +237,10 @@ wsl -d <DistroName> -- bash -c "
 - **write_file 写入 .bat 文件是 UTF-8 without BOM**：WSL 侧用 `write_file`、`cp`、`echo` 创建的 .bat 文件默认 UTF-8 无 BOM。Windows cmd.exe 启动时按 ANSI/GBK (CP936) 解析，中文字符和 Unicode 边框符号（═┌┐╔╗╚╝）会变成乱码碎片，导致整行命令失效。
 - **解决方案**：纯英文 + 简单符号（- = / _）最可靠；如需中文必须加 UTF-8 BOM（`\xEF\xBB\xBF`）头。
 - **参考**：`references/batch-scripts.md` 有完整模板和编码方案对比。
+
+## 多电脑合并机制
+
+详见 `references/multi-machine-merge.md` — 解释了四台电脑同时向同一 Git 仓库推送时，哪些场景自动融合、哪些产生冲突、冲突如何解决。
 
 ### 数据一致性
 - **config.yaml 以 WSL 侧为准**：WSL 运行中使用的配置是最新版，推送时覆盖同步目录

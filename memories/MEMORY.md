@@ -17,3 +17,5 @@ Windows batch files (.bat) with non-ASCII characters (Chinese, box-drawing symbo
 还有 3 台电脑待配：家里电脑、办公室电脑、笔记本
 - 每台需要修改：Windows 用户名、WSL 发行版名称、设备名
 - 下次用户告知信息后生成对应脚本
+§
+所有表格输出必须使用 table-formatter 技能，全细线网格格式（┌┬┐│├┼┤└┴┘），横平竖直、左右对齐、每行有分隔线。绝对不用 Markdown 虚线表（|---|）。

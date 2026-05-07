@@ -20,6 +20,8 @@
 §
 WorkBuddy风格表格输出原则：表格必须有至少2条横线（├──┤）和至少2条竖线（│），形成真正的"格子"结构。所有行的右侧竖线必须严格对齐同一列。使用wcwidth算法精确计算CJK/emoji显示宽度，确保对齐精度。不可用无横线分割的纯方框替代表格。
 §
-2026.5.6 输出格式整改完成。关键发现：wcwidth函数中不能写裸hex数值（如0x26CE）作为OR条件，必须写成cp==0x26CE形式，否则整个条件恒True，所有字符被误算为宽度2，导致表格右竖线不对齐。已修复并验证通过。用户确认所有竖线对齐、表格有横线分割后满意。
+2026.5.7 表格规则终版：脚本+wcwidth生成，须有├┤横线和│竖线，右竖线对齐。单元格公式 = " " + text + " "*(cw-1-dw(text))，cw = max_dw+2。严禁裸hex作OR条件，必须cp==0x26CE形式。
 §
 2026.5.6 修复鼠标支持：cli.py中mouse_support原为硬编码False，改为读取config.yaml的display.mouse_support配置（默认True），实现左键点击定位光标和右键功能。已修改三个位置：(1) hermes_cli/config.py DEFAULT_CONFIG["display"]加mouse_support默认值True；(2) cli.py __init__读取配置；(3) cli.py Application改为self.mouse_support。重启后生效。
+§
+WSL 用户名是 dmin（不是 admin），路径 /home/dmin/.hermes/。同步问题排查要点：(1) 中文SOUL.md在Git仓库，需要时拷回WSL；(2) 默认英文SOUL.md不需要备份，Hermes自带；(3) git force push经解释后用户可接受。同步bat脚本已改为全WSL内部命令链。GitHub Push Protection拦截历史中的Token，解决方案是用git rebase -i --rebase-merges重写历史删除明文Token后用force push推送。

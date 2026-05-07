@@ -1,4 +1,4 @@
-用户使用SOUL.md双模式：SOUL_Pro.md（默认，财税营销获客）和SOUL_Edu.md（上海初一学生辅导教练）。数据同步方案：GitHub私有仓库jsxuaijun-art/hermes-data，本地路径C:\Users\Admin\hermes-sync\，通过WSL执行git push/pull。
+同步：Git仓库jsxuaijun-art/hermes-data，路径 /mnt/c/Users/Admin/hermes-sync/。快捷指令——「推送github」：cd该路径→cp WSL最新文件→add→commit→push。<br>「拉取github」：cd该路径→pull→cp到~/.hermes/。SOUL双模式：Pro版（财税）、Edu版（辅导）。
 §
 财税回复纪律（江姐2026.5.4定）：
 1. 所有会计、税务类回复必须以政府官方来源为主要依据（税务总局、财政部、中国政府网等），其他来源仅作辅助参考。

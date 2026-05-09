@@ -1,7 +1,7 @@
 ---
 name: hermes-agent
-description: "Configure, extend, or contribute to Hermes Agent."
-version: 2.1.0
+description: Complete guide to using and extending Hermes Agent — CLI usage, setup, configuration, spawning additional agents, gateway platforms, skills, voice, tools, profiles, and a concise contributor reference. Load this skill when helping users configure Hermes, troubleshoot issues, spawn agent instances, or make code contributions.
+version: 2.0.0
 author: Hermes Agent + Teknium
 license: MIT
 metadata:
@@ -115,7 +115,7 @@ hermes tools disable NAME   Disable a toolset
 
 hermes skills list          List installed skills
 hermes skills search QUERY  Search the skills hub
-hermes skills install ID    Install a skill (ID can be a hub identifier OR a direct https://…/SKILL.md URL; pass --name to override when frontmatter has no name)
+hermes skills install ID    Install a skill
 hermes skills inspect ID    Preview without installing
 hermes skills config        Enable/disable skills per platform
 hermes skills check         Check for updates
@@ -149,8 +149,6 @@ hermes gateway setup        Configure platforms
 ```
 
 Supported platforms: Telegram, Discord, Slack, WhatsApp, Signal, Email, SMS, Matrix, Mattermost, Home Assistant, DingTalk, Feishu, WeCom, BlueBubbles (iMessage), Weixin (WeChat), API Server, Webhooks. Open WebUI connects via the API Server adapter.
-
-**WeCom 注意** — 企业微信有两个适配模式：AI 机器人 WebSocket 模式 (`wecom`) 和自建应用回调模式 (`wecom_callback`)，凭证和配置方式不同。详见 `references/wecom-gateway.md`。
 
 Platform docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/
 
@@ -250,6 +248,7 @@ Type these during an interactive chat session.
 ```
 /config              Show config (CLI)
 /model [name]        Show or change model
+/provider            Show provider info
 /personality [name]  Set personality
 /reasoning [level]   Set reasoning (none|minimal|low|medium|high|xhigh|show|hide)
 /verbose             Cycle: off → new → all → verbose
@@ -283,6 +282,7 @@ Type these during an interactive chat session.
 ### Utility
 ```
 /branch (/fork)      Branch the current session
+/btw                 Ephemeral side question (doesn't interrupt main task)
 /fast                Toggle priority/fast processing
 /browser             Open CDP browser connection
 /history             Show conversation history (CLI)
@@ -338,6 +338,7 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | `memory` | `memory_enabled`, `user_profile_enabled`, `provider` |
 | `security` | `tirith_enabled`, `website_blocklist` |
 | `delegation` | `model`, `provider`, `base_url`, `api_key`, `max_iterations` (50), `reasoning_effort` |
+| `smart_model_routing` | `enabled`, `cheap_model` |
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 
 Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
@@ -401,63 +402,6 @@ Enable/disable via `hermes tools` (interactive) or `hermes tools enable/disable 
 | `homeassistant` | Smart home control (off by default) |
 
 Tool changes take effect on `/reset` (new session). They do NOT apply mid-conversation to preserve prompt caching.
-
----
-
-## Security & Privacy Toggles
-
-Common "why is Hermes doing X to my output / tool calls / commands?" toggles — and the exact commands to change them. Most of these need a fresh session (`/reset` in chat, or start a new `hermes` invocation) because they're read once at startup.
-
-### Secret redaction in tool output
-
-Secret redaction is **off by default** — tool output (terminal stdout, `read_file`, web content, subagent summaries, etc.) passes through unmodified. If the user wants Hermes to auto-mask strings that look like API keys, tokens, and secrets before they enter the conversation context and logs:
-
-```bash
-hermes config set security.redact_secrets true       # enable globally
-```
-
-**Restart required.** `security.redact_secrets` is snapshotted at import time — toggling it mid-session (e.g. via `export HERMES_REDACT_SECRETS=true` from a tool call) will NOT take effect for the running process. Tell the user to run `hermes config set security.redact_secrets true` in a terminal, then start a new session. This is deliberate — it prevents an LLM from flipping the toggle on itself mid-task.
-
-Disable again with:
-```bash
-hermes config set security.redact_secrets false
-```
-
-### PII redaction in gateway messages
-
-Separate from secret redaction. When enabled, the gateway hashes user IDs and strips phone numbers from the session context before it reaches the model:
-
-```bash
-hermes config set privacy.redact_pii true    # enable
-hermes config set privacy.redact_pii false   # disable (default)
-```
-
-### Command approval prompts
-
-By default (`approvals.mode: manual`), Hermes prompts the user before running shell commands flagged as destructive (`rm -rf`, `git reset --hard`, etc.). The modes are:
-
-- `manual` — always prompt (default)
-- `smart` — use an auxiliary LLM to auto-approve low-risk commands, prompt on high-risk
-- `off` — skip all approval prompts (equivalent to `--yolo`)
-
-```bash
-hermes config set approvals.mode smart       # recommended middle ground
-hermes config set approvals.mode off         # bypass everything (not recommended)
-```
-
-Per-invocation bypass without changing config:
-- `hermes --yolo …`
-- `export HERMES_YOLO_MODE=1`
-
-Note: YOLO / `approvals.mode: off` does NOT turn off secret redaction. They are independent.
-
-### Shell hooks allowlist
-
-Some shell-hook integrations require explicit allowlisting before they fire. Managed via `~/.hermes/shell-hooks-allowlist.json` — prompted interactively the first time a hook wants to run.
-
-### Disabling the web/browser/image-gen tools
-
-To keep the model away from network or media tools entirely, open `hermes tools` and toggle per-platform. Takes effect on next session (`/reset`). See the Tools & Skills section above.
 
 ---
 
@@ -606,30 +550,6 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 2. `hermes skills config` — check platform enablement
 3. Load explicitly: `/skill name` or `hermes -s name`
 
-### Skills from archive/zip files
-When a third-party vendor distributes a skill as a `.zip` archive (common for
-platform-specific integrations like Tencent IMA, Feishu, DingTalk):
-
-1. Download and extract the archive
-2. Copy the skill directory to `~/.hermes/skills/`
-3. Check `meta.json` for runtime requirements (Node.js version, etc.)
-4. Configure credentials (env vars or config files)
-
-See `references/installing-skills-from-archives.md` for the full workflow,
-including installing Node.js without root, credential setup, and
-troubleshooting multi-module skills.
-
-### Multi-Device Data Sync
-
-When running Hermes on multiple machines (home PC, office PC, laptops), use a private GitHub repo to sync `~/.hermes/` data. Key rules:
-
-- **Run git operations on Windows side** (respects your proxy), only file copy in WSL
-- **Use `git fetch + git reset --hard`** for pull scripts (avoids merge conflicts entirely)
-- **Push: fetch+reset first**, then re-apply WSL data, then commit+push
-- **Pure ASCII only** in .bat files — Chinese chars cause mojibake encoding issues
-
-See full guide with templates and pitfalls: `references/multi-device-sync.md`
-
 ### Gateway issues
 Check logs first:
 ```bash
@@ -652,49 +572,6 @@ If `auxiliary` tasks (vision, compression, session_search) fail silently, the `a
 hermes config set auxiliary.vision.provider <your_provider>
 hermes config set auxiliary.vision.model <model_name>
 ```
-
-### Tirith not scanning (auto-install failed)
-
-Tirith auto-downloads from GitHub releases (`sheeki03/tirith`) in a background thread. On slow or throttled networks, the download times out (exit 28) and Hermes falls back to pattern matching. Logs show `download_failed` in `~/.hermes/.tirith-install-failed`.
-
-Fix: download and extract manually, clear the failure marker, and set an absolute path.
-
-See `references/tirith-manual-install.md` for the full manual install procedure.
-
-```bash
-# Quick fix after manual binary install:
-rm -f ~/.hermes/.tirith-install-failed
-hermes config set security.tirith_path /root/.hermes/bin/tirith
-# Then restart Hermes (/reset or exit+relaunch)
-```
-
-### prompt_toolkit "no current event loop" RuntimeError
-
-**Symptom:** During Hermes CLI shutdown (exit, `/reset`, gateway restart), `agent.log` shows:
-
-```
-RuntimeError: There is no current event loop in thread 'MainThread'.
-```
-
-at `prompt_toolkit/application/application.py` line ~1028 in `_handle_exception`.
-
-**Cause:** A known prompt_toolkit upstream bug — `_handle_exception` calls `ensure_future(in_term())` in its exception handler without checking if the event loop is still running. When a "Task was destroyed but it is pending!" warning fires during shutdown (after the loop has closed), the handler tries to schedule more work on an already-dead loop.
-
-**Impact:** Harmless — does NOT affect functionality, CLI input, or command execution. Only a log noise issue.
-
-**Fix (monkey-patch):** In `venv/lib/python3.11/site-packages/prompt_toolkit/application/application.py`, replace the bare `ensure_future(in_term())` at line ~1028 with:
-
-```python
-try:
-    loop = asyncio.get_running_loop()
-except RuntimeError:
-    return  # No running event loop — nothing to schedule on
-if not loop.is_running():
-    return  # Loop is closed or shutting down
-ensure_future(in_term())
-```
-
-Note: This patch lives in `site-packages/` and will be overwritten on `pip install --upgrade prompt-toolkit`. The fix should eventually land upstream.
 
 ---
 

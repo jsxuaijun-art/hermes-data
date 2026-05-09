@@ -1,33 +1,34 @@
 ---
 name: table-formatter
 category: productivity
-description: 终端 CLI 环境横平竖直的网格表格生成工具。全细线风格（┌┬┐│├┼┤└┴┘），每行有横线分隔，列之间有竖线贯穿。使用 wcwidth 库准确处理中英文、emoji、全角符号的宽度对齐。
+description: 终端 CLI 环境横平竖直的网格表格生成工具。全细线风格（┌┬┐│├┼┤└┴┘），每行有横线分隔，列之间有竖线贯穿。自动处理中文字符双倍宽度对齐。
 triggers:
   - 输出任何对比、清单、结构化的表格数据
   - 用户提到表格不好看、不对齐、虚线
   - 生成报告/方案中的表格部分
-  - 列出清单、列表、对比数据时（任何超过2行的结构化数据）
 ---
 
-## ⛔ MANDATORY - load this skill before ANY table output
+# 终端表格格式化工具
 
 ## 风格规范（用户确认的最终版）
 
 - 全细线风格：外框 `┌─┬─┐`，内线 `├─┼─┤`，竖线 `│`
 - 每行有横线分隔（网格表）
-- 左右竖线对齐（使用 wcwidth 库精确计算字符宽度）
+- 左右竖线对齐（中文字宽双倍计算）
 - 单元格内容前后各空1个空格
 
 ## 核心函数
 
-**依赖：** `pip install wcwidth`（必须，否则表格 emoji 行会偏移）
-
 ```python
-from wcwidth import wcswidth
-
 def dw(s):
-    """计算终端显示宽度：使用 wcwidth 库，准确处理 emoji、CJK 等"""
-    return wcswidth(s)
+    """计算终端显示宽度：中文=2，英文=1"""
+    w = 0
+    for c in s:
+        if '\u4e00' <= c <= '\u9fff' or '\u3000' <= c <= '\u303f' or '\uff00' <= c <= '\uffef':
+            w += 2
+        else:
+            w += 1
+    return w
 
 def pc(s, tw):
     """填充单元格至目标显示宽度"""
@@ -94,16 +95,8 @@ def mt(h, r):
 
 ## 注意事项
 
-1. **字符宽度**：使用 `wcwidth` 库（`wcswidth()`）计算显示宽度，支持 CJK、emoji（如 ✅ 👉）、全角符号等
+1. **中文字宽**：CJK统一表意文字（\u4e00-\u9fff）、CJK符号（\u3000-\u303f）、全角ASCII（\uff00-\uffef）按2宽度计算
 2. **禁止输出 markdown 表格**：`| --- | --- |` 这种格式绝对不要用
 3. **边生成边验证**：每次先调 mt() 生成字符串，确认对齐无误后再贴到回复中
 4. **最佳列数**：2~6列，超过6列终端可能折行
 5. **表头和数据行写法**：数据行不要用 `┃`（厚竖线），统一用 `│`（细竖线）
-
-## 踩坑记录 / Pitfalls
-
-### emoji 宽度问题（已修复）
-- `✅`（U+2705）等 emoji 在终端中宽度为 2，但旧版 `dw()` 函数仅识别 CJK 范围，按宽度 1 计算
-- 导致含 emoji 的行右侧竖线偏移 1 字符
-- **修复方案**：改用 `wcwidth` 库的 `wcswidth()`，该库正确覆盖 emoji、CJK、全角半角等所有 Unicode 范围
-- 安装依赖：`pip install wcwidth`

@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-description: "Write implementation plans: bite-sized tasks, paths, code."
+description: Use when you have a spec or requirements for a multi-step task. Creates comprehensive implementation plans with bite-sized tasks, exact file paths, and complete code examples.
 version: 1.1.0
 author: Hermes Agent (adapted from obra/superpowers)
 license: MIT
@@ -31,41 +31,6 @@ Assume the implementer is a skilled developer but knows almost nothing about the
 - Feature seems simple (assumptions cause bugs)
 - You plan to implement it yourself (future you needs guidance)
 - Working alone (documentation matters)
-
-## Plan Mode (No-Exec Planning)
-
-Use this approach when the user explicitly wants a plan **without execution** (e.g., `/plan` command). This is "planning only":
-
-### Rules for Plan Mode
-
-- **Do not implement code.** Zero edits to project files except the plan markdown.
-- **Do not run mutating terminal commands**, commit, push, or perform external actions.
-- You **may** inspect the repo or other context with read-only commands/tools.
-- Write a concrete, actionable markdown plan.
-
-### Plan Template
-
-Include, when relevant:
-- **Goal** — what we're building
-- **Current context / assumptions** — known state of the codebase
-- **Proposed approach** — high-level strategy
-- **Step-by-step plan** — bite-sized tasks (see granularity section below)
-- **Files likely to change** — exact paths
-- **Tests / validation** — how success is measured
-- **Risks, tradeoffs, and open questions**
-
-### Save Location
-
-Save the plan under `.hermes/plans/YYYY-MM-DD_HHMMSS-<slug>.md` (relative to the active workspace). Use `write_file`.
-
-### Interaction Style
-
-- If the request is clear enough, write the plan directly.
-- If no explicit instruction accompanies `/plan`, infer the task from current conversation context.
-- If genuinely underspecified, ask a brief clarifying question instead of guessing.
-- After saving, reply briefly with what you planned and the file path.
-
----
 
 ## Bite-Sized Task Granularity
 

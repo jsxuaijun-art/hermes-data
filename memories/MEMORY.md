@@ -1,19 +1,27 @@
-设备：家里电脑 + 办公室电脑 + 笔记本 + 江敏笔记本（共4台），全部安装 Hermes Agent 和 WordBuddy，通过 GitHub 仓库 hermes-data 同步数据
+同步：Git仓库jsxuaijun-art/hermes-data，路径 /mnt/c/Users/Admin/hermes-sync/。快捷指令——「推送github」：cd该路径→cp WSL最新文件→add→commit→push。<br>「拉取github」：cd该路径→pull→cp到~/.hermes/。SOUL双模式：Pro版（财税）、Edu版（辅导）。
 §
-Tirith security scanner binary installed at ~/.hermes/bin/tirith, config updated to use absolute path. Downloaded v0.3.0 from sheeki03/tirith GitHub releases. Also patched prompt_toolkit application.py _handle_exception to check for running event loop before ensure_future() — fixes the "no current event loop" RuntimeError on shutdown.
+财税回复纪律（江姐2026.5.4定）：
+1. 所有会计、税务类回复必须以政府官方来源为主要依据（税务总局、财政部、中国政府网等），其他来源仅作辅助参考。
+2. 严格禁止AI幻觉：不做无根据联想，不创造事实，不张冠李戴，不自信犯错，不编造条文。
+3. 回答必须实事求是，依据明确可查。
+4. 群成员有权要求展示思考过程并列出引用来源链接以验证准确性。
 §
-Windows batch files (.bat) with non-ASCII characters (Chinese, box-drawing symbols, Unicode symbols) break on Chinese Windows systems when saved as UTF-8. Both UTF-8 without BOM AND with BOM can fail — BOM bytes get read as literal text (锘緻echo). The only reliable fix is to rewrite with pure ASCII only: English text, `=/-` for separators, `[OK]/[FAIL]/[INFO]` for status indicators. Applies to Hermes同步-拉取.bat and Hermes同步-推送.bat on all 4 machines.
+短视频运营 — 黄金三秒钩子（2026.5.5江姐输入）：\n核心数据：用户平均1.7秒滑动切换，六成观众3秒内决定去留。平台算法以3秒完播率为核心指标决定是否继续推送。\n六大开头钩子公式：\n1. 数字冲击型 — 具体数字展示结果（例：三天学会剪辑）\n2. 冲突悬念型 — 制造反差矛盾（例：月薪三千vs三万）\n3. 情感共鸣型 — 贴合大众情绪场景（例：三十岁你是否也迷茫）\n4. 反常识揭秘型 — 颠覆认知（例：别再用这种方式减肥）\n5. 利益承诺型 — 直白告知观看收获\n6. 提问好奇型 — 抛出问题勾起探索欲\n使用技巧：口语化、带情绪、短句抓人；视觉配合文案；搭配具体场景和数据。\n避坑：不要冗长自我介绍、不要晦涩术语铺垫、不要噱头与内容不符、不要开场无重点。\n优化：多用反问/惊呼/命令式语气；多测试不同钩子；严格兑现开头价值承诺。\n该原则作为四类文案创作技能的"共同前件"——无论写哪类文案，开头都必须先按此规则设计。
 §
-江敏笔记本 WSL distro 名是 Ubuntu22.04（无短横线），不是 Ubuntu-22.04。Windows 上跑着代理 127.0.0.1:7890（Clash/同类工具）。Hermes 同步脚本在 C:\Users\jiangmin\Desktop\CLAW\ 下，已改为纯 ASCII + fetch/reset 策略避免合并冲突。
+短视频运营四大分类框架（2026.5.6更新）：
+1. 范话题类（技能：short-video-general）— 与业务无关的泛话题，追求爆款，不受财税纪律约束。
+2. 行业自然流（技能：short-video-industry-flow）— 泛话题与财税自然融合，双角色整合，文案必须含财税要素。
+3. 纯广告类（技能：short-video-ad）— 精准筛选，五句结构（直击→钩子→秀价值→打消顾虑→引导行动）。
+4. 趣味破播类（技能：short-video-fun-breakout）— 独立交互询问式智能体。用户给文案后，先问观点/目的，再问是否关联财税业务；如需则追问具体业务（公司注册/代理记账/税务合规/会计服务/高端财务咨询/税务筹划/企业经营 可多选），然后按固定六模块格式输出（标题→话题→文案→神评→配乐→文生图提示词）。关联业务必须自然植入、无缝过渡。
+通用前置规则：所有文案开头必须按「黄金三秒钩子」设计。
+持续关注平台算法更新，主动提出修改建议。
 §
-IMA OpenAPI skill 已安装 ~/.hermes/skills/ima-skill/，凭证存于 ~/.config/ima/client_id 和 api_key。Node.js v20.18.0 在 ~/.local/node/bin/node。API Base: https://ima.qq.com。Client ID: 2ee6c4f520af5d9f8499a1b30b096388。用户有 6 个知识库（徐爱军的知识库、销售学等）和 3 篇笔记（供应商洽谈记录、客户来访记录含1039贸易方式内容、ima笔记使用指南）。搜索已在 KB 和 Notes 中验证可用。注意：IMA 内容分 knowledge-base（文件）和 notes（笔记）两套存储，搜索需兜底两个模块。
+承诺：主动追踪各短视频平台（抖音、视频号、快手等）的算法更新和推流机制变化，不等江姐提醒。发现影响现行创作原则的变化，立即提出修改建议。每两周至少主动检查一次平台动态。前三类技能（范话题类/行业自然流/纯广告类）的复盘提醒已设cronjob，2026年5月21日上午9点触发。
 §
-所有表格输出必须使用 table-formatter 技能，全细线网格格式（┌┬┐│├┼┤└┴┘），横平竖直、左右对齐、每行有分隔线。绝对不用 Markdown 虚线表（|---|）。
+WorkBuddy风格表格输出原则：表格必须有至少2条横线（├──┤）和至少2条竖线（│），形成真正的"格子"结构。所有行的右侧竖线必须严格对齐同一列。使用wcwidth算法精确计算CJK/emoji显示宽度，确保对齐精度。不可用无横线分割的纯方框替代表格。
 §
-table-formatter 技能已定型为最终版（全细线网格格式 ┌┬┐│├┼┤└┴┘），用户确认完美对齐。四台电脑命名已明确：1)江敏笔记本（Windows用户jiangmin，WSL Ubuntu22.04），2)办公室电脑（Windows用户Administrator，WSL Ubuntu 24.04.4），3)家里电脑，4)笔记本（待定）。所有电脑均通过 GitHub 仓库 hermes-data 双向同步，同步脚本已生成。
+2026.5.7 表格规则终版：脚本+wcwidth生成，须有├┤横线和│竖线，右竖线对齐。单元格公式 = " " + text + " "*(cw-1-dw(text))，cw = max_dw+2。严禁裸hex作OR条件，必须cp==0x26CE形式。
 §
-用户在企业微信群中建立了机器人，我之前帮他连接成功了。
+2026.5.6 修复鼠标支持：cli.py中mouse_support原为硬编码False，改为读取config.yaml的display.mouse_support配置（默认True），实现左键点击定位光标和右键功能。已修改三个位置：(1) hermes_cli/config.py DEFAULT_CONFIG["display"]加mouse_support默认值True；(2) cli.py __init__读取配置；(3) cli.py Application改为self.mouse_support。重启后生效。
 §
-企业微信群机器人已连接成功。Webhook Key: 339a62c0-c13b-4733-a706-6ce136a49fe6，当前工作模式为简单模式（直接发消息无需token）。Secret 备用: qCB8YuT6JSREfPAhV112EFk7D9XlCrCJ1Q4NFgidFy9。
-§
-企业微信 AI 机器人（双向）已配置完成。Bot ID: aibCgyqs_UpoYBfLGf0QejX1YCmKfW176cM, Secret 存在 .env 中。使用 WebSocket 模式（wecom）连接 wss://openws.work.weixin.qq.com。网关已启动并成功连接。注意：AI 机器人需要手动添加到群聊才能响应 @mention，不同于 Webhook 群机器人（单向推送）。用户无法扫码或打开手机链接，配置需后台手动操作。
+WSL 用户名是 dmin（不是 admin），路径 /home/dmin/.hermes/。同步问题排查要点：(1) 中文SOUL.md在Git仓库，需要时拷回WSL；(2) 默认英文SOUL.md不需要备份，Hermes自带；(3) git force push经解释后用户可接受。同步bat脚本已改为全WSL内部命令链。GitHub Push Protection拦截历史中的Token，解决方案是用git rebase -i --rebase-merges重写历史删除明文Token后用force push推送。

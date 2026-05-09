@@ -28,6 +28,7 @@ Use this skill for:
 - raw access to any X API v2 endpoint
 - multi-app / multi-account workflows
 
+This skill replaces the older `xitter` skill (which wrapped a third-party Python CLI). `xurl` is maintained by the X developer platform team, supports OAuth 2.0 PKCE with auto-refresh, and covers a substantially larger API surface.
 
 ---
 

@@ -324,6 +324,9 @@ curator:
   min_idle_hours: 2
   stale_after_days: 30
   archive_after_days: 90
+  backup:
+    enabled: true
+    keep: 5
 honcho: {}
 timezone: ''
 discord:
@@ -348,6 +351,10 @@ approvals:
   cron_mode: deny
   mcp_reload_confirm: true
 command_allowlist:
+- stop/restart system service
+- shell command via -c/-lc flag
+- overwrite system file via redirection
+- kill hermes/gateway process (self-termination)
 - script execution via -e/-c flag
 quick_commands: {}
 hooks: {}
@@ -425,6 +432,17 @@ platform_toolsets:
   - hermes-yuanbao
   teams:
   - hermes-teams
+  wecom:
+  - hermes-wecom
+gateway:
+  platforms:
+    wecom:
+      enabled: true
+      extra:
+        bot_id: aibCgyqs_UpoYBfLGf0QejX1YCmKfW176cM
+        secret: qCB8YuT6JSREfPAhV112EFk7D9XlCrCJ1Q4NFgidFy9
+        dm_policy: open
+        group_policy: open
 
 # ── Fallback Model ────────────────────────────────────────────────────
 # Automatic provider failover when primary is unavailable.

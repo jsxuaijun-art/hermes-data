@@ -150,6 +150,8 @@ hermes gateway setup        Configure platforms
 
 Supported platforms: Telegram, Discord, Slack, WhatsApp, Signal, Email, SMS, Matrix, Mattermost, Home Assistant, DingTalk, Feishu, WeCom, BlueBubbles (iMessage), Weixin (WeChat), API Server, Webhooks. Open WebUI connects via the API Server adapter.
 
+**WeCom 注意** — 企业微信有两个适配模式：AI 机器人 WebSocket 模式 (`wecom`) 和自建应用回调模式 (`wecom_callback`)，凭证和配置方式不同。详见 `references/wecom-gateway.md`。
+
 Platform docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/
 
 ### Sessions
@@ -603,6 +605,19 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 1. `hermes skills list` — verify installed
 2. `hermes skills config` — check platform enablement
 3. Load explicitly: `/skill name` or `hermes -s name`
+
+### Skills from archive/zip files
+When a third-party vendor distributes a skill as a `.zip` archive (common for
+platform-specific integrations like Tencent IMA, Feishu, DingTalk):
+
+1. Download and extract the archive
+2. Copy the skill directory to `~/.hermes/skills/`
+3. Check `meta.json` for runtime requirements (Node.js version, etc.)
+4. Configure credentials (env vars or config files)
+
+See `references/installing-skills-from-archives.md` for the full workflow,
+including installing Node.js without root, credential setup, and
+troubleshooting multi-module skills.
 
 ### Multi-Device Data Sync
 

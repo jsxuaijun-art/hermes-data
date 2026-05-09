@@ -1,7 +1,7 @@
 ---
 name: word-documents
 title: Word Documents
-description: Create, format, and convert rich Word (.docx) documents using python-docx — tables, styling, Chinese fonts, shading, headers, and page layout.
+description: Create, format, and convert rich Word (.docx) documents — python-docx for rich formatting, pure-stdlib fallback for minimal environments, and markdown-to-docx conversion for large Chinese-government-style reports.
 trigger: user asks to create a Word document, convert to .docx, save as Word format, or generate a formatted document for print/sharing.
 category: productivity
 ---
@@ -157,3 +157,62 @@ doc.save('/mnt/c/Users/jiangmin/Desktop/文件名.docx')
 file /mnt/c/Users/jiangmin/Desktop/输出文件.docx
 ls -lh /mnt/c/Users/jiangmin/Desktop/输出文件.docx
 ```
+
+---
+
+## Fallback: Stdlib-Only .docx (No python-docx)
+
+When `python-docx` is unavailable (WSL, minimal containers, no pip), generate .docx files using pure Python stdlib with string-based OOXML construction:
+
+```python
+import zipfile, xml.parsers.expat, xml.sax.saxutils
+
+def make_docx(path, html_body):
+    """Create a .docx from an HTML string using pure stdlib."""
+    from xml.sax.saxutils import escape
+    document_xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <w:body>
+    <w:p><w:r><w:rPr><w:rFonts w:ascii="SimSun" w:eastAsia="SimSun"/><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">{escape(html_body)}</w:t></w:r></w:p>
+  </w:body>
+</w:document>'''
+    # ... construct full OOXML with [Content_Types].xml, document.xml, rels
+    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('word/document.xml', document_xml)
+        z.writestr('[Content_Types].xml', content_types_xml)
+        # etc.
+```
+
+### When to use
+- WSL/minimal environment where `pip install python-docx` fails
+- No network access to install packages
+- Simple documents with basic formatting (fonts, sizes, paragraphs)
+
+See `references/generate-docx-without-python-docx.md` for the full implementation.
+
+## Fallback: Markdown to .docx Conversion
+
+Convert large Markdown documents (500-1000+ lines) to .docx with proper Chinese government-document formatting:
+
+- 仿宋 (FangSong) body text
+- 黑体 (SimHei) main headings  
+- 楷体 (KaiTi) sub-headings
+- Automatic table conversion with shading
+- Page number and header/footer support
+
+```bash
+python3 -c "
+import re, zipfile, xml.sax.saxutils
+# Parse markdown headings, paragraphs, tables
+# Build OOXML zip structure
+# Output: output.docx
+"
+```
+
+### When to use
+You have a large Markdown report and need both .md and .docx deliverables in a minimal environment without python-docx.
+
+See `references/markdown-to-word-converter.md` for the full implementation.

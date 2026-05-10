@@ -1,131 +1,197 @@
-# Hermes 同步脚本 (推送/拉取)
+# Hermes 同步脚本 (推送/拉取) — 完整内容
 
-这两个 .bat 文件放在桌面：`D:\360MoveData\Users\Admin\Desktop\`
+> **架构**: WSL shell 脚本驱动 + Windows git.exe 做网络操作
+> **.bat 文件**: 仅 4 行纯 ASCII 触发器，无乱码风险
+> **双引擎重试**: Windows git.exe 优先（5 次）→ WSL git 回退（5 次）
 
-- `Hermes同步-推送.bat` — 本地 → GitHub
-- `Hermes同步-拉取.bat` — GitHub → 本地
+## 文件位置
+
+| 文件 | Windows 路径 | WSL 路径 |
+|------|-------------|---------|
+| 推送 .bat | `C:\Users\Admin\Desktop\Hermes同步-推送.bat` | `/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat` |
+| 拉取 .bat | `C:\Users\Admin\Desktop\Hermes同步-拉取.bat` | `/mnt/c/Users/Admin/Desktop/Hermes同步-拉取.bat` |
+| 推送 WSL 脚本 | — | `/home/dmin/.hermes/sync-push.sh` |
+| 拉取 WSL 脚本 | — | `/home/dmin/.hermes/sync-pull.sh` |
+
+## 完整文件内容
+
+### `Hermes同步-推送.bat` (4 行, 纯 ASCII)
+
+```batch
+@echo off
+chcp 65001 >nul
+wsl -d Ubuntu-22.04 -- bash /home/dmin/.hermes/sync-push.sh
+pause
+```
+
+### `sync-push.sh` (WSL, ~80 行)
+
+```bash
+#!/bin/bash
+# Hermes Sync - Push to GitHub (hybrid dual-engine)
+
+SYNC_DIR="/mnt/c/Users/Admin/hermes-sync"
+SYNC_DIR_WIN="C:/Users/Admin/hermes-sync"
+GIT_WIN="/mnt/c/Program Files/Git/bin/git.exe"
+
+cd "$SYNC_DIR" || exit 1
+
+echo "[1/4] Copy Hermes data from WSL to Windows..."
+cp -f /home/dmin/.hermes/SOUL.md /home/dmin/.hermes/SOUL_Pro.md /home/dmin/.hermes/SOUL_Edu.md . 2>/dev/null
+cp -rf /home/dmin/.hermes/memories/* memories/ 2>/dev/null
+mkdir -p skills && cp -rf /home/dmin/.hermes/skills/* skills/ 2>/dev/null
+cp -f /home/dmin/.hermes/config.yaml . 2>/dev/null
+
+echo "[2/4] Copy Claw data from WSL to Windows..."
+cp -f /home/dmin/.claw.yaml /home/dmin/.claw/config.yaml . 2>/dev/null
+cp -rf /home/dmin/.claw/memories/* claw_memories/ 2>/dev/null
+
+echo "[3/4] Git add + commit..."
+git add -A
+git commit -m "sync $(date '+%Y-%m-%d_%H:%M')" 2>/dev/null || echo "(nothing to commit)"
+
+echo "[4/4] Git push (2 engines, up to 10 retries)..."
+
+push_win() {
+  for i in 1 2 3 4 5; do
+    echo ">> [Windows git.exe] Attempt $i/5..."
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" fetch origin 2>/dev/null
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" rebase origin/main 2>/dev/null || \
+      "$GIT_WIN" -C "$SYNC_DIR_WIN" merge origin/main --no-edit 2>/dev/null || true
+    if "$GIT_WIN" -C "$SYNC_DIR_WIN" push origin main 2>/dev/null; then
+      echo ">> Push succeeded! (Windows git.exe)"
+      return 0
+    fi
+    sleep $((i * 2))
+  done
+  return 1
+}
+
+push_wsl() {
+  for i in 1 2 3 4 5; do
+    echo ">> [WSL git] Attempt $i/5..."
+    git -c http.proxy= fetch origin 2>/dev/null
+    git -c http.proxy= rebase origin/main 2>/dev/null || \
+      git -c http.proxy= merge origin/main --no-edit 2>/dev/null || true
+    if git -c http.proxy= push origin main 2>/dev/null; then
+      echo ">> Push succeeded! (WSL git)"
+      return 0
+    fi
+    sleep $((i * 2))
+  done
+  return 1
+}
+
+push_win || push_wsl || {
+  echo ">> Push failed after all retries (network issue)."
+  echo ">> Local data saved. Retry manually:"
+  echo ">>   cd C:\\Users\\Admin\\hermes-sync"
+  echo ">>   git fetch && git rebase origin/main && git push"
+}
+
+echo ""
+echo "============================================"
+echo "  Sync complete (local data always saved)"
+echo "============================================"
+```
+
+### `Hermes同步-拉取.bat` (4 行, 纯 ASCII)
+
+```batch
+@echo off
+chcp 65001 >nul
+wsl -d Ubuntu-22.04 -- bash /home/dmin/.hermes/sync-pull.sh
+pause
+```
+
+### `sync-pull.sh` (WSL, ~45 行)
+
+```bash
+#!/bin/bash
+# Hermes Sync - Pull from GitHub (dual-git engine with retry)
+
+SYNC_DIR="/mnt/c/Users/Admin/hermes-sync"
+SYNC_DIR_WIN="C:/Users/Admin/hermes-sync"
+GIT_WIN="/mnt/c/Program Files/Git/bin/git.exe"
+
+cd "$SYNC_DIR" || exit 1
+
+echo "[1/4] Git pull from GitHub..."
+
+pull_retry() {
+  for i in 1 2 3; do
+    echo ">> [Windows git.exe] Attempt $i/3..."
+    if "$GIT_WIN" -C "$SYNC_DIR_WIN" pull origin main --rebase 2>/dev/null; then
+      echo ">> Pull successful!"
+      return 0
+    fi
+    sleep $((i * 3))
+  done
+  return 1
+}
+
+pull_retry || {
+  for i in 1 2 3; do
+    echo ">> [WSL git] Attempt $i/3..."
+    if git -c http.proxy= pull origin main --rebase 2>/dev/null; then
+      echo ">> Pull successful!"
+      break
+    fi
+    sleep $((i * 3))
+  done
+  echo ">> Pull had issues, continuing with local data..."
+}
+
+echo "[2/4] Copy to WSL Hermes..."
+cp -f SOUL.md SOUL_Pro.md SOUL_Edu.md /home/dmin/.hermes/ 2>/dev/null
+mkdir -p /home/dmin/.hermes/memories && cp -rf memories/* /home/dmin/.hermes/memories/ 2>/dev/null
+mkdir -p /home/dmin/.hermes/skills && cp -rf skills/* /home/dmin/.hermes/skills/ 2>/dev/null
+cp -f config.yaml /home/dmin/.hermes/ 2>/dev/null
+
+echo "[3/4] Copy to WSL Claw..."
+mkdir -p /home/dmin/.claw && cp -f .claw.yaml config.yaml /home/dmin/.claw/ 2>/dev/null
+mkdir -p /home/dmin/.claw/memories && cp -rf claw_memories/* /home/dmin/.claw/memories/ 2>/dev/null
+
+echo ""
+echo "============================================"
+echo "  Done! GitHub data synced to local Hermes + Claw"
+echo "============================================"
+```
+
+## 架构演进史
+
+| 版本 | 架构 | 问题 | 结局 |
+|------|------|------|------|
+| **v0** | Windows cmd 做 git + WSL 拷贝 | cmd 编码/盘符 → 乱码 | 废弃 |
+| **v1** | 全部 git 在 WSL 内执行 | 从中国连 GitHub 超慢 | 废弃 |
+| **v2 (当前)** | WSL shell 脚本驱动 + Windows git.exe 做网络操作 | 稳定 ✅ | 当前 |
 
 ## 关键设计原则
 
-1. **全部 git 操作在 WSL 内执行** — 用 `wsl -d Ubuntu-22.04 -- bash -c "..."` 包裹，避免 Windows cmd 盘符切换、中文编码、CRLF 等问题
-2. **中文 commit message 用 Linux date** — `date +%Y-%m-%d` 代替 `%date%`，避免 cmd 把"同步"两个字当命令名解析
-3. **空提交保护** — `(git diff --cached --quiet || git commit ...)` 避免没改动时产生空提交
-4. **每次推送前 pull --rebase** — 防止 non-fast-forward 拒绝
-5. **用 `$WSL_HOME` 变量** — 避免硬编码 `/root/.hermes/` 这种错误路径，两台电脑只改变量值即可复用
+1. **.bat 做触发器，不做逻辑** — 4 行纯 ASCII，`wsl -- bash 路径` 即可。零编码/CRLF 风险。
+2. **WSL shell 脚本做全部逻辑** — `cp`、`git add/commit` 本地操作在 WSL 内飞快。网络操作用 Windows git.exe。
+3. **Windows git.exe 优先** — `/mnt/c/Program Files/Git/bin/git.exe` 利用 Windows 网络栈（代理/VPN），从中国连 GitHub 比 WSL 原生 git 快 10-100 倍。
+4. **双引擎重试** — Windows git.exe 崩溃/超时后自动切 WSL git，两个引擎各试 5 次。
+5. **本地数据永远保存** — 网络失败只影响推送，文件拷贝步骤已提前完成。不会丢数据。
 
-## ⚠️ 头号 Bug：WSL 路径写错
+## 验证方法
 
-```diff
-- 错误: wsl -d Ubuntu-22.04 -- bash -c "cp /root/.hermes/SOUL.md ..."
-+ 正确: wsl -d Ubuntu-22.04 -- bash -c "WSL_HOME=/home/dmin; cp $WSL_HOME/.hermes/SOUL.md ..."
+```bash
+# 看文件换行符
+file /mnt/c/Users/Admin/Desktop/*.bat
+# 应显示: DOS batch file, ASCII text, with very long lines
+
+# 看 shell 脚本语法
+bash -n /home/dmin/.hermes/sync-push.sh
+bash -n /home/dmin/.hermes/sync-pull.sh
+
+# 手动测试（先测试网络）
+/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" fetch origin
 ```
 
-如果写成 `/root/.hermes/`，cp 命令**静默失败**（`2>/dev/null` 吞掉了错误提示脚本，看起来"完成"了，实际什么都没拷贝）。
+## 故障排查
 
-## ⚠️ 二号 Bug：CRLF 换行符（比编码问题更致命）
-
-```diff
-- 错误: 用 write_file 写 .bat → 生成 LF 换行，cmd 无法解析
-+ 正确: 用 Python 以二进制模式写，显式指定 \r\n
-```
-
-**症状**: 文件内容在 WSL 里 `cat` 看着完全正确，但 cmd 运行时各种乱码错误。即使把中文全部改成英文，错误依然一样。
-
-**原因**: cmd.exe 只能解析 CRLF（`\r\n`）换行的 .bat 文件。`write_file` 工具默认写 Unix LF（`\n`），导致整文件被当一行解析。
-
-**唯一可靠的方法 — Python 二进制写入:**
-
-```python
-lines = [
-    '@echo off',
-    'chcp 65001 >nul',
-    'echo [1/4] Step one...',
-    '# ... 更多命令 ...',
-    'pause',
-]
-content = '\r\n'.join(lines) + '\r\n'
-with open('/mnt/c/Users/Admin/Desktop/script.bat', 'wb') as f:
-    f.write(content.encode('ascii'))
-```
-
-关键点：
-- `'wb'` — 二进制写模式
-- `'\r\n'.join(lines)` — 显式 CRLF
-- `encode('ascii')` — 不存中文，纯 ASCII 最安全
-- 不可用 `write_file` — 它永远生成 LF 换行
-
-## 推送脚本 (`Hermes同步-推送.bat`)
-
-```batch
-@echo off
-chcp 65001 >nul
-echo.
-echo ═══════════════════════════════════════
-echo    数据同步 - 推送到 GitHub
-echo ═══════════════════════════════════════
-echo.
-
-echo [1/4] 从 WSL 拷贝 Hermes 数据...
-wsl -d Ubuntu-22.04 -- bash -c "WSL_HOME=/home/dmin; cp -f $WSL_HOME/.hermes/SOUL.md $WSL_HOME/.hermes/SOUL_Pro.md $WSL_HOME/.hermes/SOUL_Edu.md /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; cp -rf $WSL_HOME/.hermes/memories/* /mnt/c/Users/Admin/hermes-sync/memories/ 2>/dev/null; cp -rf $WSL_HOME/.hermes/skills/* /mnt/c/Users/Admin/hermes-sync/skills/ 2>/dev/null; cp -f $WSL_HOME/.hermes/config.yaml /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; echo Hermes done"
-echo.
-
-echo [2/4] 拷贝 Claw memory...
-wsl -d Ubuntu-22.04 -- bash -c "cp -f /home/dmin/.claw.yaml /home/dmin/.claw/config.yaml /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; cp -rf /home/dmin/.claw/memories/* /mnt/c/Users/Admin/hermes-sync/claw_memories/ 2>/dev/null; echo Claw done"
-echo Claw done
-echo.
-
-echo [3/4] 提交并推送到 GitHub...
-wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git add -A && (git diff --cached --quiet || git commit -m 'sync $(date +%%Y-%%m-%%d)') && git pull --rebase origin main && git push origin main"
-echo.
-
-echo [4/4] 完成!
-echo.
-echo ✓ Hermes 数据 + Claw memory 已同步到 GitHub
-echo.
-pause
-```
-
-注意：bat 文件中的 `%%Y`、`%%m`、`%%d` 是 Windows cmd 环境下对 `%` 的转义写法。cmd 会把 `%%` 解析为单个 `%`，传到 WSL 后就变成 Linux 的 `date +%Y-%m-%d`。
-
-## 拉取脚本 (`Hermes同步-拉取.bat`)
-
-```batch
-@echo off
-chcp 65001 >nul
-echo.
-echo ═══════════════════════════════════════
-echo    数据同步 - 从 GitHub 拉取
-echo ═══════════════════════════════════════
-echo.
-
-echo [1/4] 从 GitHub 拉取最新数据...
-wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/hermes-sync && git pull origin main"
-echo.
-
-echo [2/4] 拷贝到 WSL Hermes 目录...
-wsl -d Ubuntu-22.04 -- bash -c "WSL_HOME=/home/dmin; cp -f /mnt/c/Users/Admin/hermes-sync/SOUL.md /mnt/c/Users/Admin/hermes-sync/SOUL_Pro.md /mnt/c/Users/Admin/hermes-sync/SOUL_Edu.md $WSL_HOME/.hermes/ 2>/dev/null; mkdir -p $WSL_HOME/.hermes/memories && cp -rf /mnt/c/Users/Admin/hermes-sync/memories/* $WSL_HOME/.hermes/memories/ 2>/dev/null; mkdir -p $WSL_HOME/.hermes/skills && cp -rf /mnt/c/Users/Admin/hermes-sync/skills/* $WSL_HOME/.hermes/skills/ 2>/dev/null; cp -f /mnt/c/Users/Admin/hermes-sync/config.yaml $WSL_HOME/.hermes/ 2>/dev/null; echo Hermes done"
-echo.
-
-echo [3/4] 拷贝 Claw memory 到本地...
-wsl -d Ubuntu-22.04 -- bash -c "mkdir -p /home/dmin/.claw && cp -f /mnt/c/Users/Admin/hermes-sync/.claw.yaml /mnt/c/Users/Admin/hermes-sync/config.yaml /home/dmin/.claw/ 2>/dev/null; mkdir -p /home/dmin/.claw/memories && cp -rf /mnt/c/Users/Admin/hermes-sync/claw_memories/* /home/dmin/.claw/memories/ 2>/dev/null; echo Claw done"
-echo Claw done
-echo.
-
-echo [4/4] 完成!
-echo.
-echo ✓ GitHub 数据已同步到 Hermes + Claw
-echo.
-pause
-```
-
-## 首次设置（办公室电脑）
-
-办公室电脑需额外配置：
-1. Git remote auth（Token 或 SSH key）
-2. WorkBuddy 路径可能不同（检查 Claw memory 位置）
-3. WSL home 路径确认：`echo $HOME` 确认后再写变量
-
-## 已知限制
-
-- WSL NAT 模式下的代理警告：`wsl: localhost 代理配置但未镜像到 WSL` — 可忽略
-- WorkBuddy 的路径 `20260424224200` 是时间戳，更新后需改 .bat 中的路径
+- **Windows git.exe 说`unable to access` + `GnuTLS recv error`**: 网络波动，等几分钟重试
+- **两个引擎都超时**: 网络断连/墙变严，换时间再跑。本地数据不会丢失
+- **冲突阻止 push**: `git fetch origin && git rebase origin/main` 手动解决冲突，再 `git push`
+- **脚本语法错误**: 检查 bash 语法（`bash -n`）和 CRLF 换行

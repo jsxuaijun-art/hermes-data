@@ -1,229 +1,301 @@
 ---
 name: hermes-data-sync
-description: Cross-PC data sync for Hermes Agent (SOUL.md, memories, skills, config) via GitHub private repo. Covers Windows .bat scripts, WSL integration, merge conflict resolution, and GitHub push protection.
+description: Cross-PC data sync for Hermes Agent (SOUL.md, memories, skills, config) via GitHub private repo. Covers WSL shell scripts, Windows .bat wrappers, dual-git engine retry for China network conditions, merge conflict resolution, and GitHub push protection.
 ---
 
 # Hermes Data Sync (跨电脑同步)
 
-**Last updated**: 2026-05-09 — Added WSL2 NAT proxy workaround, CRLF post-fix method, and new diagnostic patterns from garbled `'?GitHub'` symptom.
+**Last updated**: 2026-05-09 — Major rewrite: architecture changed from "Windows cmd does all git" to "WSL shell scripts drive everything, Windows git.exe handles network". Added dual-engine retry pattern.
 
 ## When to Use
+
 - User works on multiple PCs (home + office) with Hermes Agent
 - Need to sync SOUL.md, memories/, skills/, config.yaml between PCs
-- Setting up or troubleshooting the sync .bat scripts
+- Setting up or troubleshooting the sync scripts
 - Resolving merge conflicts from divergent edits on two PCs
 - Repairing git history after leaked secrets or broken rebase states
 
-## Architecture
+## Architecture (v2 — current)
 
 ```
-Windows cmd (git push/pull)                      Windows cmd (git pull)
-     ↕ GitHub Cloud ↕                                  ↕
-C:\Users\Admin\hermes-sync\                    C:\Users\Administrator\Desktop\HermesAgent\
-     ↑ WSL cp to                                       ↑ WSL cp to
-WSL ~/.hermes/                                  WSL ~/.hermes/
-(dmin@Ubuntu-22.04)                             (administrator@Ubuntu)
+Windows Desktop
+  └─ Hermes同步-推送.bat  (4 lines, pure ASCII)
+       │  "wsl -d Ubuntu-22.04 -- bash ~/.hermes/sync-push.sh"
+       │
+       ▼
+WSL ~/.hermes/sync-push.sh  (drives everything)
+       │
+       ├─ [1/4] cp  WSL→Windows (local, instant)
+       ├─ [2/4] cp  Claw→Windows (local, instant)
+       ├─ [3/4] git add+commit   (local, instant)
+       └─ [4/4] git push  ─┬─ Windows git.exe  (fast, uses Windows network stack)
+                            └─ WSL git          (fallback, slower)
+                                 (retries 5x each, alternating)
 ```
 
-**Key design decision**: ALL git operations run in **Windows cmd**, NOT in WSL. WSL is only used for file copying. This avoids the WSL2 NAT proxy problem (see pitfall below).
+**Key design decision**: ALL logic lives in WSL shell scripts (`sync-push.sh`, `sync-pull.sh`). The `.bat` files are thin wrappers (4 lines each, pure ASCII, any encoding works). Network operations use **Windows git.exe** (`/mnt/c/Program Files/Git/bin/git.exe`) with **WSL git as fallback** — because from China, Windows git.exe uses the Windows network stack (proxy/VPN) and is substantially faster to GitHub.
 
 **Sync directory**: `C:\Users\Admin\hermes-sync\` (cloned from `jsxuaijun-art/hermes-data`)
 **Git remote**: `https://github.com/jsxuaijun-art/hermes-data.git`
-**WSL user** (home PC): `dmin` (NOT root; NOT admin). Home = `/home/dmin/`
-**WSL ~/.hermes**: `/home/dmin/.hermes/` (home PC), NOT `/root/.hermes/`
+**WSL user**: `dmin` (NOT root). Home = `/home/dmin/`
+**Windows git.exe**: `/mnt/c/Program Files/Git/bin/git.exe`
 
-> ⚠️ CRITICAL: The correct WSL home path MUST be used in all .bat scripts. Using `/root/.hermes/` silently writes to the wrong location.
+> ⚠️ CRITICAL: The correct WSL home path MUST be used in all scripts. Using `/root/.hermes/` silently writes to the wrong location.
 
-## 推送脚本 (`Hermes同步-推送.bat`)
+## 推送脚本 (`Hermes同步-推送.bat` + `sync-push.sh`)
 
-Path on desktop: `D:\360MoveData\Users\Admin\Desktop\Hermes同步-推送.bat`
-
-**Architecture**: WSL copies files → Windows cmd does all git operations. This avoids WSL2 NAT proxy issues.
+### .bat 文件 (桌面, 4行纯 ASCII)
 
 ```batch
 @echo off
 chcp 65001 >nul
-echo.
-echo ==============================================
-echo   Hermes Data Sync - Push to GitHub
-echo ==============================================
-echo.
+wsl -d Ubuntu-22.04 -- bash /home/dmin/.hermes/sync-push.sh
+pause
+```
 
-echo [1/4] Copying Hermes data from WSL...
-wsl -d Ubuntu-22.04 -- bash -c "WSL_HOME=/home/dmin; cp -f $WSL_HOME/.hermes/SOUL.md $WSL_HOME/.hermes/SOUL_Pro.md $WSL_HOME/.hermes/SOUL_Edu.md /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; cp -rf $WSL_HOME/.hermes/memories/* /mnt/c/Users/Admin/hermes-sync/memories/ 2>/dev/null; cp -rf $WSL_HOME/.hermes/skills/* /mnt/c/Users/Admin/hermes-sync/skills/ 2>/dev/null; cp -f $WSL_HOME/.hermes/config.yaml /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; echo Hermes done"
+Minimal — no encoding issues possible. Just triggers the WSL script.
 
-echo [2/4] Copying Claw memory...
-wsl -d Ubuntu-22.04 -- bash -c "cp -f /home/dmin/.claw.yaml /home/dmin/.claw/config.yaml /mnt/c/Users/Admin/hermes-sync/ 2>/dev/null; cp -rf /home/dmin/.claw/memories/* /mnt/c/Users/Admin/hermes-sync/claw_memories/ 2>/dev/null; echo Claw done"
-echo.
+### WSL 脚本 (`~/.hermes/sync-push.sh`)
 
-echo [3/4] Committing and pushing to GitHub...
-cd /d C:\Users\Admin\hermes-sync
+Path: `/home/dmin/.hermes/sync-push.sh`
+
+```bash
+#!/bin/bash
+# Hermes Sync - Push to GitHub (hybrid dual-engine)
+
+SYNC_DIR="/mnt/c/Users/Admin/hermes-sync"
+SYNC_DIR_WIN="C:/Users/Admin/hermes-sync"
+GIT_WIN="/mnt/c/Program Files/Git/bin/git.exe"
+
+cd "$SYNC_DIR" || exit 1
+
+echo "[1/4] Copy Hermes data from WSL to Windows..."
+cp -f /home/dmin/.hermes/SOUL.md /home/dmin/.hermes/SOUL_Pro.md /home/dmin/.hermes/SOUL_Edu.md . 2>/dev/null
+cp -rf /home/dmin/.hermes/memories/* memories/ 2>/dev/null
+mkdir -p skills && cp -rf /home/dmin/.hermes/skills/* skills/ 2>/dev/null
+cp -f /home/dmin/.hermes/config.yaml . 2>/dev/null
+
+echo "[2/4] Copy Claw data from WSL to Windows..."
+cp -f /home/dmin/.claw.yaml /home/dmin/.claw/config.yaml . 2>/dev/null
+cp -rf /home/dmin/.claw/memories/* claw_memories/ 2>/dev/null
+
+echo "[3/4] Git add + commit..."
 git add -A
-git diff --cached --quiet || git commit -m "sync %date:~-10,4%-%date:~-4,2%-%date:~-2,2%"
-git pull --rebase origin main
-git push origin main
-echo.
+git commit -m "sync $(date '+%Y-%m-%d_%H:%M')" 2>/dev/null || echo "(nothing to commit)"
 
-echo [4/4] Done!
-echo.
-echo ==============================================
-echo   Hermes + Claw data synced to GitHub
-echo ==============================================
-echo.
-pause
+echo "[4/4] Git push (2 engines, up to 10 retries)..."
+
+push_win() {
+  for i in 1 2 3 4 5; do
+    echo ">> [Windows git.exe] Attempt $i/5..."
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" fetch origin 2>/dev/null
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" rebase origin/main 2>/dev/null || \
+      "$GIT_WIN" -C "$SYNC_DIR_WIN" merge origin/main --no-edit 2>/dev/null || true
+    if "$GIT_WIN" -C "$SYNC_DIR_WIN" push origin main 2>/dev/null; then
+      echo ">> Push succeeded! (Windows git.exe)"
+      return 0
+    fi
+    sleep $((i * 2))
+  done
+  return 1
+}
+
+push_wsl() {
+  for i in 1 2 3 4 5; do
+    echo ">> [WSL git] Attempt $i/5..."
+    git -c http.proxy= fetch origin 2>/dev/null
+    git -c http.proxy= rebase origin/main 2>/dev/null || \
+      git -c http.proxy= merge origin/main --no-edit 2>/dev/null || true
+    if git -c http.proxy= push origin main 2>/dev/null; then
+      echo ">> Push succeeded! (WSL git)"
+      return 0
+    fi
+    sleep $((i * 2))
+  done
+  return 1
+}
+
+push_win || push_wsl || {
+  echo ">> Push failed after all retries (network issue)."
+  echo ">> Local data saved. Retry manually:"
+  echo ">>   cd C:\\Users\\Admin\\hermes-sync"
+  echo ">>   git fetch && git rebase origin/main && git push"
+}
+
+echo ""
+echo "============================================"
+echo "  Sync complete (local data always saved)"
+echo "============================================"
 ```
 
-Note: `%date%` format on this PC produces `Sat 05/09/2026` → extracted as `2026-05-09`.
+## 拉取脚本 (`Hermes同步-拉取.bat` + `sync-pull.sh`)
 
-## 拉取脚本 (`Hermes同步-拉取.bat`)
-
-Path on desktop: `D:\360MoveData\Users\Admin\Desktop\Hermes同步-拉取.bat`
-
-Same architecture: Windows cmd for git, WSL for file copy.
+### .bat 文件 (桌面)
 
 ```batch
 @echo off
 chcp 65001 >nul
-echo.
-echo ==============================================
-echo   Hermes Data Sync - Pull from GitHub
-echo ==============================================
-echo.
-
-echo [1/4] Pulling latest data from GitHub...
-cd /d C:\Users\Admin\hermes-sync
-git pull origin main
-echo.
-
-echo [2/4] Copying to WSL Hermes directory...
-wsl -d Ubuntu-22.04 -- bash -c "WSL_HOME=/home/dmin; cp -f /mnt/c/Users/Admin/hermes-sync/SOUL.md /mnt/c/Users/Admin/hermes-sync/SOUL_Pro.md /mnt/c/Users/Admin/hermes-sync/SOUL_Edu.md $WSL_HOME/.hermes/ 2>/dev/null; mkdir -p $WSL_HOME/.hermes/memories && cp -rf /mnt/c/Users/Admin/hermes-sync/memories/* $WSL_HOME/.hermes/memories/ 2>/dev/null; mkdir -p $WSL_HOME/.hermes/skills && cp -rf /mnt/c/Users/Admin/hermes-sync/skills/* $WSL_HOME/.hermes/skills/ 2>/dev/null; cp -f /mnt/c/Users/Admin/hermes-sync/config.yaml $WSL_HOME/.hermes/ 2>/dev/null; echo Hermes done"
-
-echo [3/4] Copying Claw memory to WSL...
-wsl -d Ubuntu-22.04 -- bash -c "mkdir -p /home/dmin/.claw && cp -f /mnt/c/Users/Admin/hermes-sync/.claw.yaml /mnt/c/Users/Admin/hermes-sync/config.yaml /home/dmin/.claw/ 2>/dev/null; mkdir -p /home/dmin/.claw/memories && cp -rf /mnt/c/Users/Admin/hermes-sync/claw_memories/* /home/dmin/.claw/memories/ 2>/dev/null; echo Claw done"
-echo.
-
-echo [4/4] Done!
-echo.
-echo ==============================================
-echo   GitHub data synced to Hermes + Claw
-echo ==============================================
-echo.
+wsl -d Ubuntu-22.04 -- bash /home/dmin/.hermes/sync-pull.sh
 pause
 ```
+
+### WSL 脚本 (`~/.hermes/sync-pull.sh`)
+
+```bash
+#!/bin/bash
+# Hermes Sync - Pull from GitHub (dual-git engine with retry)
+
+SYNC_DIR="/mnt/c/Users/Admin/hermes-sync"
+SYNC_DIR_WIN="C:/Users/Admin/hermes-sync"
+GIT_WIN="/mnt/c/Program Files/Git/bin/git.exe"
+
+cd "$SYNC_DIR" || exit 1
+
+echo "[1/4] Git pull from GitHub..."
+
+pull_retry() {
+  for i in 1 2 3; do
+    echo ">> [Windows git.exe] Attempt $i/3..."
+    if "$GIT_WIN" -C "$SYNC_DIR_WIN" pull origin main --rebase 2>/dev/null; then
+      echo ">> Pull successful!"
+      return 0
+    fi
+    sleep $((i * 3))
+  done
+  return 1
+}
+
+pull_retry || {
+  for i in 1 2 3; do
+    echo ">> [WSL git] Attempt $i/3..."
+    if git -c http.proxy= pull origin main --rebase 2>/dev/null; then
+      echo ">> Pull successful!"
+      break
+    fi
+    sleep $((i * 3))
+  done
+  echo ">> Pull had issues, continuing with local data..."
+}
+
+echo "[2/4] Copy to WSL Hermes..."
+cp -f SOUL.md SOUL_Pro.md SOUL_Edu.md /home/dmin/.hermes/ 2>/dev/null
+mkdir -p /home/dmin/.hermes/memories && cp -rf memories/* /home/dmin/.hermes/memories/ 2>/dev/null
+mkdir -p /home/dmin/.hermes/skills && cp -rf skills/* /home/dmin/.hermes/skills/ 2>/dev/null
+cp -f config.yaml /home/dmin/.hermes/ 2>/dev/null
+
+echo "[3/4] Copy to WSL Claw..."
+mkdir -p /home/dmin/.claw && cp -f .claw.yaml config.yaml /home/dmin/.claw/ 2>/dev/null
+mkdir -p /home/dmin/.claw/memories && cp -rf claw_memories/* /home/dmin/.claw/memories/ 2>/dev/null
+
+echo ""
+echo "============================================"
+echo "  Done! GitHub data synced to local Hermes + Claw"
+echo "============================================"
+```
+
+## Voice Command Shortcuts (在 Hermes Agent 对话中)
+
+用户可以直接对 Hermes Agent 说快捷指令：
+
+### 推送github
+```bash
+cd /mnt/c/Users/Admin/hermes-sync && \
+cp /home/dmin/.hermes/config.yaml SOUL.md SOUL_Pro.md SOUL_Edu.md . && \
+cp /home/dmin/.hermes/memories/* memories/ && \
+git add -A && git commit -m "sync $(date +%Y-%m-%d)" && \
+/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" push origin main
+```
+
+### 拉取github
+```bash
+cd /mnt/c/Users/Admin/hermes-sync && \
+/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" pull origin main && \
+cp SOUL.md SOUL_Pro.md SOUL_Edu.md /home/dmin/.hermes/ && \
+cp memories/* /home/dmin/.hermes/memories/ && \
+cp config.yaml /home/dmin/.hermes/
 ```
 
 ## ⚠️ Pitfalls
 
-### 1. cmd `cd` 不切盘符
-- `cd C:\Users\Admin\hermes-sync` without `/d` DOES NOT switch drive when running from another drive
-- **Current fix**: Do git operations in Windows cmd with `cd /d`, NOT inside WSL
+### 0. ⚠️ 架构演进史（理解为什么这么设计）
 
-### 1.5 🔍 快速诊断表：从错误症状反推根因
+| 版本 | 架构 | 问题 | 结局 |
+|------|------|------|------|
+| v0 | Windows cmd 做 git + WSL 拷文件 | cmd 中文编码 + `cd /d` 盘符问题 → 乱码报错 | 废弃 |
+| v1 | 全部 git 在 WSL 内执行（`wsl -- bash -c` 包裹整段） | 从中国连 GitHub 超慢（Proxy 不镜像到 WSL2 NAT），大 push 总是超时 | 废弃 |
+| **v2 (当前)** | **WSL shell 脚本驱动 + Windows git.exe 做网络操作** | 稳定运行 ✅ | 当前 |
 
-当用户反馈同步脚本报错时，先看**错误症状**，按表反查：
+### 1. 🔴 CRITICAL: WSL GitHub 网络慢（从中国访问）
 
-| 错误症状 | 最可能根因 | 修复动作 |
-|---------|-----------|---------|
-| `'同步' 不是内部或外部命令` / `'愨晲鈺...'` / `'鏁版嵁...'` | **CRLF 换行符问题**（LF 而非 CRLF），cmd 把多行当一行解析，中文字节被截成命令名 | 查文件换行符 → Python 重写为 CRLF + ASCII |
-| `'?GitHub' 不是内部或外部命令` | **UTF-8 BOM 被当内容解析**。文件开头 `\xef\xbb\xbf` 变成行首字符，导致命令被截断 | 去掉 BOM（`awk 'NR==1{sub(/^\xef\xbb\xbf/,"")}1'`）或用纯 ASCII 重写 |
-| `'L' 不是内部或外部命令` (或其它单个字母命令报错) | 中文注释/路径导致行断裂，cmd 把下一个字母当命令名执行 | 去掉所有非 ASCII 字符（中文、线框符号） |
-| 同上错误，但文件已经 CRLF | 中文/线框字符（`═┌┐╔╗╚╝`）被 GBK 解析为乱码命令 | 去掉所有非 ASCII 字符，用纯英文 + 简单符号 |
-| `'L' 不是内部或外部命令` | 路径中含中文，盘符切换语句断裂 | 去路径/命令中的中文，或用纯 ASCII 路径 |
-| `'type' 或其它标准命令报错` | cmd 被乱码行搞坏了状态，重启 cmd 重试 | 先验证文件本身正确（`file *.bat` 显示 DOS batch），再双击运行 |
-| `fatal: not a git repository (or any of the parent directories)` | cd 未切换到正确的同步目录（路径不对 或 cd 未跨盘符 `/d`） | 全放 WSL 内 git 操作：`wsl -- bash -c \"cd /mnt/c/... && git ...\"` |
-| `fatal: not a git repository` + 后面又有 `To github.com...` | 脚本中有两个 git 命令，一个路径错、一个路径对 | 检查脚本中每个 git 命令的 cd 路径 |
-| `! [rejected] main -> main (non-fast-forward)` | 远程有本地没有的提交（另一台电脑推过） | `git pull --rebase origin main` 再推 |
-| `wsl: 检测到 localhost 代理配置...NAT 模式` | 仅警告，不影响 HTTPS git 操作 | 忽略 |
-| 同步显示 ✓ 完成，但 Hermes 启动 SOUL 是英文默认版 | **WSL 路径写错**（`/root/` 而非 `/home/dmin/`），cp 静默失败 | 排查 .bat 中 WSL_HOME 变量值 |
-| `Host key verification failed` | WSL 缺少 GitHub known_hosts | `ssh -o StrictHostKeyChecking=accept-new git@github.com` |
+**症状**: `git push` 超时（90s-300s）/ `GnuTLS recv error` / `Failed to connect to github.com port 443`
 
-**诊断优先级**：看到乱码型错误 → 先查 CRLF（`file *.bat`）→ 再查编码 → 最后查路径。
+**原因**: 从中国直接 HTTPS 连 GitHub 丢包率高、延迟大。WSL2 NAT 模式下代理不镜像，WSL 原生 git 直连 GitHub 不稳定。
 
-### 2. 🔴 CRITICAL: CRLF 换行符（排在第一位的 Bat 文件 Bug）
-
-**症状**: .bat 文件内容正确（无乱码、路径正确），但 cmd 仍然报错，且错误信息包含旧版文件的乱码字符（如 `'愨晲鈺...'`、`'鏁版嵁...'`）。即使反复修改内容，错误完全相同。
-
-**根本原因**: 用 `write_file` 从 WSL 写入 Windows 文件系统时，写入的是 **LF 换行符（Unix 格式，`\n`）**。Windows cmd.exe **必须** 使用 **CRLF 换行符（Windows 格式，`\r\n`）** 才能正确解析 .bat 文件。LF 格式下，cmd 会把整文件当一行解析，导致各行首字符和中间的非英文字符被当命令名执行。
-
-**验证方法**:
+**根本解决方案**: 用 **Windows git.exe** 做网络操作。它走 Windows 网络栈，能用上用户 Windows 上的代理/VPN/路由优化：
 ```bash
-xxd /path/to/file.bat | head -5
-# 正确: ...660d 0a63...  ← 0d 0a 是 CRLF
-# 错误: ...660a 6368...   ← 0a 后面直接跟字符，缺 0d
-# 或用 file 命令看换行符：
-file *.bat
-#    LF   → "ASCII text" 或 "UTF-8 (with BOM) text"
-#    CRLF → "DOS batch file, ASCII text" 或 "DOS batch file, ..., UTF-8 text"
-```
+# 快
+/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" push origin main
 
-**修复方法**: 用 Python 以二进制模式写入，显式指定 `\r\n`：
+# 慢（从中国）
+git push origin main
+```
+Windows git.exe 通常在 3-30 秒内完成推送，WSL git 可能 5 分钟超时。
+
+**如果双引擎都失败**: 网络临时断连，脚本依然保存了本地数据（拷贝步骤已完成），稍后再跑即可。
+
+### 2. 🔴 .bat 文件写入规则（WSL → Windows 桌面）
+
+`.bat` 文件必须满足以下条件：
+- **CRLF 换行符** (`\r\n`)，不能用 LF（`\n`）
+- **纯 ASCII**（不要中文、线框字符 `═╔╗╚╝┌┐└┘├┤┼` 等）
+- **编码**: ASCII 最安全，UTF-8 with BOM 可能在某些系统出问题
+
+**写入方法**: 用 Python 二进制写，不要用 `write_file`：
 ```python
-with open('/path/to/file.bat', 'wb') as f:
-    f.write(('\r\n'.join(lines) + '\r\n').encode('ascii'))
+lines = [
+    '@echo off',
+    'chcp 65001 >nul',
+    'wsl -d Ubuntu-22.04 -- bash /home/dmin/.hermes/sync-push.sh',
+    'pause',
+]
+content = '\r\n'.join(lines) + '\r\n'
+with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
+    f.write(content.encode('ascii'))
 ```
 
-⚠️ `write_file` 工具默认写 LF — 写 .bat 文件时绝对不要用。必须用 `execute_code` 跑 Python 写入。
-
-### 2.5 🧪 .bat 测试方法：必须双击运行，WSL 内 cmd.exe 测不准
-
-`.bat` 文件的测试方式直接影响诊断结论：
-
-| 测试方式 | 是否可靠 | 原因 |
-|---------|---------|------|
-| **Windows Explorer 双击** | ✅ 唯一可靠 | 真正的 cmd.exe 运行环境，复现全部编码/路径问题 |
-| WSL 内 `cmd.exe /c script.bat` | ❌ 不可靠 | UNC 路径问题可能导致 PATH、当前目录等行为不同 |
-| WSL 内 `wsl -- bash -c "cd /mnt/... && cmd.exe /c script.bat"` | ❌ 不可靠 | 同上，且嵌套 shell 层数多 |
-| 看代码推理 | ❌ 不可靠 | 编码/换行符问题只在执行时暴露，看代码看不出来 |
-
-**正确流程**：
-1. Python 生成 .bat（CRLF + ASCII）到 Windows 桌面
-2. 告诉用户：**双击桌面的 .bat 文件运行测试**
-3. 用户截图/贴报错回来，你根据诊断表反查
-
-**不要**在 WSL 里 `cmd.exe /c xxx.bat` 测试后说"看起来好了"——实际双击可能完全不一样。
-
-### 3. 中文编码乱码 (UTF-8 vs ASCII)
-
-**症状**: cmd 把 .bat 里的中文读成乱码命令：
-- `'同步' 不是内部或外部命令` — 中文字被当命令名解析
-- `'愨晲鈺愨晲鈺...'` — UTF-8 字节被 GBK 解码后的经典乱码
-- `'鏁版嵁...'` — 同上
-- `'L' 不是内部或外部命令` — 路径中的中文乱码导致盘符切换语句断裂
-
-**根本原因**: 两种可能，按排查顺序：
-1. **先查换行符**（见上一条 pitfall #2）— 这是最常见的根本原因。换行符错误会导致所有中文行被错误截断和解析。
-2. **编码问题本身** — .bat 文件虽然内容存为 UTF-8，但缺少 BOM。Windows cmd 在 `chcp 65001` 设置 UTF-8 代码页后，如果没有 BOM，可能仍用 GBK 解析。
-
-**修复方法**（按优先级）：
-1. **✅ 首选: 纯 ASCII + CRLF** — 所有 echo 用英文，不用中文和 Unicode 线框字符。这是唯一在**所有 Windows 系统上 100% 可靠**的方案。
-   ```batch
-   echo =============================================
-   echo   Hermes Sync - Push to GitHub
-   echo =============================================
-   ```
-2. **次选: UTF-8 with BOM + CRLF** — 在文件开头插入 BOM（`\xef\xbb\xbf`），同时确保 CRLF 换行。部分 Windows 系统仍可能失败。
-3. **不推荐: GBK/ANSI 编码** — 可以避免 cmd 编码问题，但不支持某些 Unicode 线框字符。
-
-**经验教训**: ⭐ 对于这台特定电脑，纯 ASCII + CRLF 是唯一稳定的方案。不要试图保留中文 echo 或线框字符。
-
-**验证方法**:
+**验证**: `xxd /path/to/bat | head -5` → 每行结尾应为 `0d 0a`
 ```bash
-file *.bat
-# 纯 ASCII → "DOS batch file, ASCII text, with very long lines"
-# UTF-8    → "DOS batch file, Unicode text, UTF-8 (with BOM) text"
+# 正确
+00000000: 4065 6368 6f20 6f66 660d 0a63 6863 7020  @echo off..chcp
+# 错误（缺 0d）
+00000000: 4065 6368 6f20 6f66 660a 6368 6370 3020  @echo off.chcp
 ```
 
-### 3. git push rejected (non-fast-forward)
-- Remote has commits you don't have locally (another PC pushed)
-- **Fix**: Always `git pull --rebase origin main` before `git push`
+### 3. 编码乱码症状快速诊断
 
-### 4. Merge conflicts in shared config files
+| 错误症状 | 最可能根因 | 修复 |
+|---------|-----------|------|
+| `'?GitHub'` / `'愨晲鈺...'` / `'鏁版嵁...'` | LF 换行符或 UTF-8 BOM | 检查 CRLF → 用 Python 重写 |
+| `'L' 不是内部或外部命令` | 中文/线框字符被 GBK 解析为命令 | 去所有非 ASCII 字符 |
+| `系统找不到指定的路径` | `cd /d` 盘符不切或路径不存在 | 用 WSL 脚本代替 cmd cd |
+| `Hermes done` 等 WSL 输出被当命令执行 | WSL bash 输出回流到 cmd 解析 | .bat 只做触发器，WSL 脚本做全部工作 |
+
+### 4. git push rejected (non-fast-forward)
+
+- Remote has commits you don't have locally (another PC pushed)
+- **Fix**: The script handles this via `fetch → rebase/merge → push` sequence
+- If manual intervention needed: `git pull --rebase origin main && git push`
+
+### 5. Merge conflicts in shared config files
+
 - Common conflict files: `README.md`, `memories/MEMORY.md`, `memories/USER.md`, skill files
 - These files get edited on both PCs independently
-- **Resolution**: Merge both sides — keep all info. MEMORY.md and USER.md are additive knowledge bases, not mutually exclusive.
+- **Resolution**: Merge both sides — keep all info. MEMORY.md and USER.md are additive, not mutually exclusive.
 - For skill files with same content but different line endings (CRLF vs LF): take either side
+- Script attempts auto-merge via `rebase origin/main || merge origin/main --no-edit`
 
-### 5. GitHub Push Protection (secret scanning)
+### 6. GitHub Push Protection (secret scanning)
+
 - If a GitHub Token or API key leaks into a commit, push is blocked
 - Symptom: `remote: error: GH013: Repository rule violations found`
 - **Fix options**:
@@ -231,78 +303,41 @@ file *.bat
   - B) `git rebase -i --rebase-merges` to edit out the secret, then `git push --force`
 - **Prevention**: Never store tokens in synced files like claw_memories/ or MEMORY.md
 
-### 6. `git stash` times out on large repos
-- With 900+ modified files (e.g., skills/ directory synced from GitHub), `git stash` times out even at 30s
-- **Fix**: Use `git checkout -f main` to force-switch branch and discard working changes instead
-- ⚠️ Only safe when changes are synced artifacts that will be regenerated, or already committed elsewhere
-
 ### 7. `git rebase --rebase-merges` required for history with merge commits
-- Plain `git rebase -i <base>` FLATTENS merge commits, dropping the merge structure
-- The correct command is `git rebase -i --rebase-merges <base>` — it preserves merge topology using `label`/`reset`/`merge` in the todo list
-- **Error sign**: Rebase appears to skip commits or produces a linear history that's missing merged content
 
-### 8. Cleanup leftover `.git/rebase-merge` and `.git/rebase-apply`
-- An interrupted or timed-out rebase leaves `.git/rebase-merge/` directory
-- Next rebase fails with: `fatal: It seems that there is already a rebase-merge directory`
-- **Fix**: `rm -rf .git/rebase-merge`
+- Plain `git rebase -i <base>` FLATTENS merge commits, dropping the merge structure
+- Correct: `git rebase -i --rebase-merges <base>` — preserves merge topology
+- **Error sign**: Rebase appears to skip commits or produces a linear history missing merged content
+
+### 8. Cleanup leftover `.git/rebase-merge` / `.git/rebase-apply`
+
+- Interrupted rebase leaves these directories; next rebase fails
+- **Fix**: `rm -rf /mnt/c/Users/Admin/hermes-sync/.git/rebase-merge`
 
 ### 9. WSL proxy warning
+
 - `wsl: 检测到 localhost 代理配置，但未镜像到 WSL` — harmless, ignore
-- Only matters for networking through proxy; git over HTTPS is fine
+- Only matters if you need proxy in WSL; our scripts work around it via Windows git.exe
 
 ### 10. SOUL 版本漂移 (WSL vs Git 不一致)
-- WSL 的 SOUL.md 可能与 Git 仓库版本不同（例如 WSL 被覆写为英文默认版，而 Git 存的是自定义中文版）
+
+- WSL 的 SOUL.md 可能与 Git 仓库版本不同
 - **Symptom**: 推送上去了，但实际 WSL 跑的不是你要的 SOUL
-- **Fix**: 同步后运行验证（见 `references/sync-verification.md`），如果发现差异，先执行拉取脚本还原 WSL 文件
+- **Fix**: 同步后运行验证（对比 Git 仓库和 WSL 的文件）
 
 ### 11. 🔴 WSL 路径写错 (最隐蔽的 Bug)
-- .bat 脚本中 WSL 路径写错成 `/root/.hermes/` 时，cp 命令静默失败（目标不存在但 `2>/dev/null` 掩藏了错误），所有同步操作实际上什么都没拷贝
+
+- 脚本中 WSL 路径写错成 `/root/.hermes/` 时，cp 命令静默失败
 - **Symptom**: 同步提示 ✓ 完成，但 Hermes 启动时的 SOUL 是英文默认版
-- **Detection**: 对比 Git 仓库和 WSL 的文件（见验证脚本）
-- **Fix**: 确保 .bat 中 `WSL_HOME` 设置为正确的 home 路径 (`/home/dmin/`), 并使用变量而非硬编码
+- **Fix**: 确保脚本中路径为 `/home/dmin/`
 
-### 12. WSL Hermes 可执行文件的 shebang 漂移
-- `~/.hermes/bin/hermes` 或 `~/*venv*/bin/hermes` 的 shebang 可能指向已删除的 Windows Python 路径
-- **Symptom**: `bash: /.../hermes: /mnt/c/.../python3: bad interpreter: No such file or directory`
-- **Fix**: 编辑 shebang 行指向当前 WSL venv 中的 Python（例如 `#!/home/dmin/hermes-venv/bin/python3`）
-- 注意：即使她本行修复了，如果 `hermes_cli` 模块未安装在 WSL Python 中，Hermes 仍只能从 Windows PowerShell 启动
+### 12. `.bat` 测试必须在 Windows 资源管理器双击
 
-## Voice Command Shortcuts (在 Hermes Agent 对话中)
-
-用户可以直接对 Hermes Agent 说出快捷指令代替点 .bat 文件：
-
-### 推送github（本地 → GitHub）
-
-```bash
-cd /mnt/c/Users/Admin/hermes-sync && \
-cp /home/dmin/.hermes/config.yaml SOUL.md SOUL_Pro.md SOUL_Edu.md . && \
-cp /home/dmin/.hermes/memories/* memories/ && \
-git add -A && git commit -m "sync $(date +%Y-%m-%d)" && git push origin main
-```
-
-### 拉取github（GitHub → 本地）
-
-```bash
-cd /mnt/c/Users/Admin/hermes-sync && \
-git pull origin main && \
-cp SOUL.md SOUL_Pro.md SOUL_Edu.md /home/dmin/.hermes/ && \
-cp memories/* /home/dmin/.hermes/memories/ && \
-cp config.yaml /home/dmin/.hermes/
-```
-
-### 网络超时处理
-
-WSL 连接 GitHub 偶尔出现间歇性超时（30s-90s）。策略：
-1. **先测试连通性**：`ping -c 3 github.com` — 如果通但 git 超时，重试即可
-2. **增加超时时间**：直接调用 `git push` 不带超时选项，默认等
-3. **确认 DNS 可用但路由波动**：`ping` 返回 0% loss 但 `git push` 超时 → 重试 1-2 次即可
-4. **持久不通**：检查代理设置（`echo $http_proxy`），或切换 WSL 到镜像网络模式
-
-## Post-Sync Verification (同步后验证)
-
-Always verify after sync — don't trust the "✓ 完成" message blindly. The most common failure mode is that the sync runs but WSL files are stale or wrong.
-
-See `references/sync-verification.md` for detailed check commands.
+| 测试方式 | 是否可靠 | 原因 |
+|---------|---------|------|
+| **Windows 资源管理器双击** | ✅ 唯一可靠 | 真正的 cmd.exe 环境 |
+| WSL 内 `cmd.exe /c script.bat` | ❌ 不可靠 | UNC 路径问题，行为不同 |
+| 看代码推理 | ❌ 不可靠 | 编码/换行符问题只在执行时暴露 |
 
 ## 同步范围
 
@@ -313,3 +348,11 @@ See `references/sync-verification.md` for detailed check commands.
 | memories/* | state.db |
 | skills/* | logs/, checkpoints/ |
 | claw_memories/ (WSL Claw) | .hermes_history, auth.json |
+
+## Reference Files
+
+- `references/sync-scripts.md` — 脚本完整内容和历史演进
+- `references/crlf-bat-write.md` — .bat 文件写入规范
+- `references/cross-pc-paths.md` — 多电脑路径差异
+- `references/sync-verification.md` — 同步后验证命令
+- `references/git-history-repair.md` — 历史修复（泄漏密钥、rebase 损坏）

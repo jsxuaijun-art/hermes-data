@@ -48,22 +48,41 @@ def wcwidth(cp: int) -> int:
         cp == 0x27A1 or cp == 0x27B0 or cp == 0x27BF or
         0x2934 <= cp <= 0x2935 or 0x2B05 <= cp <= 0x2B07 or
         cp == 0x2B1B or cp == 0x2B1C or cp == 0x2B50 or cp == 0x2B55 or
-        cp == 0x3030 or cp == 0x303D or cp == 0x3297 or cp == 0x3299 or
-        cp == 0xFE0F or cp == 0x200D or cp == 0x20E3):
+        cp == 0x3030 or cp == 0x303D or cp == 0x3297 or cp == 0x3299):
         return 2
     # Zero-width characters
     if cp < 32 or (0x7F <= cp <= 0xA0):
         return 0
     if 0x0300 <= cp <= 0x036F or 0x1AB0 <= cp <= 0x1AFF or \
        0x1DC0 <= cp <= 0x1DFF or 0x20D0 <= cp <= 0x20FF or \
-       0xFE20 <= cp <= 0xFE2F:
+       cp == 0x200D or cp == 0xFEFF or 0xFE00 <= cp <= 0xFE0F or 0xFE20 <= cp <= 0xFE2F:
         return 0
     return 1
 
 
 def display_width(s: str) -> int:
-    """Total terminal display width of a string."""
-    return sum(wcwidth(ord(ch)) for ch in s)
+    """Total terminal display width of a string, with emoji presentation detection."""
+    total = 0
+    i = 0
+    while i < len(s):
+        cp = ord(s[i])
+        w = wcwidth(cp)
+
+        # Emoji presentation: a char followed by U+FE0F (VS16) renders as
+        # full-width emoji (2 cells) in modern terminals, even if wcwidth says 1.
+        if w == 1 and i + 1 < len(s) and ord(s[i+1]) == 0xFE0F:
+            w = 2
+            # Consume the FE0F and any following ZWJ sequences
+            j = i + 2
+            while j + 1 < len(s) and ord(s[j]) == 0x200D:
+                j += 2
+            total += w
+            i = j
+            continue
+
+        total += w
+        i += 1
+    return total
 
 
 def make_box(title: str = None, lines: list = None, width: int = 72) -> str:
@@ -181,13 +200,20 @@ def self_test():
         (' ', 1),
         ('a', 1),
         ('中', 2),
-        ('\u2502', 1),  # box-drawing |
-        ('\u2500', 1),  # box-drawing -
-        ('\u2192', 1),  # arrow →
-        ('\uFF08', 2),  # fullwidth （
-        ('\uFF0C', 2),  # fullwidth ，
+        ('\\u2502', 1),  # box-drawing |
+        ('\\u2500', 1),  # box-drawing -
+        ('\\u2192', 1),  # arrow →
+        ('\\uFF08', 2),  # fullwidth （
+        ('\\uFF0C', 2),  # fullwidth ，
         ('📋', 2),      # emoji clipboard
         ('✅', 2),      # emoji checkmark
+        ('❌', 2),      # cross mark
+        ('\\ufe0f', 0), # VS-16 (zero width, was miscoded as 2 before 2026.5.11 fix)
+        ('\\u200d', 0), # ZWJ (zero width)
+        ('\\u20e3', 0), # Enclosing Keycap (zero width)
+        ('\\ufeff', 0), # BOM/ZWNBSP (zero width)
+        ('☁️', 1),      # cloud emoji = U+2601(1) + U+FE0F(0) = 1
+        ('❤️', 1),      # heart emoji = U+2764(1) + U+FE0F(0) = 1
     ]
     for char, expected in tests:
         actual = wcwidth(ord(char))

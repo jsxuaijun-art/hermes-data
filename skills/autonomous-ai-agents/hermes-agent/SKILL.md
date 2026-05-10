@@ -594,6 +594,7 @@ hermes config set auxiliary.vision.model <model_name>
 | Gateway logs | `~/.hermes/logs/gateway.log` |
 | Session files | `~/.hermes/sessions/` or `hermes sessions browse` |
 | Source code | `~/.hermes/hermes-agent/` |
+| Session content retrieval (FTS5 fallback) | `references/session-content-fallback-retrieval.md` — use `search_files` on raw JSON when `session_search` returns nothing |
 
 ---
 

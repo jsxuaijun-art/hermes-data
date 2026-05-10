@@ -158,6 +158,38 @@ file /mnt/c/Users/jiangmin/Desktop/输出文件.docx
 ls -lh /mnt/c/Users/jiangmin/Desktop/输出文件.docx
 ```
 
+## User Delivery Preferences (江姐专属)
+
+**核心规则：Word (.docx) 是默认交付格式，不是备选。**
+
+- ⚡ 所有文档类产出，**默认先出 .docx 版本**。.md 版本可以做辅助，但不是主交付物。
+- 🚫 生成的文档**不发企业微信群给团队看**。文件直接放桌面 `D:\\360MoveData\\Users\\Admin\\Desktop\\`。
+- ✅ 交付格式：.docx 格式化版本（含正规排版、字体、表格）为最终交付标准。
+- 📋 如果同时需要 .md 版本，在 .docx 之后生成。
+- 📊 **数据模板类产出（需填写计算的表格）→ 默认追加 .xlsx 版本**。用户明确说过"输出为Excel格式"，对于需勾稽校验的财务模板，Excel 天然对齐 + 自动计算，比 Word 表格更适合。参见下方 `Excel Workbook Alternative` 章节及 `references/excel-financial-workbook-patterns.md`。
+  - 生成路径：先出 .xlsx（用 openpyxl），让用户确认可打开
+  - 再补 .docx 版本（用 python-docx），供正式存档/打印使用
+
+### Windows 路径速查
+
+用户桌面路径（WSL映射）：
+```
+/mnt/d/360MoveData/Users/Admin/Desktop/
+```
+
+### 操作流程
+
+1. 确认用户要生成的文档类型和内容
+2. 优先用 `python-docx`（pip install python-docx 可安装）
+3. 环境受限时降级到纯 stdlib 方案（见下方 Fallback 章节）
+4. 生成后放桌面，报文件路径即可
+5. 需要 Word 格式的发送版本直接用 .docx 输出
+
+### 不宜场景
+
+- 非正式沟通/群聊消息 → 直接用文字回复
+- 用户明确要求 Markdown → 尊重要求但仍可附带 .docx
+
 ---
 
 ## Fallback: Stdlib-Only .docx (No python-docx)
@@ -192,6 +224,29 @@ def make_docx(path, html_body):
 - Simple documents with basic formatting (fonts, sizes, paragraphs)
 
 See `references/generate-docx-without-python-docx.md` for the full implementation.
+
+## Chinese Financial Template Patterns
+
+For Chinese government-document-style financial/accounting templates (税务合规报告、纳税调整表、期初余额调整表、会计政策说明书 etc.), the document structure follows a reusable pattern:
+
+```
+Title → Applicability → Formula Flowchart → Main Table → Detail Schedules → Journal Entries → Operational Checklist
+```
+
+See `references/chinese-financial-template-patterns.md` for the full structural pattern, font/size/table conventions, and per-scenario adaptations.
+
+### Excel Workbook Alternative
+
+When the user needs a fillable data template with automatic calculations instead of a narrative Word document, offer .xlsx format. See `references/excel-financial-workbook-patterns.md` for:
+
+- When to choose Excel vs Word
+- Multi-sheet structure for financial adjustment workbooks
+- Color code convention (yellow=input, green=formula, red=check)
+- Formula injection patterns (SUM, IF+N, 倒轧, cross-sheet references)
+- Merged cells handling pitfall
+- Multi-category section layout pattern
+
+Key signal: user requests reformatting of structured data and you're struggling with ASCII compliance → offer .xlsx as a native-grid alternative that avoids the alignment problem entirely.
 
 ## Fallback: Markdown to .docx Conversion
 

@@ -108,7 +108,7 @@ pause
 
 ```bash
 #!/bin/bash
-# Hermes Sync - Pull from GitHub (dual-git engine with retry)
+# Hermes Sync - Pull from GitHub (Dual-git engine, fetch+reset strategy)
 
 SYNC_DIR="/mnt/c/Users/Admin/hermes-sync"
 SYNC_DIR_WIN="C:/Users/Admin/hermes-sync"
@@ -116,15 +116,15 @@ GIT_WIN="/mnt/c/Program Files/Git/bin/git.exe"
 
 cd "$SYNC_DIR" || exit 1
 
-echo "[1/4] Git pull from GitHub..."
+echo "[1/4] Fetch + reset from GitHub..."
 
 pull_retry() {
   for i in 1 2 3; do
     echo ">> [Windows git.exe] Attempt $i/3..."
-    if "$GIT_WIN" -C "$SYNC_DIR_WIN" pull origin main --rebase 2>/dev/null; then
-      echo ">> Pull successful!"
-      return 0
-    fi
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" fetch origin main 2>/dev/null || continue
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" reset --hard origin/main 2>/dev/null || continue
+    echo ">> Pull successful!"
+    return 0
     sleep $((i * 3))
   done
   return 1
@@ -133,10 +133,10 @@ pull_retry() {
 pull_retry || {
   for i in 1 2 3; do
     echo ">> [WSL git] Attempt $i/3..."
-    if git -c http.proxy= pull origin main --rebase 2>/dev/null; then
-      echo ">> Pull successful!"
-      break
-    fi
+    git fetch origin main 2>/dev/null || continue
+    git reset --hard origin/main 2>/dev/null || continue
+    echo ">> Pull successful!"
+    return 0
     sleep $((i * 3))
   done
   echo ">> Pull had issues, continuing with local data..."

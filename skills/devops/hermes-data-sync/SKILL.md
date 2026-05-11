@@ -234,7 +234,7 @@ git add -A && git commit -m "sync $(date +%Y-%m-%d)" && \
 ### 拉取github
 ```bash
 cd /mnt/c/Users/Admin/hermes-sync && \
-/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" pull origin main && \
+git fetch origin main && git reset --hard origin/main && \
 cp SOUL.md SOUL_Pro.md SOUL_Edu.md /home/dmin/.hermes/ && \
 cp memories/* /home/dmin/.hermes/memories/ && \
 cp config.yaml /home/dmin/.hermes/
@@ -367,6 +367,43 @@ with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
 | 看代码推理 | ❌ 不可靠 | 编码/换行符问题只在执行时暴露 |
 
 ### 13. 🔴 WSL UTF-8 中文输出回流到 cmd.exe 产生乱码幽灵命令（含 hermes.bat 变体）
+
+### 14. 🔴 `git pull` 遇到本地脏文件直接拒绝（Pull script 核心 Bug）
+
+**症状**: 拉取脚本报 `Your local changes to the following files would be overwritten by merge` + 列出被改动的文件 → `Aborting`
+
+**根因**: `git pull`（甚至 `--rebase` 模式）在有未提交的本地改动时拒绝工作。如果上次推送因网络问题失败，本地仓库就留下了脏文件，下次拉取必卡死。
+
+**修复方案**: 用 `git fetch origin main && git reset --hard origin/main` 替代 `git pull origin main`：
+
+```bash
+# ✗ 脆弱 — 本地有脏文件就死
+git pull origin main --rebase
+
+# ✓ 健壮 — 无条件同步到 GitHub 最新状态
+git fetch origin main && git reset --hard origin/main
+```
+
+**原理**: `fetch` 只下载不合并，`reset --hard` 丢弃本地所有改动把工作区设为远程最新。这个仓库的设计原则是"GitHub 是唯一真相源"，本地仓库只是镜像中转站，`reset --hard` 完全符合语义。
+
+**如果确实需要保留本地改动**（比如正在开发自定义 skill）：先 stash → pull → 恢复 stash：
+
+```bash
+git stash push -m "save before pull $(date)"
+git pull origin main
+git stash pop
+```
+
+**适用所有 pull 脚本**: 包括 `sync-pull.sh`、桌面 `.bat` 拉取脚本、快捷指令中的 pull 命令。
+
+### 15. 🟡 架构变体：多电脑间 `.bat` 格式可能不同
+
+同一用户在不同电脑上可能有不同风格的拉取/推送脚本：
+
+| 架构 | 特征 | 示例电脑 | 优劣 |
+|------|------|---------|------|
+| **标准（v2.1）** | `.bat` 4行纯 ASCII 触发器 → 调用 `~/.hermes/sync-pull.sh` | 江敏笔记本（Ubuntu-22.04, jiangmin） | 逻辑收在 shell 脚本，易维护 |
+| **内联（v1 演进）** | `.bat` 内含完整 `wsl -d ... -- bash -c "..."` 命令 | 办公室电脑（Ubuntu, Administrator） | 自包含，但逻辑分散在多行 |
 
 **症状**: 双击 .bat 后出现这些乱码被当作命令执行：
 ```

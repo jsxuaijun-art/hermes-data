@@ -160,6 +160,155 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 
 ---
 
+---
+
+## PDF Sanitization (Watermark & Logo Removal)
+
+Remove text watermarks and header/footer logo images from PDFs using pymupdf. No extra dependencies beyond pymupdf itself.
+
+### Step 1: Analyze PDF Structure
+
+```python
+import pymupdf
+doc = pymupdf.open("document.pdf")
+
+for i, page in enumerate(doc):
+    # Find text watermarks (grid-like repeating text)
+    text_blocks = page.get_text("text")
+    print(f"\n--- Page {i+1} ---")
+    print(text_blocks[:2000])  # preview first 2000 chars
+
+    # Find image objects
+    for img in page.get_images():
+        xref = img[0]
+        bbox = page.get_image_bbox(img)
+        pix = pymupdf.Pixmap(doc, xref)
+        print(f"  Image xref={xref}, size={pix.width}x{pix.height}, bbox={bbox}")
+```
+
+### Step 2: Remove Text Watermarks
+
+Use `search_for()` + redact annotations. **Critical: only apply to short text matches (<10 chars)** to avoid removing legitimate content that happens to contain the same string.
+
+```python
+import pymupdf
+doc = pymupdf.open("document.pdf")
+
+watermark_text = "安信伯君"  # replace with actual watermark string
+for page in doc:
+    instances = page.search_for(watermark_text)
+    for inst in instances:
+        # Only redact short matches — watermarks are typically short words
+        # Full sentence matches are usually content text
+        nearby_text = page.get_text("text", clip=inst).strip()
+        if len(nearby_text) < 10:
+            page.add_redact_annot(inst, fill=None)  # fill=None = transparent
+    page.apply_redactions()
+
+doc.save("cleaned.pdf")
+```
+
+**Pitfall — content vs watermark**: If the watermark text appears in a legitimate sentence (e.g., "安信伯君专家团队深耕财税咨询..."), `search_for()` will find it. Always verify with the <10 char filter, and use `page.get_text("text", clip=inst)` to inspect context.
+
+### Step 3: Remove Logo Images (Header/Footer)
+
+Two approaches:
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **White block overlay** | Simple, preserves PDF integrity | Logo image data still in file |
+| **delete_image + overlay** | Clean removal | May cause image reference issues on shared xrefs |
+
+**Recommended: white block overlay** (safer for shared images):
+
+```python
+for page in doc:
+    for img in page.get_images():
+        xref = img[0]
+        bbox = page.get_image_bbox(img)
+        # Only target header/footer area (e.g., Y < 100 or Y > page_height - 100)
+        page_height = page.rect.height
+        if bbox.y0 < 100 or bbox.y0 > page_height - 100:
+            # Draw white rectangle over the logo
+            page.draw_rect(bbox, color=(1,1,1), fill=(1,1,1), width=0)
+```
+
+**Clean removal** (use when you want file size reduction, but verify shared xrefs):
+
+```python
+for page in doc:
+    for img in page.get_images():
+        xref = img[0]
+        bbox = page.get_image_bbox(img)
+        page_height = page.rect.height
+        if bbox.y0 < 100 or bbox.y0 > page_height - 100:
+            page.draw_rect(bbox, color=(1,1,1), fill=(1,1,1), width=0)
+            page.delete_image(xref)
+```
+
+**Pitfall — shared images**: If all pages share the same logo via xref (common in PDFs), `delete_image` on one page removes it from all pages. Verify with: `page.get_images(full=True)` lists all images with their page-specific bbox.
+
+### Step 4: Save with Optimization
+
+```python
+doc.save("output.pdf", garbage=4, deflate=True, clean=True)
+```
+
+- `garbage=4` — maximum garbage collection of unused objects
+- `deflate=True` — compress streams
+- `clean=True` — remove redundant structures
+
+File size may still increase vs original (redaction adds annotations). Expected: 1.5-3x original. If that's a problem, test `garbage=3` or run the file through a PDF optimizer.
+
+### Advanced Watermark Removal (Complex PDFs)
+
+When the basic `search_for()` + redact approach fails — watermarks live in shared XObject
+forms, body text shares the same font as the watermark, or the user requires true
+transparency (no white blocks) — use the content-stream approach.
+
+**Key differences from basic approach:**
+
+| Aspect | Basic (redact) | Advanced (3Tr / XObject) |
+|--------|----------------|--------------------------|
+| Detection | `page.search_for("text")` | Content stream `Tm` position + font name |
+| Removal | Redact annotation (opaque overlay) | `3 Tr` rendering mode (invisible text) |
+| Watermark source | Page text objects | XObject forms (shared across pages) |
+| Body text protection | `<10 char filter` | Position-based matching (grid vs sentence) |
+| Visual artifact | Possible white patches | No visual change (transparent) |
+| File size | 1.5-3x larger | Minimal increase |
+
+**Decision tree:**
+
+```
+search_for() finds watermark text but needs transparency?
+  └─ check content streams for XObject references
+      ├─ XObject found → Use XObject manipulation (Phase 5)
+      └─ No XObject   → Position-based Tm matching (Phase 4)
+
+search_for() finds nothing but watermark is visible?
+  └─ Watermark is in shared XObject → inspect /Type/XObject streams
+      └─ Use XObject 3Tr approach
+
+Body text contains same string as watermark?
+  └─ Must use position-based matching, NOT search_for() + filter
+```
+
+**Reference document**: See `references/pdf-watermark-advanced.md` for the complete
+6-phase workflow covering:
+- Phase 1–2: Deep structure analysis + XObject inspection
+- Phase 3: Attack strategy selection
+- Phase 4: Position-based content stream matching (Tm coordinates)
+- Phase 5: XObject content stream manipulation (3Tr injection, CID replacement)
+- Phase 6: Clean LOGO removal (transparent pixel, no white block)
+- Full decision tree, pitfall summary, and code examples
+
+### Reference Script
+
+See `scripts/remove_pdf_watermark.py` for a basic reusable script (search_for + redact).
+For complex PDFs (XObject/3Tr approach), see `references/pdf-watermark-advanced.md`.
+
+---
+
 ## Notes
 
 - `web_extract` is always first choice for URLs

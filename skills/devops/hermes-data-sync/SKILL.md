@@ -5,7 +5,7 @@ description: Cross-PC data sync for Hermes Agent (SOUL.md, memories, skills, con
 
 # Hermes Data Sync (跨电脑同步)
 
-**Last updated**: 2026-05-11 — Added `hermes.bat` variant (CLI startup script was missing `2>nul`). Extended pitfall #13 with two-source analysis (hermes.bat + sync .bat). Updated `batch-scripts-v1.md` reference doc with complete three-template (push/pull/startup) encoding guide.
+**Last updated**: 2026-05-12 — Added Sync Readiness Check section (新机器诊断), expanded pitfall #11 to cover cross-machine WSL username variance, added GitHub API fallback technique. Reorganized headings.
 
 ## When to Use
 
@@ -14,6 +14,8 @@ description: Cross-PC data sync for Hermes Agent (SOUL.md, memories, skills, con
 - Setting up or troubleshooting the sync scripts
 - Resolving merge conflicts from divergent edits on two PCs
 - Repairing git history after leaked secrets or broken rebase states
+- **New machine: checking if sync is configured at all** — run the Sync Readiness Check first
+- **Unsynced machine: wanting to peek at remote repo contents** — use GitHub API fallback without cloning
 
 ## Architecture (v2 — current)
 
@@ -240,6 +242,77 @@ cp memories/* /home/dmin/.hermes/memories/ && \
 cp config.yaml /home/dmin/.hermes/
 ```
 
+## 🔍 Sync Readiness Check（快速诊断：本机是否已配置同步？）
+
+在新电脑上运行 Hermes Agent 时，先执行以下检查确认同步是否已设置：
+
+### 步骤 1：检查同步目录是否存在
+
+```bash
+# 同步目录路径
+ls /mnt/c/Users/Admin/hermes-sync/
+
+# 不存在时 → 需要首次克隆
+# 存在时 → 检查是否是完整的 git 仓库
+ls /mnt/c/Users/Admin/hermes-sync/.git/
+```
+
+### 步骤 2：确认 WSL 用户身份
+
+```bash
+# 当前 WSL 用户名
+whoami
+# → 输出如 dmin / administrator / jiangmin
+
+# 解释：同步脚本里硬编码了 /home/<username>/.hermes/
+# 如果 whoami 输出和脚本里的用户名不一致，cp 命令静默失败
+```
+
+### 步骤 3：检查 Git 远程是否可达
+
+```bash
+# 从 WSL 内测试
+curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/jsxuaijun-art/hermes-data"
+# 200 = 可达, 000 = 网络不通
+
+# 或直接从 WSL 检查
+cd /mnt/c/Users/Admin/hermes-sync && git remote -v
+```
+
+### 步骤 4：检查桌面同步快捷方式
+
+```bash
+ls /mnt/c/Users/Admin/Desktop/Hermes同步-*.bat
+# 应看到：Hermes同步-推送.bat + Hermes同步-拉取.bat
+```
+
+### GitHub API 快速查看（无需本地 clone）
+
+当同步目录未设置时，仍可通过 GitHub API 查看远程仓库内容：
+
+```bash
+# 查看仓库根目录
+curl -s "https://api.github.com/repos/jsxuaijun-art/hermes-data/contents?ref=main"
+
+# 查看最近提交
+curl -s "https://api.github.com/repos/jsxuaijun-art/hermes-data/commits?per_page=5"
+
+# 读取特定文件内容（base64 解码）
+curl -s "https://api.github.com/repos/jsxuaijun-art/hermes-data/contents/path/to/file?ref=main" \
+  | python3 -c "import json,sys,base64; d=json.load(sys.stdin); print(base64.b64decode(d['content']).decode())"
+```
+
+> 注意：这是**只读查看**，无法推送。适合检查远程是否有你需要的数据，再决定是否需要完整克隆。
+
+### 快速诊断总表
+
+| 检查项 | 通过条件 | 失败时的应对 |
+|--------|---------|------------|
+| 同步目录存在 | `/mnt/c/Users/Admin/hermes-sync/` 存在且包含 `.git/` | 首次克隆：`git clone https://github.com/jsxuaijun-art/hermes-data.git /mnt/c/Users/Admin/hermes-sync` |
+| WSL 用户名匹配 | `whoami` 输出与脚本中的 `/home/xxx/` 一致 | 不一致时 cp 操作静默失败 → 修改脚本中的 WSL 路径或用 GitHub API 手动下载文件 |
+| Git 远程可达 | `curl` 返回 200 | 网络问题 → 检查代理/VPN |
+| 桌面快捷方式 | `.bat` 文件存在 | 缺失可临时用 WSL 内命令手动推/拉（见 Voice Command Shortcuts 章节） |
+
 ## ⚠️ Pitfalls
 
 ### 0. ⚠️ 架构演进史（理解为什么这么设计）
@@ -352,11 +425,28 @@ with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
 - **Symptom**: 推送上去了，但实际 WSL 跑的不是你要的 SOUL
 - **Fix**: 同步后运行验证（对比 Git 仓库和 WSL 的文件）
 
-### 11. 🔴 WSL 路径写错 (最隐蔽的 Bug)
+### 11. 🔴 WSL 路径/用户名写错 (最隐蔽的 Bug, 含跨机用户名差异)
 
-- 脚本中 WSL 路径写错成 `/root/.hermes/` 时，cp 命令静默失败
-- **Symptom**: 同步提示 ✓ 完成，但 Hermes 启动时的 SOUL 是英文默认版
-- **Fix**: 确保脚本中路径为 `/home/dmin/`
+**症状 A — 写错 root 路径**：同步提示 ✓ 完成，但 Hermes 启动时的 SOUL 是英文默认版
+- **根因**: 脚本中 WSL 路径写错成 `/root/.hermes/` 时，cp 命令静默失败（因为实际 Hermes 数据在 `/home/<user>/.hermes/`）
+- **Fix**: 确保脚本中路径为 `/home/<actual_user>/`，用 `whoami` 确认当前 WSL 用户名
+
+**症状 B — 跨机器用户名不匹配**：脚本提示 ✓ 完成，但 Hermes 数据没变
+- **场景**: 
+  - 笔记本电脑：WSL 用户名 `dmin`，脚本硬编码 `/home/dmin/.hermes/`
+  - 办公室电脑：WSL 用户名 `administrator`，Hermes 在 `/home/administrator/.hermes/`
+  - 如果你从笔记本克隆了脚本到办公室，脚本仍然指向 `/home/dmin/` → cp 静默复制到空路径
+- **诊断**: 
+  ```bash
+  echo "脚本指向: /home/dmin/.hermes/"
+  echo "实际位置: /home/$(whoami)/.hermes/"
+  whoami  # 确认当前用户名
+  ```
+- **Fix**: 
+  1. 修改 `sync-push.sh` 和 `sync-pull.sh` 中的 WSL 路径为当前机器正确的 `/home/<user>/`
+  2. 或改用 `~` 相对路径（前提是 bash login shell 正确解析 `~`）：`cp -f ~/.hermes/SOUL.md .`
+  3. 修改 `.bat` 文件中调用的脚本路径也同步更新
+- **防止复发**: 在新机器首次设置同步时，先跑 Readiness Check 确认用户名一致
 
 ### 12. `.bat` 测试必须在 Windows 资源管理器双击
 
@@ -552,3 +642,4 @@ The following were preserved from the v1 (`hermes-agent-sync`) skill, now archiv
 - `references/cross-pc-paths.md` — 多电脑路径差异
 - `references/sync-verification.md` — 同步后验证命令
 - `references/git-history-repair.md` — 历史修复（泄漏密钥、rebase 损坏）
+- `references/github-api-fallback.md` — 无需本地 clone 的 GitHub API 远程访问方法（适合新机器诊断/单文件读取）

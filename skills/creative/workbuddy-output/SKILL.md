@@ -12,7 +12,9 @@ metadata:
 
 # WorkBuddy Output Style
 
-## ⚠️ 强制加载规则（江姐 2026.5.10 定）
+## 🚨 强制加载规则 + 循环刹车（2026.5.10-12 江姐定）
+
+### 规则A：必须尝试表格
 
 **本技能必须在每次输出含结构化数据/对比/列表时加载。** 步骤如下：
 
@@ -23,19 +25,30 @@ metadata:
 
 这条规则已写入 memory 红线，跳过 = 不可靠。
 
-### 用户拒绝输出格式时的处理流程
+### 规则B：一次不行立刻兜底（重要程度 ≥ 规则A）
 
-当用户指出表格格式/对齐问题（已发生过，用户明确纠正过）：
+**核心原则：用户要的是数据，不是格式修复。不要在ASCII表格对齐上纠缠。一次用户说不行就转，不需要三次。**
 
-1. **立即承认** — 不辩解，直接说明问题
-2. **加载本技能** — 用 box_maker.py 重新生成正确表格
-3. **验证** — 调用 verify_box() 确认每行宽度一致
-4. **修复机制** — 同时更新三个层面：
-   - `memory`：添加红色警示条目（江姐会认为AI不可靠）
-   - `SOUL.md`：添加强制输出规则章节
-   - `本技能 SKILL.md`：添加强制加载规则
-5. **演示** — 在回复中实际展示正确的表格输出
-6. **考虑替代方案** — 如果 ASCII 表格反复对不齐，主动提议转 .xlsx 格式（Excel 天然对齐，见 word-documents 技能中的 excel-financial-workbook-patterns.md）
+当用户指出表格显示不对/不对齐（即使 verify_box() 通过）：
+
+1. **立即承认** — 不辩解，直接说"终端渲染问题，我直接出文件"
+2. **主动提出替代方案** — **不等用户问**，直接说：
+   > "我出个 .docx 放你桌面吧，终端显示不太稳。"
+3. **跳过任何纠错循环** — 不允许出现 "让我重新生成一次" / "我调整一下" / "让我再试试"。一次不行就转，只有一次尝试机会
+4. **兜底优先级**：
+   - 🥇 .docx（用户默认交付格式，正规排版，见 word-documents 技能）
+   - 🥈 .xlsx（数据模板类，天然网格对齐，见 word-documents 技能的 xlsx 生成参考）
+   - ❌ 不要尝试 Markdown 表格（用户明确拒绝）
+   - ❌ 不允许降级到无格式纯文本代替——表格就是表格，只换格式不丢结构
+5. **兜底实施细节**：
+   - 如果 python-docx 可安装 → pip install 后用 python-docx
+   - 如果不可安装（PEP 668 限制或超时）→ 用纯 stdlib zipfile + OOXML 字符串构建
+   - 同理对 .xlsx：openpyxl 不可用 → zipfile + OOXML 字符串构建
+   - 文件放用户桌面：`/mnt/d/360MoveData/Users/Admin/Desktop/`
+   - 报完文件路径即可，不浪费对话时间解释技术细节
+6. **修复机制**（只在后台做，不在对话中耗时间）：
+   - 如果确定是脚本bug→修复 box_maker.py 后 patch 本技能
+   - 如果是用户终端兼容性→用 memory 记录终端特性
 
 This skill governs how structured terminal output is formatted for the user. The user expects WorkBuddy style for all structured responses: emoji + bold titles, ASCII border cards, grid tables with both horizontal and vertical lines, and precise right-edge alignment.
 

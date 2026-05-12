@@ -248,6 +248,22 @@ When the user needs a fillable data template with automatic calculations instead
 
 Key signal: user requests reformatting of structured data and you're struggling with ASCII compliance → offer .xlsx as a native-grid alternative that avoids the alignment problem entirely.
 
+### Pure Stdlib .xlsx (No openpyxl)
+
+When openpyxl is unavailable (pip blocked by PEP 668, network timeout), generate .xlsx files using pure Python stdlib with string-based OOXML construction. The approach mirrors the pure stdlib .docx fallback — zipfile + XML string building.
+
+- Header row with deep blue (`FF1A3C6E`) background + white bold text
+- Shared string table for all cell values
+- Works in any Python 3 environment with no external dependencies
+- Cell type: shared string (`t="s"`) for text, direct value for numbers
+
+See `references/generate-xlsx-without-openpyxl.md` for the full implementation with a reusable `make_xlsx()` function template.
+
+**When to use this instead of Excel Workbook Alternative (openpyxl):**
+- No pip access / PEP 668 restriction
+- Need to generate a simple structured .xlsx quickly
+- Data is static (no formulas, no merged cells, no conditional formatting)
+
 ## Fallback: Markdown to .docx Conversion
 
 Convert large Markdown documents (500-1000+ lines) to .docx with proper Chinese government-document formatting:

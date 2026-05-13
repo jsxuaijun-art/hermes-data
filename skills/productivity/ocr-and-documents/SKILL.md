@@ -13,6 +13,26 @@ metadata:
 # PDF & Document Extraction
 
 For DOCX: use `python-docx` (parses actual document structure, far better than OCR).
+
+**⚠️ DOCX 兜底方案（当 python-docx.paragraphs 返回空时）**
+
+某些复杂格式的docx文件（尤其是从WPS/Office高级模板生成的文档），`python-docx` 的 `.paragraphs` 可能返回空列表，即使文档实际包含大量文本。
+
+**不要卡住，切换到底层提取：**
+
+```bash
+python3 -c "
+import zipfile, re
+z = zipfile.ZipFile('/path/to/file.docx')
+xml = z.read('word/document.xml').decode('utf-8')
+texts = re.findall(r'<w:t[^>]*>([^<]+)</w:t>', xml)
+print(''.join(texts))
+"
+```
+
+docx本质是ZIP压缩包，`word/document.xml` 包含所有文本内容的XML表示。`<w:t>` 标签是Word存储文本的基本单元。用正则提取后拼接即可获取完整文本。
+
+**如果仍然取不到**：检查文档中的表格（`.tables`）、文本框、SmartArt等结构。对复杂文档可先输出XML结构查看：`xml_str[:2000]` 预览前2000字符了解文档骨架。
 For PPTX: see the `powerpoint` skill (uses `python-pptx` with full slide/notes support).
 This skill covers **PDFs and scanned documents**.
 

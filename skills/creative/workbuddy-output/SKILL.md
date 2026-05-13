@@ -12,111 +12,23 @@ metadata:
 
 # WorkBuddy Output Style
 
-<<<<<<< HEAD
 ## 🚨 强制加载规则 + 循环刹车（2026.5.10-12 江姐定）
 
-### 规则A：必须尝试表格
-=======
-## 🚨 最高等级约束 — 表格格式红线（2026.5.12 更新）
+### 规则A：必须尝试表格 + 主动预加载（2026.5.13 经验修正）
 
-**这是本技能第一条规则。必须先读这条，再读下面任何内容。不遵守 = 用户放弃信任。**
+**本技能必须在每次输出含结构化数据/对比/列表时加载。** 这是硬性要求。但光有规则不够——实战中暴露的常见失败模式是：先输出了Markdown表格，被用户指出后才补加载。必须做到 **在输出任何结构化内容前主动预加载**，而不是用户指出后纠正。
 
-### 核心规则
+- 哪怕只有两行对比数据，也走 box_maker.py
+- 不要有"数据少就先手写一个"的念头——手写Markdown表格被用户看到就是一次信任扣分
+- 如果同时有文本+表格要输出，先加载技能生成表格，再组合成完整回复
+- 建议在每次准备输出前先反问自己：这段内容能不能做成表格？能，就加载本技能
 
-**绝对禁止在回复正文中出现任何 Markdown 表格格式。** 包括但不限于：
-
-```
-| 项目 | 价格 |
-|:---|:---:|       ← 禁止
-| 项目 | 价格 |     ← 禁止（即使没有分隔线）
-```
-
-只要内容涉及「对比、清单、步骤、方案、价格、配置、参数」等结构化数据 → **必须**强制走以下路径：
-
-```
-检测到结构化数据
-    ↓
-立即中断当前回复草稿（不允许发送）
-    ↓
-切换至 execute_code 模式
-    ↓
-exec(open(box_maker.py).read())
-    ↓
-make_grid_table() 或 make_box()
-    ↓
-verify_box() 全通过
-    ↓
-输出
-```
-
-### 心理机制（这不是「记不住」，是惯性）
-
-**根因：** Markdown 表格是我的原生输出路径（打字直接出来，思考成本为零）。box_maker 是需要刻意切换到 execute_code + Python 的外部管道。快速回复时，大脑自动走默认路径。
-
-**这不是记忆力问题，是动作惯性问题。** 唯一的解法是在「生成回复草稿 → 发送」之间设一个物理阻断：
-
-```
-在你即将输出任何包含 | 或 ┌ 或 ── 的字符之前 → 刹车 → 确认来源
-如果这行字符是你手打的（不是 execute_code 输出）→ 删掉重来
-```
-
-### 用户已明确表达的标准（2026.5.12 用户原话）
-
-> 「对啊，以后就要这样输出表格。」
-> 「你也说过很多次要遵守规定的，但还是经常出错，是记不住还是其他原因？」
-
-**这意味着：** 用户不再接受「我下次会注意」这类表态。唯一能重建信任的方式是：**再看到一次 Markdown 表格，整段重做，不辩解。**
-
-### 强制预检流程
-
-在每次输出**任何内容**之前（无论多短、多快的回复），必须执行以下预检：
-
-```
-预检步骤：
-Step 0 ─ 扫描我的回复草稿中是否包含任何 `|---|` 或 `| :---` 或 `|:---` 字符串
-Step 1 ─ 如果发现 → 立即整段删除回复草稿，不允许发送
-Step 2 ─ 切换至 execute_code 模式
-Step 3 ─ 加载 box_maker.py → exec() → make_grid_table()/make_box() → verify_box()
-Step 4 ─ 只有 verify_box() 全通过后，才能输出
-```
-
-**关键记忆锚点：** 如果我在回复草稿中写了 `|` 符号且后面跟着 `-` 或 `:`，这 100% 是一个 Markdown 表格 — 刹车！
-
-如果预检没做就输出了 → 用户说「违规」→ 整段重做，不辩解，不修补。
-
-## ⚠️ 强制加载规则（江姐 2026.5.10 定，5.11 补充）
->>>>>>> 610b90e (sync 2026-05-12_23:56)
-
-**本技能必须在每次输出含结构化数据/对比/列表时加载。** 步骤如下：
+步骤如下：
 
 1. 先用 `skill_view('workbuddy-output', file_path='scripts/box_maker.py')` 读取脚本
-2. 用 `exec(open(script_path).read())` 载入 `make_grid_table()` / `make_box()` 函数
-3. 用该函数生成表格，**禁止手写、禁止 Markdown `|---|` 替代**
+2. 用 `exec(open(script_path).read())` 载入 `make_grid_table()` 函数
+3. 用该函数生成表格，禁止手写、禁止 Markdown `|---|` 替代
 4. 生成后调用 `verify_box()` 验证所有行 dw 一致
-
-### ⚠️ 2026.5.11 追加：Markdown 表格滑脱陷阱
-
-**问题：** 在对话中，Hermes 多次在 inline 文本（非 execute_code 块）中手写 Markdown 表格：
-
-```
-| 项目 | 推荐 | 价格 |
-|:---|:---|:---:|
-```
-
-这违反了强制规则，用户两次纠正：「表格你要按照早前的约定或记忆进行修改，横平竖直，成一条直线」。
-
-**根因：** execute_code 调用 box_maker 需要「意识到需要格式化输出 → 主动加载技能 → 写代码」这个链条。而 Markdown 表格是 0 思考成本的自然习惯。在快速回复的场景下，容易滑向 Markdown 表格。
-
-**强制触发条件：** 以下任何一个条件满足，**必须**用 make_grid_table() 而非 Markdown 写法：
-- 内容包含「对比、清单、步骤、方案、价格」等结构化数据
-- 你正在写 `|---|` 或 `| :--- |` 这样的字符串
-- 用户之前就表格格式纠正过你
-
-**纠正流程（已激活两次，不激活第三次）：**
-1. 用户指出表格问题 → 立即承认，不辩解
-2. 加载本技能 → exec(box_maker.py) → 重新生成
-3. 调用 verify_box() 确认每行 dw 一致
-4. 如果用户说「重新输出」→ 整段全部重做，不修修补补
 
 这条规则已写入 memory 红线，跳过 = 不可靠。
 
@@ -181,28 +93,7 @@ Where `col_width = max(dw(column_contents)) + 2` (2 = 1 left padding + 1 right p
 
 The `-1` is the most common bug. Without it, content rows are 1 column wider than border rows, breaking right-edge alignment.
 
-### ⚠️ PITFALL: make_grid_table 不支持多行单元格
-
-`make_grid_table()` 的每个单元格必须是**单行文本**。如果单元格内包含 `\n`（换行符），网格会在换行处断裂，`verify_box` 会报大量行宽不一致。
-
-**正确做法：** 需要展示多行内容的条目，用 `make_box()` 分块输出，不要硬塞进 grid table。
-
-```python
-# ❌ 错误：make_grid_table 里塞 \n
-t = make_grid_table(['时段', '内容'], [['工作时间', '第一行\n第二行']])  # 会断裂
-
-# ✅ 正确：用 make_box 逐行输出
-b = make_box('时段：工作时间', [
-    '  第一行',
-    '  第二行',
-])
-```
-
-**正确分工：**
-| 函数 | 适用场景 | 行数控制 |
-|:---|:---|:---:|
-| `make_grid_table()` | 纯 tabular 数据，每格一行 | 所有格无换行 |
-| `make_box()` | 多行文本、方案说明、话术演示 | 每行一个 list item |
+### ⚠️ PITFALL: Never hand-write table code inline
 
 Do NOT re-implement `make_grid_table()` in `execute_code()` calls during conversation. The box_maker.py script already has the correct formula. Hand-written versions are prone to forgetting the `-1` leading-space offset.
 
@@ -349,95 +240,3 @@ When presenting multiple pieces of structured info:
 3. Next steps / instructions last
 
 Each card separated by one blank line.
-
-## ⚠️ PITFALL: Know your audience — don't over-use box-drawing
-
-Box-drawing characters (`┌┐└┘├┤│`) and `make_grid_table()` are designed for **CLI terminal display only**. They are **NOT** safe for:
-
-| Destination | Problem | What to use instead |
-|:---|:---|:---|
-| 💬 企微/微信聊天 | 制表符显示为乱码/方框 | 纯文本分段 + 行内分隔线 `---` |
-| 📄 文档文件 (.docx) | 不必要地复杂化格式 | Markdown 表格 → Word 原生表格 |
-| 📱 手机端消息 | 对齐被字体/字号打乱 | 简短的纯文字列表 |
-
-**Decision rule** before generating any box/table:
-
-> 如果这份内容最终会出现在非终端环境（客户群、文档、手机端），用纯文字格式替代框框格式。
-
-**2026.5.11 实战教训：** 在讨论企微外部群部署方案时，该用户连续调用了4次 `execute_code` 来生成 `┌┐└┘` 框框。用户直接指出：这些框框在 CLI 里看着漂亮，但内容讲的是企微客户群场景，框框既不能直接复制到企微用，又占用了大量对话空间。**正确答案是：单纯文字分段就能表达清楚的内容，不要画框。**
-
-### ⚠️ PITFALL: Batch generation — don't scatter execute_code calls
-
-When you need to present multiple boxes/tables in a single response, **generate ALL of them in ONE `execute_code` call**, not N separate calls. Each separate call:
-- Clutters the conversation transcript with repetitive boilerplate (`import sys`, `insert path`, `verify_box`)
-- Breaks the user's reading flow (they see your analysis, then a script, then output, then your next line, then another script...)
-- Makes the conversation harder to follow in review
-
-**Correct approach — single batch call:**
-```python
-# ONE execute_code call that outputs everything
-grid = make_grid_table(...)
-box1 = make_box('标题1', [...])
-box2 = make_box('标题2', [...])
-print(grid)
-print()
-print(box1)
-print()
-print(box2)
-# verify at end
-verify_box(grid)  # and each box
-```
-
-**Wrong approach (what happened in 2026.5.11):**
-```python
-# Call 1 — one table
-# Call 2 — one box
-# Call 3 — another box
-# Call 4 — another box
-# User: \"你先把你的上面的输出做好吧\" 😅
-```
-
-### ⚠️ PITFALL: "重新输出" = 整段重做，不要修修补补
-
-**2026.5.11 实战教训：** 用户指出表格对齐问题后说「重新输出」—— 此时正确的做法是**整段全部清掉重来**，而不是在原有输出上修修补补。
-
-**原因：**
-- 用户看到的是一段破碎的对话（你的文字 → execute_code → 输出 → 你的文字 → 另一个 execute_code...）
-- 修补式的修复让用户觉得你「记不住规矩，要一句一句教」
-- 整段重做展示了「我懂了，一次性搞定」的态度
-
-**正确流程（2026.5.11 验证可行）：**
-1. 用户说「重新输出」→ 直接加载 `workbuddy-output` 技能
-2. 在**一个** `execute_code` 调用里，把需要展示的全部内容（标题 + 多张表 + 多个框 + 收尾问句）生成完毕
-3. 每个框/表分别调 `verify_box()` 确认对齐
-4. 输出只有两段：execute_code 的 stdout + 你的收尾一句话
-5. 不把"需要展示的内容"和"执行的代码"交替呈现给用户
-
-When you need to present multiple boxes/tables in a single response, **generate ALL of them in ONE `execute_code` call**, not N separate calls. Each separate call:
-- Clutters the conversation transcript with repetitive boilerplate (`import sys`, `insert path`, `verify_box`)
-- Breaks the user's reading flow (they see your analysis, then a script, then output, then your next line, then another script...)
-- Makes the conversation harder to follow in review
-
-**Correct approach — single batch call:**
-```python
-# ONE execute_code call that outputs everything
-grid = make_grid_table(...)
-box1 = make_box('标题1', [...])
-box2 = make_box('标题2', [...])
-print(grid)
-print()
-print(box1)
-print()
-print(box2)
-# verify at end
-verify_box(grid)  # and each box
-```
-
-**Wrong approach (what happened in 2026.5.11):**
-```python
-# Call 1 — one table
-# Call 2 — one box
-# Call 3 — another box
-# Call 4 — another box
-# User: "你先把你的上面的输出做好吧" 😅
-```

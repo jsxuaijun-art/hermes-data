@@ -19,6 +19,7 @@ agent:
   gateway_notify_interval: 180
   gateway_auto_continue_freshness: 3600
   image_input_mode: auto
+  disabled_toolsets: []
 terminal:
   backend: local
   modal_mode: auto
@@ -67,6 +68,17 @@ tool_output:
   max_bytes: 50000
   max_lines: 2000
   max_line_length: 2000
+tool_loop_guardrails:
+  warnings_enabled: true
+  hard_stop_enabled: false
+  warn_after:
+    exact_failure: 2
+    same_tool_failure: 3
+    idempotent_no_progress: 2
+  hard_stop_after:
+    exact_failure: 5
+    same_tool_failure: 8
+    idempotent_no_progress: 5
 compression:
   enabled: true
   threshold: 0.6
@@ -174,14 +186,15 @@ display:
   tool_progress_command: false
   tool_progress_overrides: {}
   tool_preview_length: 0
+  ephemeral_system_ttl: 0
   platforms: {}
-  mouse_support: true
   runtime_footer:
     enabled: false
     fields:
     - model
     - context_pct
     - cwd
+  mouse_support: true
   tool_progress: all
 dashboard:
   theme: default
@@ -256,6 +269,8 @@ delegation:
   orchestrator_enabled: true
   subagent_auto_approve: false
 prefill_messages_file: ''
+goals:
+  max_turns: 20
 skills:
   external_dirs: []
   template_vars: true
@@ -268,6 +283,9 @@ curator:
   min_idle_hours: 2
   stale_after_days: 30
   archive_after_days: 90
+  backup:
+    enabled: true
+    keep: 5
 honcho: {}
 timezone: ''
 discord:
@@ -292,9 +310,10 @@ approvals:
   cron_mode: deny
   mcp_reload_confirm: true
 command_allowlist:
-- shell command via -c/-lc flag
 - overwrite project env/config file
 - git force push (rewrites remote history)
+- script execution via -e/-c flag
+- shell command via -c/-lc flag
 quick_commands: {}
 hooks: {}
 hooks_auto_accept: false
@@ -313,6 +332,9 @@ security:
 cron:
   wrap_response: true
   max_parallel_jobs: null
+kanban:
+  dispatch_in_gateway: true
+  dispatch_interval_seconds: 60
 code_execution:
   mode: project
 logging:

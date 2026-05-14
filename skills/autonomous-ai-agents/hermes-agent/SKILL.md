@@ -520,6 +520,21 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 - **Use tmux for interactive sessions** — raw PTY mode has `\r` vs `\n` issues with prompt_toolkit
 - **For scheduled tasks**, use the `cronjob` tool instead of spawning — handles delivery and retry
 
+### Cron Pitfall: Pending Tasks vs "Nothing New"
+
+When a cron job is triggered to remind the user about a pending task, **do NOT go [SILENT] just because the session hasn't changed since the last check.** A task that was explicitly paused for user input (marked "待补充" / "pending user info") is still pending — it warrants a proactive reminder.
+
+**Wrong:** Session history unchanged → nothing new → [SILENT]
+**Right:** Task explicitly marked as pending → deliver reminder with confirmed state + clear ask
+
+The [SILENT] output is for cases where there is genuinely nothing to report — no pending tasks, no new data, no errors. If the cron was scheduled to check on a task's status and the task is still incomplete, that IS something to report.
+
+To reconstruct task state for a reminder:
+1. Use `session_search()` with the task's keywords to find the relevant session
+2. Extract confirmed items and pending items from the session transcript
+3. Present a structured reminder showing both, with a clear call to action
+4. If the task has a supporting skill (e.g. `coze-tax-agent-prompt` for tax analysis), load it to ensure consistent formatting
+
 ---
 
 ## Troubleshooting
@@ -549,6 +564,48 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 1. `hermes skills list` — verify installed
 2. `hermes skills config` — check platform enablement
 3. Load explicitly: `/skill name` or `hermes -s name`
+
+### Hermes command not found
+
+If `hermes` returns "command not found" after installing from source (git clone + venv):
+
+1. **Find the venv:** Look for `venv/bin/hermes` or `.venv/bin/hermes` inside the cloned repo directory
+2. **Activate the venv:** `source venv/bin/activate` (or `.venv/bin/activate`)
+3. **Or use full path:** `/path/to/repo/venv/bin/hermes ...`
+4. **Or add an alias:** `alias hermes='/path/to/repo/venv/bin/hermes'` in `~/.bashrc`
+
+The repo root may also have a `hermes` wrapper script, but it needs the venv active to work. The pip-installed binary goes to a system PATH directory — only source installs have this issue. Common repo locations: `~/hermes-agent/`, `~/.hermes/hermes-agent/`.
+
+**Getting the version:**
+- If `hermes --version` fails (command not found), check `pyproject.toml`: `grep -A1 '^version' ~/hermes-agent/pyproject.toml`
+- Or search for version in the installed package: `grep -r 'version' ~/hermes-agent/hermes_constants.py | head -3`
+- Tag system is date-based: `git ls-remote --tags origin | grep -E 'v20[0-9]{2}' | tail -5`
+
+### Update via git when `hermes update` times out
+
+The `hermes update` command can time out on slow/flaky networks (default 300s). Fallback using raw git:
+
+```bash
+cd /path/to/hermes-agent
+git fetch origin
+git merge origin/main   # or: git pull
+```
+
+This is faster and gives you visibility into network issues. After the merge, restart your session (the Python bytecode picks up the changes automatically since you're running from source).
+
+**Network troubleshooting (flaky GitHub on WSL):**
+- `git fetch origin` often works at shorter timeouts (15-30s)
+- `git fetch --tags` is heavier and may time out where plain fetch succeeds
+- If network is consistently flaky, try: `git fetch origin main` (lightest option), then `git merge origin/main`
+- Verify connectivity: `timeout 10 curl -s https://github.com -o /dev/null -w "%{http_code}"`
+- If curl gets 200 but git times out, try reducing clone buffer: `git config http.postBuffer 524288000`
+
+**Version discovery when `hermes --version` fails:**
+- In source installs (git clone + venv), `hermes --version` may not work if the binary isn't on PATH
+- Check version via `pyproject.toml` at the repo root: `grep -A1 '^version' /path/to/hermes-agent/pyproject.toml`
+- Or check remote tags: `git ls-remote --tags origin | grep -E 'v20[0-9]{2}' | tail -5`
+  - Hermes uses **date-based tags** (e.g. `v2026.5.7`), not semantic version tags
+  - The `pyproject.toml` `version` field is the canonical software version (e.g. `0.12.0`)
 
 ### Gateway issues
 Check logs first:

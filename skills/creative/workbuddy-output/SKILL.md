@@ -14,14 +14,30 @@ metadata:
 
 ## 🚨 强制加载规则 + 循环刹车（2026.5.10-12 江姐定）
 
-### 规则A：必须尝试表格 + 主动预加载（2026.5.13 经验修正）
+### ⚠️ 规则A：强制预加载 + 硬性自检（2026.5.14 升级 — 违反=不可靠）
 
-**本技能必须在每次输出含结构化数据/对比/列表时加载。** 这是硬性要求。但光有规则不够——实战中暴露的常见失败模式是：先输出了Markdown表格，被用户指出后才补加载。必须做到 **在输出任何结构化内容前主动预加载**，而不是用户指出后纠正。
+**无条件强制规则，无例外。** 每次输出任何内容前，**必须自问**："这段回复里有没有结构化数据/对比/列表/步骤说明？" 有，就必须在**写第一行文字前**先完成以下步骤：
 
-- 哪怕只有两行对比数据，也走 box_maker.py
-- 不要有"数据少就先手写一个"的念头——手写Markdown表格被用户看到就是一次信任扣分
-- 如果同时有文本+表格要输出，先加载技能生成表格，再组合成完整回复
-- 建议在每次准备输出前先反问自己：这段内容能不能做成表格？能，就加载本技能
+1. `skill_view('workbuddy-output', file_path='scripts/box_maker.py')` 读取脚本
+2. `exec(open(script_path).read())` 载入函数
+3. 用 `make_grid_table()` 生成表格
+4. 用 `verify_box()` 验证
+
+**无任何例外场景：**
+- 只有两行对比数据 → 必须走表格
+- 一分钟快速响应 → 必须走表格，不能因为"快"就省
+- 用户问题很急 → 先出表格，再出解释
+- "怕表格不对齐" → 用 `verify_box()` 验证，不过关就兜底.docx
+
+**这条规则优先级高于任何"让回复更快"的理由。** 用户已经多次指出这个问题，每次都是信任扣分。不再容忍Markdown表格、手写ASCII或纯文本列表示意。
+
+**操作序列（肌肉记忆）：**
+```
+① 脑子里过"这段有没有表格内容？" → 有
+② 加载技能 → 读脚本 → exec → 生成 → 验证
+③ 把表格嵌入回复
+④ 再写文字说明
+```
 
 步骤如下：
 
@@ -97,6 +113,39 @@ The `-1` is the most common bug. Without it, content rows are 1 column wider tha
 
 Do NOT re-implement `make_grid_table()` in `execute_code()` calls during conversation. The box_maker.py script already has the correct formula. Hand-written versions are prone to forgetting the `-1` leading-space offset.
 
+### ⚠️ PITFALL: The "just one small table, I'll hand-write it" trap (2026.5.14 bug — YOU DID THIS)
+
+This is the **most common and most deadly** pitfall. Even though the skill explicitly says "always use box_maker.py", the pattern is:
+
+1. You think "this table is tiny, just 2 columns, hand-writing is faster"
+2. You write a few lines of hand-crafted ASCII — **violate the rule**
+3. The user immediately catches it
+
+**The fix is not "try harder next time" — it's a procedural interlock:**
+
+Before ANY output, **pause and scan your pending response text**. If you see any of these patterns, DELETE and redo with box_maker.py:
+
+```
+┌───┬───┐    ← hand-written box
+│ a │ b │
+├───┼───┤
+| a | b |   ← markdown-style with | and ---
+|---|---|---|
+```
+
+**Surgical checklist (run BEFORE sending any response):**
+
+```
+□ Does this response contain structured/comparative/list data?
+   Yes → SKIP hand-writing, load box_maker.py
+□ Did I already start writing ASCII lines in my mind?
+   Yes → DELETE mental buffer, force skill_view → exec()
+□ Is the table "too small to bother"?
+   No such thing. 2 rows × 2 cols still goes through make_grid_table().
+```
+
+The user caught this exact failure in session 2026.5.14. **Don't let the user have to say it twice.**
+
 **Correct approach:**
 ```python
 exec(open('/home/dmin/.hermes/skills/creative/workbuddy-output/scripts/box_maker.py').read())
@@ -109,6 +158,33 @@ The three most common inline bugs (all happened in production):
 1. **Missing `-1`** in `pad = col_width - text_w` → content rows 1 col too wide
 2. **Wrong wcwidth** with bare hex OR conditions (0x26CE or 0x26D4 is always True)
 3. **Forgetting verification** — every table MUST run verify: all lines same dw
+
+### ⚠️ PITFALL: Multi-line cells break make_grid_table() (2026.5.14 discovered)
+
+`make_grid_table()` treats each cell as a single-line string. If a cell contains `\n` (newline), it gets embedded literally, producing content lines that don't have border characters (`│`) on the left — `verify_box()` WILL FAIL.
+
+**Bad (multi-line cell):**
+```python
+make_grid_table(
+    ['税种', '结论'],
+    [['增值税', '跨市分公司必须独立办证。\n非独立核算几乎不可行。']]
+)
+# → verify_box fails because \n creates a line without │ prefix
+```
+
+**Fix — break into multiple rows:**
+```python
+make_grid_table(
+    ['税种', '结论'],
+    [
+        ['增值税', '跨市分公司必须独立办证。'],
+        ['',       '非独立核算几乎不可行。'],
+    ]
+)
+# → verify_box passes
+```
+
+**Alternative:** Use `make_box()` (single-column card) for multi-line descriptions, reserving `make_grid_table()` for single-line-per-cell data.
 
 ### ⚠️ PITFALL: Zero-width characters miscounted as wide (2026.5.11 bug, round 1)
 
@@ -183,6 +259,22 @@ The script:
 4. Both return strings — embed directly in your response
 
 After generating, verify every line has the same display width.
+
+## 🚨 Temporal Awareness Rule (2026.5.14 added — caught guessing time)
+
+**Never guess the time of day.** Before making ANY temporal reference in output (晚安/晚上/下午好/今天/明天/本周), **always run `terminal('date')` to check actual local time.**
+
+```
+BAD → "今晚好梦" at 13:23 CST  → user called it out
+GOOD → terminal('date') first → "下午好，有什么要推进的？"
+```
+
+This applies to:
+- Greetings (下午好/晚上好/早安)
+- Time-based offers (明天再做 → use date to check if "明天" is accurate)
+- Any assumption about business hours, end of day, or work schedule
+
+**This is a trust issue, not a formatting issue.** Wrong time reference makes the AI look disconnected from reality.
 
 ## CJK wcwidth Algorithm
 

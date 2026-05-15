@@ -743,6 +743,46 @@ terminal(command="claude -p 'Use /autoplan to create a task plan for building au
 terminal(command="tmux send-keys -t claude-session '/ship' Enter")
 ```
 
+## Optional: Hermes-Hosted gstack Skills (use without Claude Code)
+
+If Claude Code login is unavailable or you want gstack skills available inside Hermes directly (not just through Claude Code), generate Hermes-compatible skill files:
+
+```bash
+cd ~/gstack
+bun run gen:skill-docs --host hermes
+```
+
+This generates skills into `.hermes/skills/` inside the gstack repo. Install them to your Hermes skills directory:
+
+```bash
+GSTACK_SRC=~/gstack/.hermes/skills
+HERMES_SKILLS=~/.hermes/skills
+
+mkdir -p "$HERMES_SKILLS"
+for d in "$GSTACK_SRC"/gstack-*/; do
+  [ -d "$d" ] || continue
+  skill=$(basename "$d")
+  mkdir -p "$HERMES_SKILLS/$skill"
+  cp "$d/SKILL.md" "$HERMES_SKILLS/$skill/SKILL.md"
+done
+
+# Verify count
+ls -d "$HERMES_SKILLS"/gstack-* | wc -l
+# Expected: 46
+```
+
+**After install:** Each gstack skill appears as a regular Hermes skill (confirmed by `hermes skills list | grep gstack`). Use `skill_view()` to inspect individual skills.
+
+**Benefits:**
+- No Claude Code login required
+- Skills available in CLI mode
+- Can be evolved via hermes-agent-self-evolution
+
+**Limitations:**
+- Skills are guidance-only (no executable scripts from `bin/`)
+- Some browser-based skills (`browse`, `scrape`) require Playwright Chromium — skip on slow networks
+- Hermes-hosted skills may drift from Claude Code originals; regenerate periodically
+
 ## Pitfalls & Gotchas
 
 1. **Interactive mode REQUIRES tmux** — Claude Code is a full TUI app. Using `pty=true` alone in Hermes terminal works but tmux gives you `capture-pane` for monitoring and `send-keys` for input, which is essential for orchestration.

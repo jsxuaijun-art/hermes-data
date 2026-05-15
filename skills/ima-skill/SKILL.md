@@ -45,7 +45,7 @@ Unified IMA OpenAPI skill. Currently supports: **notes**, **knowledge-base**.
 
 | 用户意图                                                                                   | 模块           | 读取                      |
 | ------------------------------------------------------------------------------------------ | -------------- | ------------------------- |
-| 搜索笔记、浏览笔记本、获取笔记内容、创建笔记、追加内容                                     | notes          | `notes/SKILL.md`          |
+| 搜索笔记、浏览笔记本、**创建笔记本**、获取笔记内容、创建笔记、追加内容                   | notes          | `notes/SKILL.md`          |
 | 上传文件、添加网页链接、搜索知识库、浏览知识库内容、获取知识库信息、获取可添加的知识库列表 | knowledge-base | `knowledge-base/SKILL.md` |
 | 查看原文、分析原文、导出原文（需要 media_id）                                              | knowledge-base | `knowledge-base/SKILL.md` |
 
@@ -73,6 +73,7 @@ Unified IMA OpenAPI skill. Currently supports: **notes**, **knowledge-base**.
 | "新建一篇笔记记录这些内容"                               | **创建**新笔记           | **notes** — `import_doc`                                    |
 | "帮我记一下"、"记录一下"、"保存为笔记"（未指定已有笔记） | 意图不明确，**需要确认** | **notes** — 先询问用户是创建新笔记还是追加到哪篇已有笔记    |
 | "添加到笔记里"（未指定具体哪篇）                         | 意图不明确，**需要确认** | **notes** — 先询问用户是创建新笔记还是追加到哪篇已有笔记    |
+| "记一下这个想法/灵感"、"保存灵感"、"！想法：xxx"、"灵感记录" | **灵感捕捉**（持续追加到统一笔记） | **notes** — 自动追加到"💡 灵感记录"笔记，带时间戳+标签。先搜索是否存在该笔记，有则 `append_doc`，无则 `import_doc` 创建。无需询问"新建还是追加"。CLI 快捷助手见 `scripts/capture_idea.sh` |
 
 ### ⚠️ 跨模块任务 — 必须读取两个子模块
 
@@ -93,6 +94,16 @@ Unified IMA OpenAPI skill. Currently supports: **notes**, **knowledge-base**.
 - 目标是**知识库的条目**（上传文件、添加链接、关联笔记到知识库）→ knowledge-base 模块
 - 目标是**获取知识库条目的原始内容**（查看原文、分析原文、导出原文）→ knowledge-base 模块（若原文是笔记，会跨模块到 notes `get_doc_content`）
 - 用户提到"知识库"只是在**描述笔记的位置**（如"知识库里的那篇笔记"），真正操作对象仍是笔记 → notes 模块
+
+## 📂 推荐笔记结构（财税服务公司）
+
+当用户要求设计/搭建 IMA 笔记体系，或需要按业务类型组织笔记时，参考 `references/notebook-structure-tax-firm.md`。该文件定义了财税服务公司的推荐笔记本结构，包含各笔记本用途说明和笔记命名规范。
+
+关键原则：
+- **笔记本 = 业务大类**（客户方案、政策库、内部SOP等）
+- **笔记 = 具体项目/文档**，按客户名+项目类型命名
+- **灵感记录**使用单篇笔记持续追加，不建多篇
+- **重要交付文档**建议本地 .docx + IMA 笔记双存
 
 ## Credential Check
 
@@ -213,6 +224,20 @@ export IMA_FORCE_UPDATE_CHECK=1
 ```
 
 ---
+
+## Scripts
+
+The `scripts/` directory contains reusable CLI tools built on top of the IMA API:
+
+| Script | Description | Usage |
+| ------ | ----------- | ----- |
+| `scripts/capture_idea.sh` | 快速捕捉灵感 → 自动追加到💡灵感记录笔记（固定 note_id），带时间戳。支持参数和管道两种输入方式。依赖: node + IMA 凭证 | `capture_idea "内容"` 或 `echo "内容" \| capture_idea` |
+
+建议将常用脚本链接到 `~/.local/bin/` 方便全局调用：
+
+```bash
+ln -sf ~/.hermes/skills/ima-skill/scripts/capture_idea.sh ~/.local/bin/capture_idea
+```
 
 ## Detailed Rules Reference
 

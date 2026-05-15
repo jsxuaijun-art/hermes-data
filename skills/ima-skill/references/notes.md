@@ -17,7 +17,8 @@ API base path: `openapi/note/v1`
 | --------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------- |
 | 搜索/查找笔记                                                                     | `search_note`     | `query_info`（QueryInfo 对象）                                            |
 | 查看笔记本列表 / 列出笔记本                                                       | `list_notebook`   | `cursor`(必填，首页传`"0"`) + `limit`(必填)                               |
-| 列出笔记/获取多篇笔记信息                                                         | `list_note`       | `folder_id`(选填,空为全部) + `sort_type` + `cursor`(首次传`""`) + `limit` |
+| **创建笔记本** ✅                                                                 | `add_notebook`    | `folder_name`（必填，笔记本名称字符串）                                    |
+| 列出笔记/获取多篇笔记信息                                                         | `list_note`       | `folder_id`(选填,空为全部) + `sort_type` + `cursor`(首次传`""`) + `limit` |
 | 读取笔记正文                                                                      | `get_doc_content` | `note_id` + `target_content_format`(必填，推荐`0`纯文本)                  |
 | 新建一篇笔记（用户明确说"新建/创建笔记"时走此接口）                               | `import_doc`      | `content` + `content_format`(必填，固定`1`) + 可选 `folder_id`            |
 | 往已有笔记追加内容（⚠️ **敏感操作**：用户必须明确指定目标笔记，否则先确认再操作） | `append_doc`      | `note_id` + `content` + `content_format`(必填，固定`1`)                   |
@@ -105,6 +106,25 @@ ima_api "openapi/note/v1/list_note" '{"folder_id":"", "sort_type":0, "cursor": "
 
 ```
 
+### 创建笔记本（批量操作）
+
+```bash
+# 创建单个笔记本
+ima_api "openapi/note/v1/add_notebook" '{"folder_name": "笔记本名字"}'
+
+# 创建多个笔记本
+for name in "客户方案" "财税政策库" "内部SOP"; do
+  ima_api "openapi/note/v1/add_notebook" "{\"folder_name\": \"$name\"}"
+done
+```
+
+**响应示例：**
+```json
+{"code":0,"msg":"success","data":{"folder_id":"folder133d014159338f5c"}}
+```
+
+> ⚠️ **Shell 传参的 JSON 编码陷阱：** 当通过命令行传 JSON 给 `node ima_api.cjs` 时，**emoji 等非 BMP 字符（如 💡 U+1F4A1）在 JSON 原生只能用 `\uXXXX` 转义，而 `\uXXXX` 只支持到 U+FFFF。** 解决方案：用 UTF-16 代理对 `\uD83D\uDCA1` 替代 💡。Shell 直传含 emoji 的纯文本 JSON 字符串可能因区域编码被截断，代理对方案在所有 shell/bash 环境下 100% 可靠。
+
 ### 浏览笔记本里的笔记
 
 先拉笔记本列表获取 `folder_id`，再拉该笔记本下的笔记：
@@ -148,6 +168,8 @@ ima_api "openapi/note/v1/search_note" '{"search_type": 1, "query_info": {"conten
 
 **笔记本条目**（`NoteFolderInfo`）：关键字段：`folder_id`、`name`、`note_number`、`create_time`、`modify_time`、`parent_folder_id`、`folder_type`（`0`=用户自建，`1`=全部笔记，`2`=未分类）。
 
+**创建笔记本**（`add_notebook`）：返回 `data.folder_id`（新笔记本的唯一 ID）。
+
 **写入结果**（`import_doc`/`append_doc`）：返回 `note_id`（新建或目标笔记的唯一 ID）。
 
 完整字段定义见 `references/api.md`。
@@ -173,6 +195,14 @@ ima_api "openapi/note/v1/search_note" '{"search_type": 1, "query_info": {"conten
 - 展示笔记列表时只展示标题、摘要和修改时间，不要主动展示正文
 - 时间字段是 Unix 毫秒时间戳，展示时转为可读格式
 - 返回数据为嵌套结构：搜索结果取 `SearchNoteInfo[].note_book_info.note_id`，笔记本列表取 `NoteFolderInfo[].folder_id`，笔记列表取 `NoteBookInfo[].note_id`，注意按层级解析
+
+## 已知限制
+
+| 限制项                   | 说明                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| ❌ **无删除 API**        | `delete_note`、`del_note`、`remove_note`、`delete_notebook` 等端点**均不存在**。测试创建的笔记/笔记本无法通过 API 清理，只能由用户在 IMA 客户端手动删除。 |
+| ❌ **无重命名 API**      | 创建后的笔记本名称不可通过 API 修改。                                                       |
+| ❌ **无笔记本列表修改**  | 笔记本之间不支持通过 API 移动笔记（修改 `folder_id`）。                                     |
 
 ## 错误处理
 

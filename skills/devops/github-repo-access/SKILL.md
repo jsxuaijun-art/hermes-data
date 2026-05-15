@@ -25,11 +25,67 @@ git clone --depth 1 <repo-url> <target-dir>
 curl -s "https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>"
 ```
 
-## Fallback: GitHub REST API (when clone/CDN fail)
+## Fallback A: WSL — Windows git.exe via PowerShell (when WSL clone fails)
+
+**Scope: WSL (Windows Subsystem for Linux) environments only.** When `git clone` times out from inside WSL but you have Windows git installed on the host.
 
 ### When to use
-- `git clone` times out (network slowness, firewall restrictions)
+- `git clone` hangs / disconnects from WSL (common from China, restricted networks, WSL2 NAT routing issues)
+- `powershell.exe` is available (always in WSL)
+- Windows git.exe is installed (`C:\Program Files\Git\bin\git.exe`)
+- `api.github.com` may also be unreachable from WSL (REST fallback doesn't help either)
+
+### How it works
+
+WSL can call Windows executables directly. Windows git.exe uses the **Windows network stack** (proxy, VPN, routing), which often works when WSL's Linux network stack fails. Since this is a direct clone (not REST API), you get the full repo tree, not just file-by-file.
+
+### Steps
+
+```bash
+# 1. Clone via PowerShell → Windows git.exe
+powershell.exe -Command "& 'C:\Program Files\Git\bin\git.exe' clone --depth 1 https://github.com/<owner>/<repo>.git C:\Users\<WindowsUser>\<target-dir>"
+
+# 2. Copy from Windows path to WSL
+cp -r /mnt/c/Users/<WindowsUser>/<target-dir> ~/<target-dir>
+
+# 3. (Optional) Clean up Windows copy
+powershell.exe -Command "Remove-Item -Recurse -Force 'C:\Users\<WindowsUser>\<target-dir>'"
+```
+
+### Real example (from session)
+
+```bash
+# Windows git through PowerShell — works when WSL git times out
+powershell.exe -Command "& 'C:\Program Files\Git\bin\git.exe' clone --depth 1 https://github.com/garrytan/gstack.git C:\Users\Administrator\gstack"
+
+# Wait for completion in WSL
+# Then copy from Windows to WSL
+cp -r /mnt/c/Users/Administrator/gstack ~/gstack
+```
+
+### Pitfalls
+- **Timeout duration**: PowerShell defaults to infinite wait; use `Start-Process -NoNewWindow -Wait` if you need a timeout
+- **Large repos**: `--depth 1` is essential — without it Windows git may also time out on full history
+- **Copy timing**: Wait for clone to finish before copying (check exit code via `$LASTEXITCODE`)
+- **Cleanup**: Always remove the Windows-side clone copy if not needed — it won't auto-delete
+- **No auth passthrough**: If the repo requires auth, Windows git.exe will prompt for credentials in its own window; use `git clone https://TOKEN@github.com/...` style URLs for automation
+- **WSL distro name**: Default is `Ubuntu-22.04` or `Ubuntu` — pass `-d <DistroName>` to `wsl` if running from Windows side
+- **`&` in PowerShell**: The `&` (call operator) is required when the path to git.exe contains spaces; always wrap the path in quotes
+
+### When NOT to use this
+
+- Working on a native Linux machine (no WSL) → use REST API fallback below
+- PowerShell or cmd.exe not available → use REST API fallback below
+- The repo is tiny and you only need one file → `curl` on raw CDN or REST API are faster
+
+---
+
+## Fallback B: GitHub REST API (when clone/CDN fail)
+
+### When to use
+- `git clone` times out on a native Linux system (no Windows host to fall back to)
 - `raw.githubusercontent.com` is unreachable but `api.github.com` works
+- Both WSL git AND Windows git.exe fail
 - You only need to browse/inspect files, not clone the full history
 
 ### 1. List the repo tree (recursive)

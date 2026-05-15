@@ -715,6 +715,34 @@ Use `/context` in interactive mode to see a colored grid of context usage. Key t
 10. **Start new sessions for distinct tasks** — sessions last 5 hours; fresh context is more efficient.
 11. **Use `--no-session-persistence`** in CI to avoid accumulating saved sessions on disk.
 
+## gstack Integration
+
+[gstack](https://github.com/garrytan/gstack) (97K⭐) is a collection of 47 Claude Code skills covering shipping, review, planning, design, QA, and more. Install it to supercharge Claude Code's task-specific capabilities.
+
+### Quick Install (non-WSL)
+```bash
+git clone --depth 1 https://github.com/garrytan/gstack.git ~/gstack
+cd ~/gstack
+npm install -g bun      # if Bun not installed
+bun install --frozen-lockfile
+bun run build
+bash ./setup
+```
+
+### WSL Install
+WSL has specific network and symlink challenges. See `references/gstack-wsl-install.md` for the full step-by-step guide with workarounds (PowerShell git clone, manual skill copy to Windows path, Playwright timeout handling).
+
+### Usage from Hermes
+gstack skills are invoked via Claude Code slash commands (`/ship`, `/review`, `/autoplan`, etc.). From Hermes, spawn a Claude Code session:
+
+```python
+# Print mode
+terminal(command="claude -p 'Use /autoplan to create a task plan for building auth module' --allowedTools 'Read,Edit,Bash' --max-turns 10", workdir="/project", timeout=120)
+
+# Interactive tmux mode
+terminal(command="tmux send-keys -t claude-session '/ship' Enter")
+```
+
 ## Pitfalls & Gotchas
 
 1. **Interactive mode REQUIRES tmux** — Claude Code is a full TUI app. Using `pty=true` alone in Hermes terminal works but tmux gives you `capture-pane` for monitoring and `send-keys` for input, which is essential for orchestration.

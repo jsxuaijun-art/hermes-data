@@ -5,7 +5,7 @@ description: Cross-PC data sync for Hermes Agent (SOUL.md, memories, skills, con
 
 # Hermes Data Sync (跨电脑同步)
 
-**Last updated**: 2026-05-12 — Added Sync Readiness Check section (新机器诊断), expanded pitfall #11 to cover cross-machine WSL username variance, added GitHub API fallback technique. Reorganized headings.
+**Last updated**: 2026-05-18 — Fixed pull script: `git pull --rebase` → `fetch + reset --hard` (divergent branches fix). Updated both Windows git.exe and WSL git fallback paths. Previous: Added Sync Readiness Check section (新机器诊断), expanded pitfall #11 to cover cross-machine WSL username variance, added GitHub API fallback technique.
 
 ## When to Use
 
@@ -183,11 +183,10 @@ echo "[1/4] Git pull from GitHub..."
 pull_retry() {
   for i in 1 2 3; do
     echo ">> [Windows git.exe] Attempt $i/3..."
-    if "$GIT_WIN" -C "$SYNC_DIR_WIN" pull origin main --rebase 2>/dev/null; then
-      echo ">> Pull successful!"
-      return 0
-    fi
-    sleep $((i * 3))
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" fetch origin main 2>/dev/null || { sleep $((i * 3)); continue; }
+    "$GIT_WIN" -C "$SYNC_DIR_WIN" reset --hard origin/main 2>/dev/null || { sleep $((i * 3)); continue; }
+    echo ">> Pull successful!"
+    return 0
   done
   return 1
 }
@@ -195,11 +194,10 @@ pull_retry() {
 pull_retry || {
   for i in 1 2 3; do
     echo ">> [WSL git] Attempt $i/3..."
-    if git -c http.proxy= pull origin main --rebase 2>/dev/null; then
-      echo ">> Pull successful!"
-      break
-    fi
-    sleep $((i * 3))
+    git fetch origin main 2>/dev/null || { sleep $((i * 3)); continue; }
+    git reset --hard origin/main 2>/dev/null || { sleep $((i * 3)); continue; }
+    echo ">> Pull successful!"
+    return 0
   done
   echo ">> Pull had issues, continuing with local data..."
 }
@@ -456,7 +454,69 @@ with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
 | WSL 内 `cmd.exe /c script.bat` | ❌ 不可靠 | UNC 路径问题，行为不同 |
 | 看代码推理 | ❌ 不可靠 | 编码/换行符问题只在执行时暴露 |
 
-### 13. 🔴 WSL UTF-8 中文输出回流到 cmd.exe 产生乱码幽灵命令（含 hermes.bat 变体）
+## 确认远程是否有你推的 commit（排查"我已推送但机器人说没拉到"）
+
+当用户说"我明明在家推送了"但机器人说远程没有，执行以下排查：
+
+```bash
+# 1. 查远程最新 HEAD
+git fetch origin main --quiet && git log origin/main -3 --oneline
+
+# 2. 查远程是否有你要的文件（确认推没推到）
+git ls-tree -r origin/main --name-only | grep -i "关键词"
+
+# 3. 如果远程没有 → 家里电脑可能没推成功
+#    常见原因：网络超时，没 push，推错了仓库（hermes-agent ≠ hermes-data）
+```
+
+## 实际同步架构（2026-05 真实状态 vs 文档差异）
+
+⚠️ **以下文档部分与实际用户配置存在偏差**。当前用户实际环境：
+
+| 项 | 文档记载 | 实际配置 |
+|----|---------|---------|
+| WSL 用户名 | `dmin` | `administrator` |
+| 主仓库位置 | `C:\Users\Admin\hermes-sync` | `C:\Users\Administrator\Desktop\HermesAgent` |
+| 旧仓库 | - | `C:\Users\Admin\hermes-sync`（仍存在，已通过物理覆盖同步） |
+| 拉取脚本结构 | `.bat` → `~/.hermes/sync-pull.sh` | `.bat` 自包含内联 bash 命令（无 shell 脚本） |
+| 推送脚本结构 | `.bat` → `~/.hermes/sync-push.sh` | `.bat` 自包含内联 bash 命令（无 shell 脚本） |
+| Windows 用户名 | `Admin` | `Administrator`（桌面 .bat 在此用户下） |
+| 双引擎重试 | Windows git.exe + WSL git 交替 | 纯 WSL SSH（不再需要 Windows git.exe fallback） |
+| 桌面 .bat 编码 | CRLF 纯 ASCII | 当前脚本含 emoji/线框字符（cmd 实测稳定） |
+
+**结论**：`~/.hermes/sync-push.sh` 和 `~/.hermes/sync-pull.sh` **不存在**。所有逻辑在 .bat 内联实现。后续维护时注意路径用 `Administrator` 而非 `Admin`。
+
+## Git Pull 分叉修复
+
+### 根因（2026-05-18 实际案例）
+
+用户在 `Hermes同步-拉取.bat` 中执行 `git pull`，但本地分支与远程分叉（因为多台电脑各自有 commit），git 提示：
+```
+fatal: Need to specify how to reconcile divergent branches.
+```
+
+**根本解决方案**: 用 `git fetch origin main && git reset --hard origin/main` 替代 `git pull origin main`：
+```bash
+# ✗ 脆弱 — 分叉就死
+git pull origin main --rebase
+
+# ✓ 健壮 — 无条件对齐远程（本地仓库只是镜像，数据在上游）
+git fetch origin main && git reset --hard origin/main
+```
+
+**前提**: 这个仓库的设计原则是"GitHub 是唯一真相源"，本地仓库只是镜像中转站。如果本地有未推送的重要改动，先 `push` 再拉取，或用 cherry-pick 恢复。
+
+### 预防性配置
+
+```bash
+# 设置全局/本地 pull.rebase=true，避免下次 pull 再问
+git config --global pull.rebase true
+git config pull.rebase true   # 当前仓库
+
+# 验证
+git config pull.rebase
+# → true
+```
 
 ### 14. 🔴 `git pull` 遇到本地脏文件直接拒绝（Pull script 核心 Bug）
 
@@ -626,11 +686,21 @@ Exclusion rules (`*`) must come BEFORE whitelist rules (`!xxx`):
 | `<Owner>` | GitHub owner | `jsxuaijun-art` |
 | `<Repo>` | Sync repo | `hermes-data` |
 
+## New Reference Files (2026-05-18)
+
+- `references/bat-scripts-inline-2026-05.md` — 当前实际使用的内联版 .bat 脚本（架构差异 vs 文档标准版）
+- `references/verify-remote-push.md` — 排查"已推送但远程没有"的工作流
+- `references/divergent-branches-case-2026-05-18.md` — 分叉分支导致 `git pull` 失败的实际案例
+
+## New Reference Files (2026-05-20)
+
+- `references/agent-created-skills-sync-workflow.md` — AI Agent 在对话中创建技能后，如何同步到 Windows Git 仓库的完整工作流（WSL skills/ → HermesAgent git repo）
+
 ## Heritage Reference Files
 
-The following were preserved from the v1 (`hermes-agent-sync`) skill, now archived. They contain session-specific examples and diagnostic records that may be useful for troubleshooting:
+> The following was preserved from the v1 (`hermes-agent-sync`) skill, now archived. It contains session-specific examples and diagnostic records that may be useful for troubleshooting:
 
-- `references/heritage/batch-scripts-v1.md` — Full V1→V2.1 batch script template evolution with encoding pitfalls
+- `references/heritage/batch-scripts-v1.md`
 - `references/heritage/office-pc-diagnostic.md` — Office PC environment check (Ubuntu 24.04, Administrator user)
 - `references/heritage/office-pc-batch-examples.md` — Office PC batch file examples with error handling (old V1 format, for reference)
 - `references/heritage/multi-machine-merge.md` — Multi-PC git merge mechanics and conflict resolution walkthrough

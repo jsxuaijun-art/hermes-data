@@ -11,7 +11,7 @@ trigger: >-
 metadata:
   hermes:
     tags: [tax-planning, corporate-structure, compliance, entity-restructuring, case-methodology]
-    related_skills: [coze-tax-agent-prompt, reference-material-integration]
+    related_skills: [coze-tax-agent-prompt, reference-material-integration, compliant-accounting]
 ---
 
 # 企业架构重组·税务筹划·合规方案 方法论
@@ -104,7 +104,9 @@ graph TD
 | 分公司就是总公司的延伸 | ✅ 但不等于可跨市汇总 | 国税2012年57号公告 |
 | 子公司亏损可以抵母公司利润 | ❌ 独立纳税，不能互抵 | 企业所得税法第52条 |
 | 同城分公司必须独立核算 | ❌ 可申请非独立核算 | 省级税务机关规定 |
-| 个体户注销不用管差额 | ❌ 注销查账可能触发补税 | 税收征管法 |
+- 个体户注销不用管差额 | ❌ 注销查账可能触发补税 | 税收征管法 |
+| 股东干活可以不发工资 | ❌ 实质重于形式，事实劳动关系可能被认定 | 劳动合同法+社保法 |
+| 股东不交社保可以发工资 | ❌ 发工资即建立劳动关系，强制参保 | 社会保险法第58条 |
 
 ---
 

@@ -70,8 +70,66 @@ Only use local extraction when: the file is local, web_extract fails, or you nee
 
 **Decision**: Use pymupdf unless you need OCR, equations, forms, or complex layout analysis.
 
+**⚠️ Quick first check — mutool (pre-installed on most Linux)**: Before installing anything, try:
+```bash
+which mutool && mutool draw -F text document.pdf
+```
+If `mutool` exists, it extracts text from text-based PDFs instantly with zero install. See the `mutool` section below for full usage.
+
 If the user needs marker capabilities but the system lacks ~5GB free disk:
 > "This document needs OCR/advanced extraction (marker-pdf), which requires ~5GB for PyTorch and models. Your system has [X]GB free. Options: free up space, provide a URL so I can use web_extract, or I can try pymupdf which works for text-based PDFs but not scanned documents or equations."
+
+---
+
+## mutool (mupdf-tools) — Zero-dependency Fallback
+
+**Best for**: Quick text extraction when pip install fails or network is unavailable.
+
+`mutool` comes from the `mupdf-tools` package and is often pre-installed on Ubuntu/Debian. If missing:
+```bash
+sudo apt install mupdf-tools -y
+```
+
+### Text Extraction
+```bash
+# Extract all text
+mutool draw -F text document.pdf
+
+# Output to file
+mutool draw -F text -o output.txt document.pdf
+
+# Specific pages (0-indexed: 0-4 = pages 1-5)
+mutool draw -F text document.pdf 0-4
+```
+
+### Other Operations
+```bash
+# Info (pages, metadata)
+mutool info document.pdf
+
+# Convert page to image (PNG)
+mutool draw -o page-%d.png document.pdf
+
+# Merge PDFs
+mutool merge -o merged.pdf input1.pdf input2.pdf
+```
+
+### Comparison to pymupdf & marker-pdf
+
+| Aspect | mutool | pymupdf | marker-pdf |
+|--------|--------|---------|------------|
+| **Install size** | ~5MB | ~25MB | ~3-5GB |
+| **Pre-installed?** | Often ✅ | ❌ | ❌ |
+| **Network needed?** | Only if not pre-installed | pip install | pip + model download |
+| **Text-based PDF** | ✅ | ✅ | ✅ |
+| **Scanned PDF (OCR)** | ❌ | ❌ | ✅ |
+| **Speed** | Instant | Instant | Slow |
+
+### Pitfall: mutool output is unformatted text
+`mutool draw -F text` dumps text in reading order with minimal layout — no tables, no formatting. Use only for content extraction (searching, reference material), not for layout-preserving extraction. For layout-sensitive work, use pymupdf or marker-pdf.
+
+### Pitfall: Not installed — don't assume
+Always test with `which mutool` first. Some Ubuntu minimal/headless installs omit it. Install takes 5 seconds via `apt`.
 
 ---
 
@@ -331,6 +389,7 @@ For complex PDFs (XObject/3Tr approach), see `references/pdf-watermark-advanced.
 
 ## Notes
 
+- **Before reporting "can't extract this PDF"**: check what tools are already on the system (`which mutool`, `pip list | grep pymupdf`, `which tesseract`) and search available skills first. Don't immediately tell the user it's impossible — the right tool may already be installed or in a skill you haven't loaded.
 - `web_extract` is always first choice for URLs
 - pymupdf is the safe default — instant, no models, works everywhere
 - marker-pdf is for OCR, scanned docs, equations, complex layouts — install only when needed

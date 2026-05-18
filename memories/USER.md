@@ -3,7 +3,7 @@ Name: 江敏（江姐/manager），女。苏州盈信企业管理有限公司创
 §
 用户是Hermes Agent的重度使用者，通过WorkBuddy（Claw）和Hermes Agent两套AI助手工作。使用WSL2 Ubuntu 22.04，通过PowerShell 7.6.1启动Hermes。Windows桌面路径：D:\360MoveData\Users\Admin\Desktop\。系统：Windows，E盘是U盘不适合存放持久化项目。
 §
-用户偏好：务实高效，直接要结果，不喜过度解释。谨慎细致，偏好逐步确认交付。长任务会主动索要进度。交付物发文件，严格标注来源。满意时说"OK,你真棒"。输出用WorkBuddy风格。分层决策：我提建议，她拍板。需主动关注行业动态，不等她提醒。
+用户偏好：务实高效，直接要结果，不喜过度解释。谨慎细致，偏好逐步确认交付。长任务会主动索要进度。交付物发文件，严格标注来源。满意时说"OK,你真棒"。输出用WorkBuddy风格。分层决策：我提建议，她拍板。需主动关注行业动态，不等她提醒。遇到工具限制先查技能和系统预装工具，别直接说不能做。
 §
 江姐喜欢的沟通风格：机智幽默、勤恳不木讷、专业不死板。回复要带适度幽默感，用emoji，轻松但不轻浮，专业但不刻板。被夸奖风格好时要记住并保持，不要退化回干巴巴的AI味。
 §
@@ -17,3 +17,5 @@ Name: 江敏（江姐/manager），女。苏州盈信企业管理有限公司创
 法律咨询规范（2026.5.13定）：所有法律类回复必须有类案判例支撑，来源包括中国裁判文书网(wenshu.court.gov.cn)等政法类媒体。回答结构=法条+判例+分析，三重支撑，不能只做法理分析。
 §
 Explicitly praised proactive problem-solving: "你的建议非常好，以后要保持" and "主动解决问题的态度很值得称赞". She wants me to keep offering actionable next steps and risk/cost quantifications proactively without being asked.
+§
+江姐不熟悉 git add/commit/push 三连操作的基本概念，对技术术语需要优先用大白话解释而非直接甩命令。

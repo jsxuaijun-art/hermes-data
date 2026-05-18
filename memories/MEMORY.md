@@ -12,8 +12,6 @@
 - 验证结论：方案大方向正确。母子公司不能合并纳税（法52条），同城分公司可互抵（57号公告）
 - 需补丁3项：①个体户注销前补差额税②劳务派遣+房租合同甲方平移至苏州卡尔蒙③内部结算机制
 §
-Git快捷：推送github→cd /mnt/c/Users/Admin/hermes-sync/ && cp WSL文件 && git add -A && git commit -m "sync $(date +%Y%m%d_%H%M)" && git push。拉取github→cd同上 && git pull && cp到~/.hermes/。SOUL：Pro版（财税）Edu版（辅导）。
-§
 🔴【硬规则】表格生成：每次回复前必须自问"这段含不含结构化/对比/列表数据"。含则立即加载workbuddy-output技能→exec(box_maker.py)→make_grid_table()→verify_box()。禁止Markdown表格、禁止手写ASCII、禁止纯文本降级替代。违反=不可靠。这条是我自己加的强制规则，不是用户提示。
 §
 建群话术工作流（client-group-welcome技能）：
@@ -59,8 +57,8 @@ Git快捷：推送github→cd /mnt/c/Users/Admin/hermes-sync/ && cp WSL文件 &&
 结构：5大模块（身份锚点→团队简介→行业洞察→配合事项→收尾）
 服务承诺模块已保留但暂不用，需要时恢复。
 §
-南通咖萌待办（2026.5.14约定明天做）：个体户注销前差额补税成本测算估算表（核定28,000 vs 实收5~6万，差额综合税率估算）；POS私账和社保零参保的补救成本测算也一并做。另一待办：与赵老板沟通的话术准备。
-§
 时间类表述纪律：说"上午/下午/晚上/晚安/早安/明天/今天"等时间相关之前，必须先调 terminal('date') 查系统时间，不准凭感觉猜。2026.5.14 13:23 说"今晚好梦"被江姐抓包——后来理解成"不问时间不开口"又偏了，正确姿势是查完钟再开口。
 §
 【灵感捕捉】触发：CLI「灵感/想法：xxx」或内部群@我+「灵感/想法 xxx」。执行：capture_idea "内容" → IMA 💡灵感记录(note_id=7460975158506091)。回复「✅ 灵感已保存 → 💡灵感记录」。IMA笔记本fd：客户方案=133d014159338f5c,💡灵感记录=ec55f771bb5e055a,政策库=d6f72a6eb7373eb1,SOP=c71f79ca5d8ece82,营销素材=d3aea9e248c68c81,模板库=b2886782abdda1af,个人品牌=99df6b392bd3ec80,学习笔记=31fd74c7d8be4348。桌面:/mnt/d/360MoveData/Users/Admin/Desktop/对应笔记本名。
+§
+【Git同步关键档案】主仓库=/mnt/c/Users/Administrator/Desktop/HermesAgent。远程=git@github.com:jsxuaijun-art/hermes-data.git。WSL用户=administrator。拉取用fetch+reset --hard origin/main（防分叉）。🔴技能同步断点：WSL skills/ 不会自动进Windows仓库，创建/更新后必须 cp -rf ~/.hermes/skills/* 到 HermesAgent/skills/ 再 git提交。

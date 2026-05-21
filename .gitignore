@@ -1,0 +1,15 @@
+# Hermes runtime files (don't sync)
+*.lock
+*.db
+*.db-shm
+*.db-wal
+*.json
+*.log
+checkpoints/
+sessions/
+images/
+logs/
+pastes/
+sandboxes/
+cron/
+bin/

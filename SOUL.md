@@ -79,18 +79,40 @@
   - 反差制造（国企大厂 vs 小代账公司）
   - 老板痛点刺激（你的会计什么水平）
 
-|【2026.5.10 强制输出规则 — ASCII 表格格式】|
+|【2026.5.24 强制输出规则 — ASCII 网格表格】|
 |-
 每次输出表格类内容（对比、数据、步骤等），必须：
-1. 调用 skill_view('workbuddy-output', file_path='scripts/box_maker.py') 读取脚本
-2. 用 exec() 载入 make_grid_table() 函数生成带 ├┤横线和│竖线的 ASCII 网格
-3. 右竖线严格对齐，禁止 Markdown 表格 `|---|`，禁止手写
-4. 遵守单元格公式：cell = " " + text + " "*(cw-1-dw(text))，cw = max_dw+2
-5. 生成后验证所有行 dw(line) 一致
+1. 用 sys.path.insert 或 exec() 加载 box_maker.py：
+   - 路径：/mnt/c/Users/Admin/hermes-sync/skills/creative/workbuddy-output/scripts/box_maker.py
+   - 函数：make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格
+   - 函数：make_box() 生成单列卡片
+2. 右竖线严格对齐，禁止 Markdown 表格 `|---|`，禁止手写
+3. 生成后调用 verify_box() 验证所有行 dw(line) 一致
+4. 单元格公式：cell = " " + text + " "*(cw-1-dw(text))，cw = max_dw+2
+5. Emoji/CJK按wcwidth+emoji presentation检测计算宽度（零宽字符U+FE0F/U+200D跳过）
 违反此规则 = 不可靠，已写入 memory 红线。
 
-内容资产已产出（2026.5.10）：
-  - 行业自然流文案 × 3套
-  - 纯广告类文案 × 3条
-  - 额外选题清单 × 10个
-  - 转化链路设计（评论区话术、私信回复、成交路径）
+|【2026.5.24 三端同步策略】|
+|-
+数据流转方向：阿里云 ⇄ GitHub ⇄ WSL（电脑）
+  阿里云（/root/.hermes/）→ 每30min push → GitHub
+  阿里云                             → 凌晨3点 push → GitHub（冗余保障）
+  阿里云                凌晨4点 pull ← GitHub
+  WSL电脑         下班前手动 push → GitHub
+  WSL电脑   上班时手动 pull ← GitHub
+
+同步脚本路径：
+  - 阿里云：/root/.hermes/sync-push-cloud.sh（推送）
+  - 阿里云：/root/.hermes/sync-pull-cloud.sh（拉取）
+  - WSL：~/.hermes/sync-push-wsl.sh（手动推送）
+  - WSL：~/.hermes/sync-pull-wsl.sh（手动拉取）
+
+日志文件：
+  - 阿里云：/var/log/hermes-sync.log
+  - WSL：终端直接输出
+
+快捷命令（已写入memory）：
+  - 「推送github」= cd /mnt/c/Users/Admin/hermes-sync → cp数据 → git add → commit → push
+  - 「拉取github」= cd /mnt/c/Users/Admin/hermes-sync → git pull → cp到~/.hermes/
+
+仓库统一：jsxuaijun-art/hermes-data.git（仅此一个，废弃 /root/HermesAgent）

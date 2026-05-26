@@ -1,0 +1,137 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "AccountingService",
+      "@id": "https://【域名】",
+      "name": "【公司全称，如：苏州盈信企业管理有限公司】",
+      "alternateName": "【公司简称，如：盈信财税】",
+      "description": "【120-160字简介：地域+业务范围+核心差异化卖点】",
+      "url": "https://【域名】",
+      "telephone": "【电话】",
+      "email": "【邮箱】",
+      "foundingDate": "【成立年份】",
+      "founder": {
+        "@type": "Person",
+        "name": "【创始人姓名】",
+        "jobTitle": "【创始人职称】",
+        "description": "【创始人简介】",
+        "image": "https://【域名】/【照片路径】",
+        "alumniOf": {
+          "@type": "CollegeOrUniversity",
+          "name": "【毕业院校】"
+        },
+        "worksFor": {
+          "@type": "AccountingService",
+          "name": "【公司全称】"
+        },
+        "knowsAbout": "【专业领域，如：代理记账，税务合规，公司注册，高端会计服务，企业架构】"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "【详细地址】",
+        "addressLocality": "【城市，如：苏州】",
+        "addressRegion": "【省份，如：江苏】",
+        "postalCode": "【邮编】",
+        "addressCountry": "CN"
+      },
+      "areaServed": ["【覆盖城区1】", "【覆盖城区2】"],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "财税服务",
+        "itemListElement": [
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "公司注册"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "代理记账"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "税务合规审查"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "高端会计服务"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "公司变更"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "公司注销"}}
+        ]
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "【评分，如4.9】",
+        "bestRating": "5",
+        "ratingCount": "【评价数】",
+        "reviewCount": "【评论数】"
+      },
+      "memberOf": {
+        "@type": "Organization",
+        "name": "【协会/联盟名称】"
+      },
+      "sameAs": [
+        "https://www.zhihu.com/people/【知乎ID】",
+        "https://www.douyin.com/user/【抖音ID】"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://【域名】/#website",
+      "url": "https://【域名】",
+      "name": "【公司全称】",
+      "description": "【一句话描述】",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://【域名】/search.asp?keyword={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://【域名】/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "注册公司要多久？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州注册公司一般需要5-10个工作日，包括核名、提交材料、领取营业执照、刻章备案等环节。其中核名1-2个工作日，材料审核3-5个工作日。加急通道可缩短至3-5个工作日。建议提前准备好公司名称（准备3-5个备选）、经营范围、注册资本、法人股东身份信息。注册完成后还需办理银行开户、税务登记等后续事项。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "代理记账一年多少钱？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州代理记账费用根据企业规模和开票量不同：小规模纳税人通常2000-4000元/年，一般纳税人4000-8000元/年。价格差异取决于每月票据量、开票频率、是否需要上门服务以及会计的专业等级。选择时除了价格，更要看会计资质——有高级会计师带队的团队在税务合规和风险防控方面更有保障。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "公司注销麻烦吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "公司注销确实比注册复杂，流程包括税务注销、工商注销、银行账户注销、印章缴销等环节，通常需要1-3个月。其中最难的是税务注销环节，需要完成所有未申报税种、缴清欠税罚款、注销发票系统。很多老板因为嫌麻烦选择不注销，导致被列入经营异常名录甚至严重违法失信名单，影响法人个人征信和后续注册公司。建议找专业机构代办注销。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "怎么选靠谱的代账公司？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "选代账公司看三个核心指标：① 会计资质——公司是否有高级会计师带队？据财政部代理记账机构管理系统数据，全国持证代账机构中有高级会计师的不足0.5%。② 客户口碑——转介绍率高不高？转介绍率超过50%说明服务质量过硬。③ 服务年限——成立5年以上说明运营稳定。另外建议查一下该公司是否有行政处罚记录或经营异常信息。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "小微企业常见的税务风险有哪些？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "小微企业最常踩的三个税务坑：① 发票管理不规范——未及时认证进项发票、虚开发票、发票丢失等，轻则罚款重则移送税务稽查。② 收入不完整——微信支付宝收款不申报、私户收款不申报，税务局通过大数据比对很容易发现异常。③ 零申报过长——连续3个月以上零申报会被税务局重点监控，可能触发实地核查。建议每季度做一次税务健康检查，防患于未然。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "苏州注册公司哪个区政策好？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州各区注册公司各有优势：苏州工业园区对科技创新企业有租金补贴和税收优惠，高新区适合制造业和外资企业，吴江区成本相对较低适合初创企业，姑苏区适合服务业和文创企业。建议根据公司行业性质和预算综合选择。无论选哪个区，注册材料和要求基本一致，专业代办机构可以一站式服务。"
+          }
+        }
+      ]
+    }
+  ]
+}

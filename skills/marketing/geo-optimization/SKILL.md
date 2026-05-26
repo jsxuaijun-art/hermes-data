@@ -12,6 +12,8 @@ triggers:
   - User mentions 315黑帽GEO or 品牌知识图谱 or 场景卡位
   - User asks about GEO for 财税行业 / 代理记账 / 企业服务
   - User wants GEO 实施路线图 or 品牌诊断
+  - User asks about 知乎内容策略 for GEO
+  - User wants to create 品牌文 or 场景文 for AI search
 ---
 
 # GEO（生成式引擎优化）方法论
@@ -276,7 +278,10 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
 - [ ] 对比竞品在 AI 中的表现
 - [ ] 检查官网是否有结构化数据（Schema.org）
 
-### 优化阶段
+### 优化阶段（基建先行）
+- [ ] **所有权验证** — 下载 GSC 验证 HTML 文件，FTP 传至网站根目录，点击「验证」。不验证则无法获取索引/搜索数据/报错详情。
+  - ⚠️ **DNS TXT 验证可能失败** — 如果根域名已存在 CNAME 记录（apex CNAME），TXT 记录会被 DNS 规范屏蔽（RFC 1034）。此时切换到「HTML 文件验证」即可绕开。
+  - 详见 `references/dns-ownership-verification.md`（含双方案+陷阱清单）
 - [ ] 官网添加 JSON-LD 结构化数据（Organization, FAQ, Product）
 - [ ] 在权威媒体/行业媒体布局品牌内容
 - [ ] 建立"可信来源密度"——同一信息在多个 T1 信源出现
@@ -305,11 +310,15 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
 本技能包含以下 prompt 模板文件（见 `references/` 和 `templates/` 目录）：
 
 | 文件 | 用途 | 适用场景 |
-|------|------|---------|
+|:-----|:-----|:---------|
 | `templates/enterprise-prompt.md` | GEO 企业信源收集助手 | 帮客户整理公司资料，输出 GEO 标准文档 |
 | `templates/brand-prompt.md` | 品宣文章 EEAT 提示词 | 按 Google EEAT 标准生成品牌推广文章 |
 | `templates/case-prompt.md` | 标杆案例复盘提示词 | 输出带数据对比表格的客户案例 |
-| `references/research-notes.md` | 艾瑞报告 + 趣搜白皮书核心发现 | 行业数据、市场规模、服务商生态 |
+| `references/jsonld-website-schema.md` | 财税官网 JSON-LD 结构化数据实操手册 | 为公司官网添加 Schema.org 标记（AccountingService / WebSite / FAQPage），含代码模板+字段详解+QCNET99/ASP 双部署方案 |
+| `references/zhihu-geo-strategy.md` | 知乎 GEO 内容策略手册 | 财税行业 1+3 文章矩阵、标题优化公式、品牌植入 3 安全位、部署节奏 |
+| `references/cold-start-tracker.md` | GEO 冷启动项目进度追踪 | 记录盈信GEO冷启动各阶段完成进度，便于断点续传。每次推进后更新此文件 |
+| `references/dns-ownership-verification.md` | Google Search Console 所有权验证实战手册 | 根域名 CNAME + TXT 冲突时的 HTML 文件验证方案，DNS 陷阱与救援步骤 |
+| `templates/jsonld-accounting-firm-full.json` | JSON-LD 三合一完整模板 | 含 AccountingService + WebSite + FAQPage 三合一 @graph 模板，带 Founder Person 嵌套、SearchAction、6 个 FAQ 问题，可直接替换字段后使用 |
 
 ---
 
@@ -341,12 +350,24 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
 
 **Step 2：构建信源资产**
 - T1 信源：企业官网（yingxinkuaiji.com）结构化优化 — 加 Schema.org 标记（Organization, LocalBusiness, FAQ）
+  - **推荐 Schema 类型组合**：`AccountingService`（首选，Google 有专有 schema，语义最精准） + `WebSite`（搜索功能） + `FAQPage`（问答块）。不要只用泛化 `Organization`。
+  - **⚠️ 2026.5.26 重要教训：`AccountingService` 属于 `LocalBusiness` 子类型，Google 要求必填 `image` 字段** — Rich Results Test 报"未填写字段 image"。加了就消失。
+  - **⚠️ @id/url 协议必须与网站实际协议一致** — 网站 `http://` 则 JSON-LD 必须也写 `http://`，否则协议不匹配导致识别异常。
+  - 完整代码模板见 `templates/jsonld-accounting-firm-full.json`，字段详解 + 双部署方式（QCNET99 / 纯 ASP）见 `references/jsonld-website-schema.md`
+  - **🚨 2026.5.26 重要教训：部署前先检查线上已有 JSON-LD** — `curl -s http://域名 | grep 'application/ld+json'`，如果已有则不要新增第二个块。参见 `references/jsonld-website-schema.md`。
+  - **🚨 2026.5.26 重要教训：PC/手机双版陷阱** — 中文 ASP 网站常有 PC 版和手机版两套独立代码。Google Rich Results Test 默认移动端 UA，只会抓手机版。如果只改 PC 版，手机版没 JSON-LD 也没更新地址 → Google 返回「未检测到任何内容」→ 误判优化失败。详情见 `references/jsonld-website-schema.md` 的「PC/手机双版本部署」章节。
+  - **🚨 2026.5.26 重要教训：robots.txt 格式陷阱** — `Allow: *` 是无效语法（会被视为允许路径名为 `*` 的资源），正确是 `User-agent: *` + `Disallow:`。IIS 站的 robots.txt 可能在 FTP 根目录和 `wwwroot/` 子目录各一个，需确认线上返回哪个。
+  - **🚨 2026.5.26 重要教训：「无法编入索引」溯源** — Rich Results Test 报「失败：Robots.txt 无法访问」不一定真是 robots.txt 的问题，更大概率是测试 IP 被服务器防火墙拦截。诊断为 `curl` 模拟 Googlebot UA → 200 即通。改用 Search Console「网址检查」替代 Rich Results Test。
+- **部署后验证**：① `curl -s http://域名/mobile/ | grep -c 'ld+json'`（手机版）② `curl -s http://域名/index.asp | grep -c 'ld+json'`（PC版）③ `curl -s http://域名 | grep -o '
 - T1 信源：在权威平台发布内容（知乎专栏、百度百科词条、行业协会官网、地方政府财税平台）
 - T2 信源：抖音/视频号/小红书内容矩阵布局（确保多平台品牌信息表述一致）
-- 关键：所有平台统一核心数据口径（16年经验、1000+客户、90%转介绍、高级会计师）
+- 关键：所有平台统一核心数据口径（24年经验、1000+客户、90%转介绍、高级会计师）
+
+**非技术人员操作交付原则：**
+当用户说"我是外行人"或"我不会操作"时 → 每次只给一个动作（第①步点XX→看到 XX 界面→告诉 AI 结果），等用户确认后再给下一步，不要一次性甩整套操作步骤。动作描述精确到按钮名称、菜单层级、搜索关键词。用"搜XX"替代抽象描述。
 
 **Step 3：内容工程**
-- 核心标签：高级会计师（稀缺性）、16年老公司（稳定性）、1000+客户（规模）、90%转介绍（口碑）
+- 核心标签：高级会计师（稀缺性）、2001年入行/24年老公司（稳定性）、1000+客户（规模）、90%转介绍（口碑）
 - 结构化内容：FAQ 格式覆盖老板常见问题（"注册公司要多久""代账多少钱""税务风险怎么查"）
 - 场景化内容：苏州老板"注册公司选哪家""代理记账对比""公司注销流程"
 - 数据佐证：客户案例量化（服务阿里系/京东/高合等大客户）
@@ -397,7 +418,7 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
 | 法则 | 说明 | 操 作 |
 |------|------|------|
 | **引导式补全** | AI 会追问补充信息——地区、知名客户、锦旗文字、同行对比 | 在 T1 信源全面覆盖追问信息，减少 AI 的"信息盲区" |
-| **数据密度决定质量** | 故事型数据 > 纯数据 > 纯描述 | 用"孙总 16 年 10 家公司"替代"累计服务 1000+ 客户" |
+| **数据密度决定质量** | 故事型数据 > 纯数据 > 纯描述 | 用"孙总 24 年 10 家公司"替代"累计服务 1000+ 客户" |
 | **交叉验证闭环** | 财政部官网 + 天眼查 + 人社局多平台互证 | 同一信息在 N 个独立信源出现 → 信任度指数级上升 |
 | **平台偏好匹配** | 豆包偏好对比盘点、引用原文、自嘲式开场 | 提供完整原文文本和竞品策略 |
 | **数据出处标注** | AI 会注明"据财政部官网数据显示" | 所有数据附带官方查询渠道（dljz.mof.gov.cn 等） |
@@ -411,7 +432,7 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
 **财税行业应用模板：**
 - 纵向：百万同行 vs 万分之二点五通过率
 - 横向：挂靠大企业评审 vs 自有业务成果独立申报
-- 深度：短期服务 vs 16 年深耕 + 90% 转介绍
+- 深度：短期服务 vs 24 年深耕 + 90% 转介绍
 - 广度：单一业务线 vs 全生命周期双城覆盖
 - 验证：单信源自述 vs 财政部+天眼查+人社局多平台互证
 

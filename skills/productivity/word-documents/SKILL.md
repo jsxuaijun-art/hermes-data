@@ -287,3 +287,260 @@ import re, zipfile, xml.sax.saxutils
 You have a large Markdown report and need both .md and .docx deliverables in a minimal environment without python-docx.
 
 See `references/markdown-to-word-converter.md` for the full implementation.
+
+---
+
+## Advanced: Replace Markdown Pseudo-Tables with Real Word Grid Tables in Existing .docx
+
+When an existing .docx file contains text-based pseudo-tables (Markdown `|---|` pipe tables, ASCII art grids like `┌┬┐│├┼┤`, or any text rendered as monospaced columns), replace them with proper Word grid tables using pure Python stdlib (no python-docx required).
+
+### Why this is needed
+
+- The user's `.docx` files were **originally generated from Markdown** and still contain embedded Markdown pipe tables as literal text
+- Word does not render these as tables — they appear as ugly monospaced text blocks
+- python-docx may not be available in the environment (PEP 668, no network, WSL)
+- Solution: manipulate the `.docx` (which is a ZIP of XML files) directly via string operations
+
+### Core Technique
+
+```python
+import zipfile, re, copy
+from xml.sax.saxutils import escape
+
+def replace_markdown_tables_in_docx(in_path, out_path):
+    """
+    Read a .docx file, find text-based pipe tables in paragraphs,
+    and replace them with real Word grid tables.
+    """
+    with zipfile.ZipFile(in_path, 'r') as zin:
+        doc_xml = zin.read('word/document.xml').decode('utf-8')
+
+    # 1. Parse the document body
+    body_match = re.search(r'<w:body>(.*?)</w:body>', doc_xml, re.DOTALL)
+    body_content = body_match.group(1)
+
+    # 2. Find paragraph blocks containing pipe-table-like content
+    #    A pipe table paragraph looks like: <w:p>...<w:t>| Col1 | Col2 |</w:t>...</w:p>
+    #    Tables span multiple consecutive <w:p> elements
+
+    def parse_pipe_table(lines):
+        """Parse pipe-table lines into headers + rows + column widths."""
+        # lines: list of text strings (stripped)
+        # Find separator line: |---|---|
+        sep_idx = None
+        for i, line in enumerate(lines):
+            if re.match(r'^[\s\|:\-]+$', line) and '---' in line:
+                sep_idx = i; break
+        if sep_idx is None: return None
+
+        header_text = lines[0]
+        data_lines = lines[sep_idx+1:]
+
+        def split_row(text):
+            return [c.strip() for c in text.strip().strip('|').split('|')]
+
+        headers = split_row(header_text)
+        # Strip separator dashes and leading/trailing pipes, then split
+        sep_parts = [c.strip() for c in lines[sep_idx].strip().strip('|').split('|')]
+        col_widths = [max(len(h) + 2, 6) for h in headers]  # min width
+
+        rows = [split_row(l) for l in data_lines if l.strip()]
+
+        return headers, rows, col_widths
+
+    # 3. Build a Word grid table XML snippet
+    def make_table_xml(headers, rows, col_widths=None):
+        """Generate <w:tbl> XML from parsed table data."""
+        if col_widths is None:
+            col_widths = [2000] * len(headers)
+
+        # Table grid cols
+        grid_cols = ''.join(
+            f'<w:gridCol w:w="{w*200}" />' for w in col_widths
+        )
+
+        # Build rows
+        def make_cell(text, is_header=False):
+            # Bold for header
+            bold_xml = '<w:b/>' if is_header else ''
+            shading_xml = '<w:shd w:val="clear" w:color="auto" w:fill="1A3C6E"/>' if is_header else ''
+            return f'''<w:tc>
+              <w:tcPr><w:tcW w:w="2000" w:type="dxa"/>{shading_xml}</w:tcPr>
+              <w:p><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:eastAsia="微软雅黑"/><w:sz w:val="18"/>{bold_xml}</w:rPr><w:t xml:space="preserve">{escape(text)}</w:t></w:r></w:p>
+            </w:tc>'''
+
+        header_row = '<w:tr>' + ''.join(make_cell(h, True) for h in headers) + '</w:tr>'
+        data_rows = ''
+        for ri, row in enumerate(rows):
+            fill = 'F0F4FA' if ri % 2 == 1 else 'FFFFFF'
+            cells = ''
+            for ci, val in enumerate(row):
+                if ci < len(headers):
+                    shade = f'<w:shd w:val="clear" w:color="auto" w:fill="{fill}"/>'
+                    cells += f'''<w:tc>
+                <w:tcPr><w:tcW w:w="2000" w:type="dxa"/>{shade}</w:tcPr>
+                <w:p><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:eastAsia="微软雅黑"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">{escape(val)}</w:t></w:r></w:p>
+              </w:tc>'''
+            data_rows += '<w:tr>' + cells + '</w:tr>'
+
+        return f'''<w:tbl>
+      <w:tblPr>
+        <w:tblStyle w:val="Table Grid"/>
+        <w:tblW w:w="5000" w:type="dxa"/>
+        <w:tblBorders>
+          <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+          <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+          <w:insideH w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+          <w:insideV w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+        </w:tblBorders>
+        <w:tblLook w:val="04A0"/>
+      </w:tblPr>
+      <w:tblGrid>{grid_cols}</w:tblGrid>
+      {header_row}
+      {data_rows}
+    </w:tbl>'''
+
+    # 4. The tricky part: WORD中段落是XML结构，pipe table文本可能跨多个XML节点。
+    #   用段落分组法：找到连续的pipe table段落，整体替换成一个<table> XML块
+
+    # Strategy: extract all <w:p> blocks, group consecutive pipe-table paragraphs
+    para_pattern = re.compile(r'(<w:p\b[^>]*>.*?</w:p>)', re.DOTALL)
+    paras = para_pattern.findall(body_content)
+
+    # For each para, extract text content (strip XML tags)
+    def extract_text(p_xml):
+        texts = re.findall(r'<w:t[^>]*>([^<]*)</w:t>', p_xml)
+        return ''.join(texts).strip()
+
+    i = 0
+    new_parts = []
+    while i < len(paras):
+        para_text = extract_text(paras[i])
+
+        # Check if this paragraph starts a pipe table
+        if para_text.startswith('|') and para_text.count('|') >= 2:
+            # Collect consecutive pipe-table paragraphs
+            table_lines = []
+            j = i
+            while j < len(paras):
+                t = extract_text(paras[j])
+                if t.startswith('|') and t.count('|') >= 2:
+                    table_lines.append(t)
+                    j += 1
+                else:
+                    break
+
+            if len(table_lines) >= 2:  # at least header + separator
+                result = parse_pipe_table(table_lines)
+                if result:
+                    headers, rows, widths = result
+                    if headers and rows:
+                        new_parts.append(make_table_xml(headers, rows, widths))
+                        i = j
+                        continue
+
+        new_parts.append(paras[i])
+        i += 1
+
+    # 5. Reassemble body
+    new_body = ''.join(new_parts)
+    new_doc_xml = doc_xml.replace(body_content, new_body)
+
+    # 6. Write output .docx
+    with zipfile.ZipFile(out_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+        with zipfile.ZipFile(in_path, 'r') as zin:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename == 'word/document.xml':
+                    data = new_doc_xml.encode('utf-8')
+                zout.writestr(item, data)
+```
+
+### Known Issues & Debugging Guide
+
+#### Problem A: Namespace prefix injection (ns0:)
+**Symptom**: Word shows raw XML tags like `<w:tc><w:p>...</w:p></w:tc>` as literal text. Inspecting the XML reveals `ns0:` prefix on some tags.
+
+**Root cause**: When you use `lxml.etree.fromstring()` then `tostring()`, lxml may invent namespace prefixes for tags that reference namespaces not declared in the immediate fragment. `ns0:` appears when lxml sees a reference like `w:tr` but the `xmlns:w=` declaration is absent from the parsed fragment.
+
+**Fix**: Don't use lxml for docx manipulation. Use pure string operations (re + xml.sax.saxutils.escape) to build and splice XML. The docx XML namespace (`xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"`) must be declared on the `<w:tbl>` element itself, not assumed from ancestors.
+
+```python
+# ❌ BAD - lxml can inject ns0:
+table_elem = etree.fromstring(table_xml)
+body_elem.append(table_elem)  # tostring() may add ns0:
+
+# ✅ GOOD - pure string splice
+new_body = body_content.replace(old_paras_block, table_xml_block)
+```
+
+#### Problem B: Escaped angle brackets in output
+**Symptom**: `<w:tc>` appears as `&lt;w:tc&gt;` in the document.
+
+**Root cause**: Using `xml.sax.saxutils.escape()` on text that is already XML (table structure) — escaping the XML tags themselves.
+
+**Fix**: Apply escape() only to cell *content* strings (user data), NOT to the table XML skeleton:
+```python
+# ✅ GOOD
+cell_text = escape(user_data_string)  # ONLY user data
+table_xml = f'<w:tc><w:p><w:r><w:t>{cell_text}</w:t></w:r></w:p></w:tc>'  # XML is raw
+```
+
+#### Problem C: Table not recognized by Word
+**Symptom**: The table XML is present in the document.xml but Word renders it as raw text.
+
+**Fix**: Ensure the `<w:tbl>` element includes these critical prerequisites:
+1. **`<w:tblPr>`** with `<w:tblStyle w:val="Table Grid"/>` 
+2. **`<w:tblGrid>`** with `<w:gridCol>` elements matching column count
+3. Each `<w:tc>` must have `<w:tcPr><w:tcW>` with valid width
+4. Every `<w:p>` must be a child of `<w:tc>`, not directly under `<w:tr>`
+
+#### Problem D: AI-generated table XML from vision models
+**Symptom**: When asking a vision model to "read this table and reproduce it as Word XML", the model hallucinates column headers, omits rows, or invents data.
+
+**Fix**: The cell content must come from **reliable string extraction** (regex on the docx XML), not from LLM perception of the rendered paragraph text. Parse the pseudo-table text programmatically, then build the XML around the verified cell data.
+
+### Pitfalls
+
+1. **lxml namespace poisoning**: Never use lxml to build or splice docx XML fragments. The parent document has `xmlns:w=...` declared on the root, but lxml fragments parsed without that declaration get assigned synthetic prefixes (`ns0:`, `ns1:`, etc.) that break Word rendering.
+
+2. **Consecutive pipe-table detection**: The regex extracts ALL `<w:p>` blocks, then groups consecutive pipe-table paragraphs. This works because Markdown-style pipe tables are always contiguous in the original Markdown.
+
+3. **Column count mismatch**: If a row has fewer cells than the header, pad with empty strings. If more cells, truncate.
+
+4. **Header alignment from separator row**: The separator line (`|---:|:---|---:|`) may indicate column alignment in Markdown. For a basic replacement, alignment is optional — just use the headers string.
+
+5. **Nested tables**: Not supported. Pipe tables cannot be nested in Markdown, so the code assumes flat tables only.
+
+### When to use this technique
+
+- User has `.docx` files that were converted from Markdown and still contain pipe-table artifacts
+- python-docx is unavailable (PEP 668, no pip, minimal container, WSL without venv)
+- The document has 1-10 tables that need replacement (for 50+ tables, consider a batched approach)
+- You need to preserve the original document's formatting (fonts, margins, headers) outside the table regions
+
+### Verification
+
+```bash
+# Check table XML is well-formed
+python3 -c "
+import zipfile
+with zipfile.ZipFile('output.docx') as z:
+    xml = z.read('word/document.xml').decode()
+    print('Tables found:', xml.count('<w:tbl>'))
+    print('Paragraphs:', xml.count('<w:p>'))
+"
+
+# Quick visual check - extract first 500 chars of document body
+python3 -c "
+import zipfile, re
+with zipfile.ZipFile('output.docx') as z:
+    xml = z.read('word/document.xml').decode()
+body = re.search(r'<w:body>(.*?)</w:body>', xml, re.DOTALL)
+print(body.group(1)[:1000])
+" | head -30
+
+# Check file opens correctly
+ls -lh output.docx
+file output.docx  # should say 'Microsoft Word 2007+'
+```

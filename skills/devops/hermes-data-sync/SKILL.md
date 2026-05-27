@@ -527,6 +527,57 @@ pause
 - 它的特殊性：保留 `chcp 65001`（交互式终端需要UTF-8）和 `-- bash -c`（内联长命令），但必须额外加 `2>nul`
 - 已在线修复此文件（详见 `references/heritage/batch-scripts-v1.md`）
 
+### 16. 🔴 Rebase 自动合并选择旧版文件（最隐蔽的数据丢失）
+
+**场景**: Windows 仓库执行 `git pull --rebase` 时产生冲突，auto-merge 自动解决了冲突但**使用了远程旧版**，覆盖了 Hermes Agent 在 WSL `~/.hermes/skills/` 中修改过的文件。
+
+**典型发生在**: 先通过 Hermes CLI 修改了 skill 文件（WSL 侧），然后在 Windows 仓库手动 push 时触发 rebase。
+
+**症状**:
+- Rebase 报告 "Auto-merging ..." 并成功继续，但文件内容变成了旧版
+- 检查 git diff 发现应该有的改动（TSC五级、年份更新等）不见了
+- 这些改动在 WSL `~/.hermes/skills/` 中还在，但 Windows 仓库里已经被旧版覆盖
+
+**根本原因**: git auto-merge 在处理 `add/add` 冲突（双方都新增了同一文件）时，会选择它认为更合理的版本——但这不一定是你真正想保留的 WSL 版本。
+
+**恢复方案**: 从 WSL 的 `~/.hermes/skills/` 复制正确的修改版本到 Windows 仓库，然后继续 rebase：
+
+```bash
+# 1. 确认哪些文件被覆盖了
+# 查看 WSL 修改过的文件（保留的备份）
+ls -la ~/.hermes/skills/compliant-accounting/SKILL.md  # 示例
+
+# 2. 从 WSL 复制正确版本到 Windows 仓库
+cp -f ~/.hermes/skills/compliant-accounting/SKILL.md \
+  "/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md"
+
+# 重复所有被覆盖的文件...
+
+# 3. 标记已解决并继续 rebase
+git add -A
+GIT_EDITOR=true git rebase --continue
+```
+
+**预防措施**:
+- 推送到 Windows 仓库前，先在 WSL 侧执行 `git pull --rebase` 把远程变更合并进来
+- 或优先使用同步脚本（`Hermes同步-推送.bat`）而非手动 Windows 仓库操作
+- 当 Hermes CLI 创建/修改了 skill 后，**立即执行一次推送**，减少跨平台时间差
+- 若必须手动在 Windows 仓库操作，rebese 后验证关键 skill 文件的版本是否正确
+
+**验证命令**:
+```bash
+# 检查 Windows 仓库中的文件是否包含你期待的内容
+grep -c "TSC五级\|25年\|科班" "/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md"
+# 如果返回 0，说明文件被旧版覆盖了
+```
+
+**对比 WSL vs Windows 仓库版本**:
+```bash
+# 检查文件大小差异
+echo "WSL: $(wc -c < ~/.hermes/skills/compliant-accounting/SKILL.md)"
+echo "Git: $(wc -c < '/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md')"
+```
+
 ## 同步范围
 
 | 同步 | 不同步 |

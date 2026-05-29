@@ -1,7 +1,7 @@
 ---
 name: ftp-static-site-editing
 category: devops
-description: 纯静态/ASP/PHP 网站的 FTP 远程编辑工作流 — 下载→搜索→替换→上传→验证。适用于不具备 CMS 后台或数据库驱动的传统网站维护。覆盖批量搜索替换、JSON-LD 部署、密码特殊字符编码等实战场景。
+description: 纯静态/ASP/PHP 网站的 FTP 远程编辑 + 网页 CMS 后台操作工作流。覆盖 FTP 下载→搜索→替换→上传→验证，以及通过 Web 后台管理系统编辑内容。适用于具备简易 CMS 后台的传统网站维护。覆盖批量搜索替换、JSON-LD 部署、密码特殊字符编码等实战场景。
 triggers:
   - User wants to edit content on a static/ASP website
   - User provides FTP credentials for website maintenance
@@ -10,6 +10,8 @@ triggers:
   - FTP password contains special characters (* / % ! @ etc.)
   - Site is ASP static (non-QCNET99) on IIS
   - User says "改官网" or "网站内容更新"
+  - User provides website admin/backend login credentials
+  - User says "网站后台" or "后台登录"
   - User needs to bulk update contact info (address, phone) site-wide
   - User needs to verify domain ownership for Search Console/SEO/SSL
   - User asks to check DNS TXT record propagation
@@ -151,6 +153,35 @@ Search engines may merge or ignore duplicate schema blocks. Always maintain exac
 ### ⚠️ Timeout on large batch downloads
 
 FTP over curl is per-file and slow. For 15+ files, expect ~2-3 seconds per file. For bulk operations, consider lftp if available, or batch in groups.
+
+## Alternative Workflow: Web-based CMS Backend
+
+Some static-ASP sites also have a **web-based admin backend** (a thin CMS) for editing content without FTP. This is separate from database-driven CMS (covered by `db-website-content-mgmt`).
+
+### Discovery
+
+- Backend URL often follows patterns like `http://domain.com/admin/`, `http://domain.com/manage/`, or a custom path
+- Login page: typically user + password + captcha
+- Backend typically uses iframe frameset layout (left nav + main content area)
+
+### When to use FTP vs CMS
+
+| Scenario | Recommended | Why |
+|:---------|:------------|:----|
+| Global search-replace (bulk address/phone update) | FTP | Batch download + grep all files |
+| JSON-LD / Schema markup deployment | FTP | Requires editing ASP template files directly |
+| Site config (site name, meta keywords, copyright) | CMS | Has a dedicated config page |
+| Content pages (About Us, Services, Contact) | CMS | WYSIWYG editor, no code needed |
+| Add/edit articles (news, case studies) | CMS | Built-in article management |
+| URL structure, robots.txt, sitemap.xml | FTP | These are flat files, not managed by CMS |
+
+> **Rule of thumb:** Content changes → CMS. Structural changes → FTP.
+
+### Reference
+
+See `references/yingxin-cms-backend.md` for a detailed guide to the yingxinkuaiji.com ASP backend structure (menu navigation, page URLs, per-section editing instructions).
+
+---
 
 ## DNS Verification for Domain Ownership
 

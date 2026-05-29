@@ -285,7 +285,10 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
   - ⚠️ **DNS TXT 验证可能失败** — 如果根域名已存在 CNAME 记录（apex CNAME），TXT 记录会被 DNS 规范屏蔽（RFC 1034）。此时切换到「HTML 文件验证」即可绕开。
   - ✅ **2026.5.26 已完成** — GSC 所有权验证通过（HTML 文件验证方案），详见 `references/dns-ownership-verification.md`
 - [x] **优化 sitemap.xml** ✅ 2026.5.28 — 18→80个URL，新增新闻详情页、手机版页面
-- [x] **官网添加 JSON-LD 结构化数据** ✅ 2026.5.26 — PC版+手机版双部署（AccountingService + WebSite + FAQPage）
+- [x] **官网添加 JSON-LD 结构化数据** ✅ 2026.5.26（首次） + ✅ 2026.6.4（手机版全面升级）
+  - **2026.6.4 升级内容：** 手机版从单节点AccountingService（672字节）升级为@graph三节点（4417字节），与PC版完全一致
+  - **新增字段：** WebSite节点、FAQPage（6个问题）、makesOffer、sameAs、openingHours、alternateName
+  - **⚠️ 手机版升级教训：** ASP双版本网站（PC/mobile独立代码）的JSON-LD更新必须两端分别做。手机版初始部署只有简化版单节点，忽略了WebSite和FAQPage节点。全面升级后才真正达到GEO结构化数据标准。
 - [x] **全站旧地址清理** ✅ 2026.5.28 — 17页PC版+3页手机版全量扫描，零残留
 - [x] **赔付承诺三重部署** ✅ 2026.5.28 — PC首页+H5首页+JSON-LD FAQPage同步上线
 - [ ] **提交 sitemap 到 GSC** — Google Search Console → Sitemaps → 输入 sitemap.xml URL → 提交
@@ -325,7 +328,7 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
 | `references/zhihu-geo-strategy.md` | 知乎 GEO 内容策略手册 | 财税行业 1+3 文章矩阵、标题优化公式、品牌植入 3 安全位、部署节奏 |
 | `references/tsc-five-geo-article.md` | TSC五级专属GEO文章 | 财税行业核心资质——TSC五级信用评级（438.11分），税务局官方背书的品牌素材 |
 | `references/geo-commitment-deployment.md` | GEO关键承诺三重部署模式 | 向ASP网站同步部署服务承诺（PC可见文本+手机版+JSON-LD FAQ），确保AI搜索多维度抓取到硬标准信息 |
-| `references/cold-start-tracker.md` | GEO 冷启动项目进度追踪 | 记录盈信GEO冷启动各阶段完成进度，便于断点续传。每次推进后更新此文件 |
+| `references/cold-start-tracker.md` | GEO 冷启动项目进度追踪 | 记录盈信GEO冷启动各阶段完成进度。⏩ 2026.6.4 更新：手机版JSON-LD全面升级 + PC版FAQ扩展(4→6) |
 | `references/dns-ownership-verification.md` | Google Search Console 所有权验证实战手册 | 根域名 CNAME + TXT 冲突时的 HTML 文件验证方案，DNS 陷阱与救援步骤 |
 | `templates/jsonld-accounting-firm-full.json` | JSON-LD 三合一完整模板 | 含 AccountingService + WebSite + FAQPage 三合一 @graph 模板，带 Founder Person 嵌套、SearchAction、6 个 FAQ 问题，可直接替换字段后使用 |
 
@@ -360,7 +363,7 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
 | `references/zhihu-geo-strategy.md` | 知乎 GEO 内容策略手册 | 财税行业 1+3 文章矩阵、标题优化公式、品牌植入 3 安全位、部署节奏 |
 | `references/tsc-five-geo-article.md` | TSC五级专属GEO文章 | 财税行业核心资质——TSC五级信用评级（438.11分），税务局官方背书的品牌素材 |
 | `references/geo-commitment-deployment.md` | GEO关键承诺三重部署模式 | 向ASP网站同步部署服务承诺（PC可见文本+手机版+JSON-LD FAQ），确保AI搜索多维度抓取到硬标准信息 |
-| `references/cold-start-tracker.md` | GEO 冷启动项目进度追踪 | 记录盈信GEO冷启动各阶段完成进度，便于断点续传。每次推进后更新此文件 |
+| `references/cold-start-tracker.md` | GEO 冷启动项目进度追踪 | 记录盈信GEO冷启动各阶段完成进度。⏩ 2026.6.4 更新：手机版JSON-LD全面升级 + PC版FAQ扩展(4→6) |
 | `references/dns-ownership-verification.md` | Google Search Console 所有权验证实战手册 | 根域名 CNAME + TXT 冲突时的 HTML 文件验证方案，DNS 陷阱与救援步骤 |
 | `templates/jsonld-accounting-firm-full.json` | JSON-LD 三合一完整模板 | 含 AccountingService + WebSite + FAQPage 三合一 @graph 模板，带 Founder Person 嵌套、SearchAction、6 个 FAQ 问题，可直接替换字段后使用 |
 
@@ -413,11 +416,12 @@ GEO 的战略层面工作是帮品牌构建系统化知识资产：
   - 完整代码模板见 `templates/jsonld-accounting-firm-full.json`，字段详解 + 双部署方式（QCNET99 / 纯 ASP）见 `references/jsonld-website-schema.md`
   - **🚨 2026.5.26 重要教训：部署前先检查线上已有 JSON-LD** — `curl -s http://域名 | grep 'application/ld+json'`，如果已有则不要新增第二个块。参见 `references/jsonld-website-schema.md`。
   - **🚨 2026.5.26 重要教训：PC/手机双版陷阱** — 中文 ASP 网站常有 PC 版和手机版两套独立代码。Google Rich Results Test 默认移动端 UA，只会抓手机版。如果只改 PC 版，手机版没 JSON-LD 也没更新地址 → Google 返回「未检测到任何内容」→ 误判优化失败。详情见 `references/jsonld-website-schema.md` 的「PC/手机双版本部署」章节。
+  - **🚨 2026.6.4 重要教训：手机版 JSON-LD 必须与 PC 版同等完整** — 初始部署手机版只用了单节点 AccountingService（672字节），忽略了 WebSite 和 FAQPage 节点。全面升级到 @graph 三节点（4417字节）后才真正达到 GEO 结构化数据标准。ASP双版本网站必须在两端分别部署完整的 JSON-LD，不能只给 PC 版做全。
   - **🚨 2026.5.26 重要教训：robots.txt 格式陷阱** — `Allow: *` 是无效语法（会被视为允许路径名为 `*` 的资源），正确是 `User-agent: *` + `Disallow:`。IIS 站的 robots.txt 可能在 FTP 根目录和 `wwwroot/` 子目录各一个，需确认线上返回哪个。
   - **🚨 2026.5.26 重要教训：「无法编入索引」溯源** — Rich Results Test 报「失败：Robots.txt 无法访问」不一定真是 robots.txt 的问题，更大概率是测试 IP 被服务器防火墙拦截。诊断为 `curl` 模拟 Googlebot UA → 200 即通。改用 Search Console「网址检查」替代 Rich Results Test。
   - **✅ 2026.5.28 sitemap.xml 升级** — 从18个URL扩充至80个URL，新增新闻详情页、手机版页面链接。sitemap 必须覆盖 PC 版和手机版双套页面，手动列全所有新闻ID。详见 `references/cold-start-tracker.md`。
   - **✅ 2026.5.28 全站旧地址清理** — 下载17页PC版asp源码+3页手机版asp源码，逐页grep旧地址（人民路/平江万达），确认零残留。中文ASP网站常有一页代码多处硬编码地址（foot.asp单独引用页、公司简介页、联系我们页等），grep范围必须覆盖全站所有asp文件。
-- **部署后验证**：① `curl -s http://域名/mobile/ | grep -c 'ld+json'`（手机版）② `curl -s http://域名/index.asp | grep -c 'ld+json'`（PC版）③ `curl -s http://域名 | grep -o '
+- **部署后验证**：① `curl -s http://域名/mobile/ | grep -c 'ld+json'`（手机版）② `curl -s http://域名/index.asp | grep -c 'ld+json'`（PC版）③ `curl -s http://域名 | grep -o '<li>.*</li>'` 检查赔付承诺文本是否可见
 - T1 信源：在权威平台发布内容（知乎专栏、百度百科词条、行业协会官网、地方政府财税平台）
 - T2 信源：抖音/视频号/小红书内容矩阵布局（确保多平台品牌信息表述一致）
 - 关键：所有平台统一核心数据口径（25年经验、TSC五级、1000+客户、90%转介绍、高级会计师）

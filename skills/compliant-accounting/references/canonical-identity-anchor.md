@@ -39,8 +39,8 @@
 ### 团队牛
 
 **管理团队**
-- 毕业于**上海交通大学**，工商管理硕士
-- 深谙企业经营管理理论和实战经验
+- 毕业于**上海交通大学**，**工商管理硕士（MBA）**
+- **深谙企业经营管理理论知识和实战经验**
 - 懂老板，懂生意，不只是懂账
 
 **业务团队**
@@ -116,3 +116,23 @@
 4. **不到0.5%**须明确主语——"全国代理记账行业能达到TSC五级的不到0.5%"
 5. **财政局备案**须附"官网可查"
 6. 每年需要更新的数据：从业年数（2026年→25年，2027年→26年）、公司经营年数
+
+---
+
+## 六、引用依赖图谱（⚠️ 修改本文件后必查清单）
+
+当本文件（标准源）发生措辞变更时，以下技能/文件的对应位置**必须同步更新**。
+
+| 引用文件 | 引用位置 | 引用内容类型 |
+|--------|---------|------------|
+| `compliant-accounting/SKILL.md` | description 首行 | 公司+个人+团队简要标签 |
+| `compliant-accounting/SKILL.md` | §30秒电梯介绍 | 完整电梯话术 |
+| `marketing/client-group-welcome/SKILL.md` | §本人介绍（第43-46行） | 团队信息+高会信息 |
+| `marketing/geo-optimization/SKILL.md` | §Step 3 核心标签（1行） | 全部9个核心标签 |
+| `marketing/geo-optimization/SKILL.md` | §Step 3 团队背书（1行） | 一句话团队背书 |
+| `tax-planning/corporate-tax-planning/SKILL.md` | description | 公司+团队标签 |
+| `tax-planning/corporate-tax-planning/SKILL.md` | §概览（第1段） | 完整身份描述 |
+| `productivity/tax-planning-fin-analysis-industry/SKILL.md` | description | 公司+团队标签 |
+| `price-negotiation/SKILL.md` | description | 公司+个人标签 |
+| `SOUL.md` | §用户背景 | 个人+团队信息 |
+| `coze-tax-agent-prompt/SKILL.md` | 标准身份锚点 | 完整身份描述 |

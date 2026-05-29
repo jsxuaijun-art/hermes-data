@@ -202,6 +202,35 @@ b = make_box('时段：工作时间', [
 | `make_grid_table()` | 纯 tabular 数据，每格一行 | 所有格无换行 |
 | `make_box()` | 多行文本、方案说明、话术演示 | 每行一个 list item |
 
+### ⚠️ PITFALL: 列数控制 — 7列以上必须拆成小表
+
+**用户明确要求：** 宽表格（7列以上）受不了，"乱东八糟的"。
+
+| 列数 | 做法 |
+|:---|:---|
+| 1-3 列 | 最佳，清爽优先 |
+| 4-6 列 | 可接受，但信息必须紧凑 |
+| 7 列及以上 | ❌ 禁止单张输出 — 必须拆成多张 2-3 列小表 |
+
+**拆表策略：**
+- 不追求一次性展示所有维度
+- 把一张 7+ 列表拆成 2-3 张 2-3 列的小表，每张讲一个子主题
+- 小表之间用空行隔开，用户阅读负担小
+
+**示例：**
+```python
+# ❌ 错误：一张表塞8列
+headers = ['公司', '成立时间', '资质', '团队', '服务', '客户', '口碑', '价格']
+rows = [...]  # 8列挤爆屏幕
+
+# ✅ 正确：拆成3张2-3列小表
+t1 = make_grid_table(['公司', '资质'], rows1)  # 基础信息
+t2 = make_grid_table(['服务', '客户', '口碑'], rows2)  # 业务实力
+t3 = make_grid_table(['团队', '价格'], rows3)  # 合作条件
+```
+
+**`make_grid_table()` 默认列宽 120 字符**，但在江姐这里，120宽度 + 7列以上 = 每个单元格只有十几个字符，挤到一起根本没法读。**宁可多出几张表，不要一张表塞下所有东西。**
+
 Do NOT re-implement `make_grid_table()` in `execute_code()` calls during conversation. The box_maker.py script already has the correct formula. Hand-written versions are prone to forgetting the `-1` leading-space offset.
 
 **Correct approach:**

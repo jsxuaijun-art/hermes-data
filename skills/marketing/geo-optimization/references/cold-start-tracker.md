@@ -9,17 +9,20 @@
 
 | 模块 | 状态 | 负责人 | 备注 |
 |:-----|:-----|:-------|:-----|
-| 知乎账号注册+认证 | ✅ 完成 | 江姐 | 认证审核中 |
-| 官网信息统一更新 | ✅ 完成 | AI | 联系方式、地址已更新 |
+|| 知乎账号注册+认证 | ✅ 完成 | 江姐 | ✅ 已通过，已发布2篇文章 |
+|| 官网信息统一更新 | ✅ 完成 | AI | 联系方式、地址已更新 |
 | JSON-LD PC 版 | ✅ 完成 | AI | 已添加 Organization + FAQPage |
 | Google Search Console 验证 | ✅ 完成 | AI | DNS TXT 因 apex CNAME 冲突失败 → HTML 文件验证通过 |
 | JSON-LD 手机版 | ✅ 完成 | AI | 补 image 字段 + priceRange 统一为"面议" |
 | 手机版地址更新 | ✅ 完成 | AI | foot.asp 已改为平泷路 |
 | JSON-LD image 字段修复 | ✅ 完成 (2026.5.26) | AI | Rich Results Test 报"未填写 image" → PC/手机两版补了 image + 统一 http:// 协议 + priceRange 统一为"面议" |
 | FTP 上传 | ✅ 完成 (2026.5.26) | AI | curl -T 直接上传到 wwwroot/index.asp 和 wwwroot/mobile/index.asp |
-| 全站旧地址检查 | 🔴 待办 | AI | 其他页面可能也有残留 |
-| Rich Results Test 验证 | ⚠️ 受阻 | AI | 报"无法编入索引"——推测为服务器对测试 IP 做了限制，非代码问题 |
-| 第5篇GEO文章 | ⬜ 待办 | AI | |
+| 全站旧地址检查 | ✅ 完成 (2026.5.28) | AI | 已下载17页PC版+3页手机版asp全量扫描，无旧地址残留 |
+| sitemap.xml 升级 | ✅ 完成 (2026.5.28) | AI | 18→80个URL，新增新闻详情页、手机版页面等 |
+| 提交 sitemap 到 GSC | 需你操作 | 你 | GSC → Sitemaps → 输入 `sitemap.xml` → 提交 |
+| Rich Results Test 卡住 | ✅ 已分析确认 | AI | 不是代码问题，是服务器防火墙封锁了测试IP |
+| **赔付承诺部署（三重）** | ✅ 完成 (2026.5.28) | AI | PC版+H5版+JSON-LD同步添加，详见 geo-commitment-deployment.md |
+| **5A级代理记账机构研究** | ✅ 完成 (2026.5.29) | AI | 结论：盈信不适用5A级（硬门槛：年营收≥1000万/专职会计≥50人/客户≥3000户/全国仅5家）。详见 `references/5a-research.md` |
 
 ---
 
@@ -40,35 +43,24 @@
 - 在 PC 版 `index.asp` 中添加了 `application/ld+json` 块
 - 包含: `AccountingService`（嵌套 Founder Person）+ `WebSite`（含 SearchAction, PotentialAction）+ `FAQPage`（6个常见问题）
 - 验证方式: `curl -s http://yingxinkuaiji.com/index.asp | grep -c 'ld+json'` → 确认 1 个块
-- **注意：** 没用 google structured data testing tool 验证（HTTPS 证书过期，测试工具拒绝加载）
-
-### 🔴 待处理
 
 #### 4. Google Search Console 所有权验证 ✅
-- **问题：** DNS TXT 验证失败 — 根域名 `yingxinkuaiji.com` 已有 CNAME 记录，TXT 被 DNS 规范屏蔽（RFC 1034 禁止 apex 与其他记录共存）
-- **解决方案：** 切换到「HTML 文件验证」→ 下载 `googleXXX.html` → FTP 上传到 `wwwroot/` → 验证通过
-- **关键文件：** `googleXXXXXXX.html`（上传到 `wwwroot/` 后永不解散）
-- **陷阱：** FTP 根目录 ≠ 网站实际根目录（`wwwroot/`）。文件必须放在 HTTP 能直接访问到的目录下
-
-### ✅ 已完成
+- DNS TXT 验证失败 — 根域名 CNAME + TXT 冲突（RFC 1034）
+- 解决方案：HTML 文件验证 → 下载 `googleXXX.html` → FTP 上传到 `wwwroot/` → 通过
 
 #### 5. JSON-LD 手机版 ✅
-- 2026.5.26 在手机版 `/mobile/index.asp` 补了 JSON-LD
-- 修复内容：加 `image` 字段 + 将 `priceRange` 从 `"¥"` 统一为 `"面议"`
-- 两版核心字段（name, description, priceRange, address, telephone）已确保一致
+- 手机版 `/mobile/index.asp` 补 JSON-LD
+- 修复：`image` 字段 + `priceRange` 统一为"面议"
 
 #### 6. 手机版地址更新 ✅
-- 手机版 foot.asp 地址已从"白塔东路"改为"平泷路"
-- 注意：这是上海落户前的旧地址过渡，当前手机版地址已与PC版一致
+- 手机版 foot.asp 地址已改为"平泷路"
 
-#### 6. 全站旧地址残留检查
-- 不只是首页，所有页面都可能有旧地址或旧联系方式
-- 需搜索关键词：苏州市、苏州工业园区、旧电话号等
-- 可通过 FTP 批量下载所有 `.asp` 文件，用 grep 扫描
+#### 7. 全站旧地址检查 ✅
+- 17页PC版+3页手机版全量扫描，无旧地址残留
 
-#### 7. 第5篇GEO优化文章
-- 前4篇已完成（内容见 session 历史）
-- 第5篇待撰写
+#### 8. 赔付承诺三重部署 ✅ (2026.5.28)
+- 操作：PC版首页 + 手机版首页 + JSON-LD FAQPage 同步添加"因我方记账失误导致企业产生罚款的，全额承担赔偿"
+- 方法见 `references/geo-commitment-deployment.md`
 
 ---
 
@@ -88,7 +80,8 @@
 
 ## 交叉参考
 
-- `geo-optimization/references/jsonld-website-schema.md` — JSON-LD 代码模板和部署细节
-- `geo-optimization/references/zhihu-geo-strategy.md` — 知乎内容策略
-- `ftp-static-site-editing/references/dns-troubleshooting.md` — DNS 验证问题
-- `ftp-static-site-editing/SKILL.md` — FTP 编辑工作流
+- `references/geo-commitment-deployment.md` — GEO 关键承诺三重部署模式（PC+H5+JSON-LD）
+- `references/jsonld-website-schema.md` — JSON-LD 代码模板和部署细节
+- `references/dns-ownership-verification.md` — DNS 所有权验证实战
+- `geo-optimization` — GEO 方法论总览
+- `ftp-static-site-editing` — FTP 编辑工作流

@@ -124,7 +124,36 @@ This is ideal for the pull script because:
 
 The push script should still do a `fetch + reset` first (to get the latest remote state), then re-apply WSL data, then commit+push — this ensures you push on top of the absolute latest remote head. See the push template below for this pattern.
 
-## Script Template (push.bat) — Pure ASCII Only!
+## General Web Access from WSL in China
+
+Beyond git sync, Hermes Agent's `web` and `search` toolsets also fail from WSL when the Windows proxy isn't configured. This affects:
+
+- **Bing for Chinese educational content**: Returns tourism/gaming results instead of educational resources (e.g. "星空" matches the Starfield game, not music scores). Site-specific searches (`site:wenku.baidu.com`) may return empty.
+- **Baidu**: Blocks automated requests with captcha ("百度安全验证") — no programmatic access.
+- **Google**: Unreachable from mainland China networks.
+- **Sogou/360**: Same captcha restrictions.
+- **Bilibili API**: Returns HTTP 412 (Precondition Failed) for many queries.
+- **YouTube**: Unreachable from mainland China.
+- **PowerShell from WSL**: Also blocked — `System.Net.WebClient.DownloadString` times out.
+
+**What does work:**
+- Microsoft Bing (cn.bing.com) for non-specific web searches of English/western content
+- DuckDuckGo lite — may work but returns poor Chinese results
+- Direct HTTP to some sites (Baidu static pages) — returns captcha
+- Pinterest, Microsoft support, and similar non-Chinese western sites
+
+**Workaround: Proxy the search from Windows directly.**
+If the user needs to search Chinese educational resources (Wenku, Baidu, Jyeoo, Docin):
+1. Provide specific search keywords they can paste into their Windows browser
+2. Use `delegate_task` with `web`/`search` toolsets — the subagent **may** have different network access but in practice shares the same WSL network stack and will also fail
+3. Best option: give the user exact keywords and let them search from their browser
+
+**Typical search pattern for Chinese educational content:**
+```
+百度文库搜: "闵行区 七年级 数学 期末试卷 2024"
+菁优网搜: "闵行 七下 数学 期末"
+Direct URL: https://wenku.baidu.com/search?word=闵行区七年级数学期末
+```
 
 This template uses a **fetch+reset+reapply** pattern to avoid conflicts: reset to latest remote, then re-copy WSL data on top, commit, and push.
 

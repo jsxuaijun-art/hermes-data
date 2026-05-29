@@ -77,6 +77,19 @@ for f in files:
         # content now has the file text
 ```
 
+## Cross-Machine Hermes Data Sync
+
+This skill now includes the cross-machine Hermes Agent sync workflow from the absorbed `hermes-agent-sync` skill (archived). See `references/hermes-data-sync.md` for:
+
+- **Push**: WSL → GitHub private repo → other machine
+- **Pull**: GitHub → WSL
+- **SSH key setup**: WSL doesn't inherit Windows SSH keys — explicit copy needed
+- **China network workarounds**: git proxy config, fetch+reset vs pull
+- **.bat encoding pitfalls**: UTF-8 without BOM in WSL → cmd.exe parses as GBK
+- **Recovery after reinstall**: GitHub has all core data
+
+Also see `references/hermes-data-sync-extraction.md` for the specific technique of using the GitHub REST API to restore data when `git clone` and `raw.githubusercontent.com` are both unreachable.
+
 ## API Notes
 - **Rate limit**: Unauthenticated: 60 req/hr. Authenticated: 5,000 req/hr
 - **Authentication**: Add header `Authorization: Bearer <token>` for higher limits

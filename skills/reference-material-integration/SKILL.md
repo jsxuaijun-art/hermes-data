@@ -83,6 +83,16 @@ After updating, always provide the user with a **structured audit of changes**:
 - "摊位费约210万/年" → changed to 2-10万/年 (plausible market rate; 210万 is almost certainly a typo)
 ```
 
+## English Learning & Translation Support
+
+This skill now includes the English learning and translation capabilities from the absorbed `english-learning` skill (archived). See `references/english-learning.md` for:
+
+- Chinese↔English translation with finance/tax terminology
+- Grammar explanations, sentence parsing, writing polish
+- Common finance/tax English term table
+
+When processing bilingual reference material (Chinese documents with English terms), use the translation and terminology tools in this reference file.
+
 ## Related Skills
 
 - writing-plans (for structured deliverable creation)

@@ -1,30 +1,26 @@
-财税回复纪律（江姐2026.5.4定）：
-1. 所有会计、税务类回复必须以政府官方来源为主要依据（税务总局、财政部、中国政府网等），其他来源仅作辅助参考。
-2. 严格禁止AI幻觉：不做无根据联想，不创造事实，不张冠李戴，不自信犯错，不编造条文。
-3. 回答必须实事求是，依据明确可查。
-4. 群成员有权要求展示思考过程并列出引用来源链接以验证准确性。
+Tirith security scanner binary installed at ~/.hermes/bin/tirith, config updated to use absolute path. Downloaded v0.3.0 from sheeki03/tirith GitHub releases. Also patched prompt_toolkit application.py _handle_exception to check for running event loop before ensure_future() — fixes the "no current event loop" RuntimeError on shutdown.
 §
-🔴【硬规则】表格生成：每次回复前必须自问"这段含不含结构化/对比/列表数据"。含则立即加载workbuddy-output技能→exec(box_maker.py)→make_grid_table()→verify_box()。禁止Markdown表格、禁止手写ASCII、禁止纯文本降级替代。违反=不可靠。这条是我自己加的强制规则，不是用户提示。
-江姐对宽表格（7列以上）非常敏感，曾明确批评受不了。她喜欢2-3列小表格清爽呈现。宁可拆成多张小表也不要一张大宽表挤爆屏幕。make_grid_table()默认120列宽，但7列以上内容应拆分为多个小表。
+Windows batch files (.bat) with non-ASCII characters (Chinese, box-drawing symbols, Unicode symbols) break on Chinese Windows systems when saved as UTF-8. Both UTF-8 without BOM AND with BOM can fail — BOM bytes get read as literal text (锘緻echo). The only reliable fix is to rewrite with pure ASCII only: English text, `=/-` for separators, `[OK]/[FAIL]/[INFO]` for status indicators. Applies to Hermes同步-拉取.bat and Hermes同步-推送.bat on all 4 machines.
 §
-时间类表述纪律：说"上午/下午/晚上/晚安/早安/明天/今天"等时间相关之前，必须先调 terminal('date') 查系统时间，不准凭感觉猜。2026.5.14 13:23 说"今晚好梦"被江姐抓包——后来理解成"不问时间不开口"又偏了，正确姿势是查完钟再开口。
+江敏笔记本 WSL distro 名是 Ubuntu22.04（无短横线），不是 Ubuntu-22.04。Windows 上跑着代理 127.0.0.1:7890（Clash/同类工具）。Hermes 同步脚本在 C:\Users\jiangmin\Desktop\CLAW\ 下，已改为纯 ASCII + fetch/reset 策略避免合并冲突。
 §
-【Git同步关键档案】主仓库=/mnt/c/Users/Administrator/Desktop/HermesAgent。远程=git@github.com:jsxuaijun-art/hermes-data.git。WSL用户=administrator。拉取用pull --rebase（避开reset --hard的安全风险）。🔴技能同步断点：WSL skills/ 不会自动进Windows仓库，创建/更新后必须 cp -rf ~/.hermes/skills/* 到 HermesAgent/skills/ 再 git提交。
+江敏笔记本（Windows 用户 jiangmin）的 Hermes 同步脚本已修复：
+- 文件在 C:\Users\jiangmin\Desktop\CLAW\Hermes同步-拉取.bat 和 推送.bat
+- 纯 ASCII 编码（无中文字符），Windows 侧跑 git，WSL 只负责 cp 文件
+- WSL 发行版名称：Ubuntu22.04
+- Windows 有代理 127.0.0.1:7890（Clash），git 在 Windows 侧跑所以代理生效
+- Token 已保存在 hermes-sync/.git/credentials
+- 仓库：jsxuaijun-art/hermes-data（脚本模板在 scripts/ 目录下）
+
+还有 3 台电脑待配：家里电脑、办公室电脑、笔记本
+- 每台需要修改：Windows 用户名、WSL 发行版名称、设备名
+- 下次用户告知信息后生成对应脚本
 §
-skill_view('marketing/geo-optimization') 曾成功加载内容，但 skill_manage(patch) 报 'marketing/geo-optimization' not found。猜测 skill_manage 不接受斜杠路径格式，只接受纯 name。需要先确认内部 name 字段。
+Web search from WSL in China: cn.bing.com is the only major search engine that responds to automated requests. Google is unreachable (connection failed). Baidu returns captcha on curl/Python requests. DuckDuckGo lite returns no Chinese results. No proxy is configured in WSL environment variables (Windows proxy 127.0.0.1:7890 is Windows-only, unreachable from WSL). For Chinese video content, Bilibili HTML search works via curl (search.bilibili.com/all?keyword=...) — extract BV IDs from HTML, then look up titles via api.bilibili.com/x/web-interface/view?bvid=XXX. Bilibili API returns 412 Precondition Failed on direct Chinese keyword search.
 §
-中转站 https://llm.chudian.site/v1 的 DeepSeek vision 可能不支持/挂了。Vision API 曾报 401 key is invalid，但实际上.env 里的 DEEPSEEK_API_KEY 是对的。需要给 auxiliary.vision 单独配一个能用的 vision provider（如 OpenRouter 或 Gemini）。
-§
-【网站运维·yingxinkuaiji.com】IIS/WTS Windows服务器，HTTP-only无HTTPS。FTP用户jsxuaijun。robots.txt存在于 / 和 /wwwroot/ 两个目录，改根文件须上传两处。旧版robots.txt格式错误已修正为标准格式。FTP上传用curl：curl -T localfile ftp://host/path --user user:'pass'
-§
-【品牌身份锚点 · 标准源】
-完整身份锚点（人厉害→公司牛→客户受益）已标准化为 skill compliant-accounting 的 references/canonical-identity-anchor.md。
-所有涉及公司介绍的话术/文案/视频/产品手册必须从该文件取用标准表述。
-引用纪律：
-- TSC五级 + 高级会计师必须成对出现
-- "涉税服务行业"五个字不可省略
-- 438.11分附"苏州市及全省前列"
-- 财政局备案带"官网可查"
-- 从业年数/公司年数每年更新
-§
-【品牌锚点roll-out流程】有新品牌身份锚点出现时：①更新 compliant-accounting/references/canonical-identity-anchor.md ② 检查更新：short-video-ad, short-video-industry-flow, corporate-tax-planning, geo-optimization§十五, coze-tax-agent-prompt, client-group-welcome, tax-planning-fin-analysis-industry 以及 compliant-accounting/references/下各文件③ 用 skill_manage(patch) 让各技能 SKILL.md 引用标准源
+用户（徐爱军/徐总）的公司团队介绍：
+- 江姐：苏州本地人，高级会计师（苏州2万家同行不到5家有此资质）
+- 徐总（徐爱军）：上海交通大学管理硕士
+- 黎经理：注册税务师（CTA）
+- 许经理：注册会计师（CPA）
+用户让用这些事实写一段助理跟客户的对话，展示团队专业度，用于客户税务风险评估场景。

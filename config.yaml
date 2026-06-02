@@ -2,7 +2,7 @@ model:
   default: deepseek-v4-flash
   provider: deepseek
   context_length: 65536
-  base_url: https://api.deepseek.com/v1
+  base_url: https://llm.chudian.site/v1
 providers: {}
 fallback_providers: []
 credential_pool_strategies: {}
@@ -292,9 +292,17 @@ approvals:
   cron_mode: deny
   mcp_reload_confirm: true
 command_allowlist:
-- shell command via -c/-lc flag
+- delete in root path
+- copy/move file into /etc/
+- hermes update (restarts gateway, kills running agents)
+- script execution via -e/-c flag
+- overwrite project env/config via redirection
 - overwrite project env/config file
+- script execution via heredoc
+- shell command via -c/-lc flag
 - git force push (rewrites remote history)
+- stop/restart system service
+- git force push short flag (rewrites remote history)
 quick_commands: {}
 hooks: {}
 hooks_auto_accept: false

@@ -1,0 +1,8 @@
+{
+  "last_report_path": "/home/dmin/.hermes/logs/curator/20260602-140725",
+  "last_run_at": "2026-06-02T14:07:25.578920+00:00",
+  "last_run_duration_seconds": 158.492775,
+  "last_run_summary": "auto: no changes; llm: All verified. Here's the consolidation summary:\n\n---\n\n## Human Summary\n\nProcessed all 7 agent-created skills (none were pinned, bundled, or hub-installed). The full scan revealed **4 consolidation clusters**:\n\n### 1. `kanban-orchestrator` +…",
+  "paused": false,
+  "run_count": 3
+}

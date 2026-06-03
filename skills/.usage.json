@@ -1,122 +1,15 @@
 {
-  "claude-code-deepseek-proxy": {
-    "archived_at": null,
-    "created_at": "2026-05-22T14:38:37.984797+00:00",
-    "last_patched_at": "2026-05-22T15:49:45.848049+00:00",
-    "last_used_at": "2026-05-24T08:25:44.054881+00:00",
-    "last_viewed_at": "2026-06-02T14:07:33.849807+00:00",
-    "patch_count": 21,
-    "pinned": false,
-    "state": "active",
-    "use_count": 15,
-    "view_count": 17
-  },
-  "kanban": {
-    "archived_at": null,
-    "created_at": "2026-05-24T08:27:38.407138+00:00",
-    "last_patched_at": "2026-05-24T08:27:39.434734+00:00",
-    "last_used_at": "2026-06-02T14:09:45.590239+00:00",
-    "last_viewed_at": "2026-06-02T14:09:45.583882+00:00",
-    "patch_count": 2,
-    "pinned": false,
-    "state": "active",
-    "use_count": 1,
-    "view_count": 1
-  },
-  "kanban-orchestrator": {
-    "archived_at": null,
-    "created_at": "2026-05-24T08:25:43.967432+00:00",
-    "last_patched_at": null,
-    "last_used_at": "2026-05-24T08:25:43.986577+00:00",
-    "last_viewed_at": "2026-05-24T08:25:43.967466+00:00",
-    "patch_count": 0,
-    "pinned": false,
-    "state": "active",
-    "use_count": 1,
-    "view_count": 1
-  },
-  "kanban-worker": {
-    "archived_at": null,
-    "created_at": "2026-05-24T08:25:44.017814+00:00",
-    "last_patched_at": null,
-    "last_used_at": "2026-05-24T08:25:44.034610+00:00",
-    "last_viewed_at": "2026-05-24T08:25:44.017839+00:00",
-    "patch_count": 0,
-    "pinned": false,
-    "state": "active",
-    "use_count": 1,
-    "view_count": 1
-  },
-  "sales-negotiation-customer-service": {
-    "archived_at": null,
-    "created_at": "2026-05-24T13:59:27.255746+00:00",
-    "last_patched_at": "2026-05-24T18:35:02.319027+00:00",
-    "last_used_at": "2026-06-02T14:07:33.910329+00:00",
-    "last_viewed_at": "2026-06-02T14:07:33.881040+00:00",
-    "patch_count": 28,
-    "pinned": false,
-    "state": "active",
-    "use_count": 20,
-    "view_count": 20
-  },
-  "tax-finance-professional": {
-    "archived_at": null,
-    "created_at": "2026-05-17T14:48:16.327569+00:00",
-    "last_patched_at": "2026-05-17T14:48:16.327605+00:00",
-    "last_used_at": "2026-05-24T08:25:44.005423+00:00",
-    "last_viewed_at": "2026-05-24T08:27:47.348449+00:00",
-    "patch_count": 1,
-    "pinned": false,
-    "state": "active",
-    "use_count": 1,
-    "view_count": 1
-  },
-  "tax-planning-fin-analysis-industry": {
-    "archived_at": null,
-    "created_at": "2026-05-17T14:56:20.773036+00:00",
-    "last_patched_at": "2026-05-24T08:27:58.985373+00:00",
-    "last_used_at": "2026-06-02T14:07:33.926586+00:00",
-    "last_viewed_at": "2026-05-24T13:57:33.843037+00:00",
-    "patch_count": 16,
-    "pinned": false,
-    "state": "active",
-    "use_count": 18,
-    "view_count": 16
-  },
   "workbuddy-output": {
     "archived_at": null,
-    "created_at": "2026-05-24T10:16:51.971145+00:00",
-    "last_patched_at": "2026-05-24T10:23:38.094892+00:00",
-    "last_used_at": "2026-06-02T14:07:33.737068+00:00",
-    "last_viewed_at": "2026-06-02T14:07:33.726209+00:00",
-    "patch_count": 5,
-    "pinned": false,
-    "state": "active",
-    "use_count": 4,
-    "view_count": 4
-  },
-  "wsl-hermes-env": {
-    "archived_at": null,
-    "created_at": "2026-05-23T05:57:28.440833+00:00",
-    "last_patched_at": "2026-06-02T14:09:19.229422+00:00",
-    "last_used_at": "2026-05-26T22:47:53.614336+00:00",
-    "last_viewed_at": "2026-05-26T22:47:53.608357+00:00",
-    "patch_count": 23,
-    "pinned": false,
-    "state": "active",
-    "use_count": 24,
-    "view_count": 24
-  },
-  "yingxin-business-suite": {
-    "archived_at": null,
-    "created_at": "2026-06-02T14:09:42.233442+00:00",
+    "created_at": "2026-05-26T23:02:41.089504+00:00",
+    "created_by": null,
     "last_patched_at": null,
-    "last_used_at": "2026-06-02T14:09:42.238702+00:00",
-    "last_viewed_at": "2026-06-02T14:09:42.233481+00:00",
+    "last_used_at": "2026-05-26T23:02:44.632245+00:00",
+    "last_viewed_at": "2026-05-26T23:02:44.630449+00:00",
     "patch_count": 0,
     "pinned": false,
     "state": "active",
-    "use_count": 1,
-    "view_count": 1
+    "use_count": 2,
+    "view_count": 2
   }
 }

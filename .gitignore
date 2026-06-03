@@ -20,6 +20,8 @@
 !claw-memory/
 !claw-memory/**
 !README.md
+!scrapling/
+!scrapling/**
 
 # Always exclude
 .env

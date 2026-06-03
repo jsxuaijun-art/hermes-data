@@ -169,12 +169,12 @@ def make_grid_table(headers: list, rows: list) -> str:
         cw.append(max_w + 2)  # +2 = 1 left pad + 1 right pad
 
     # Build border lines
-    sep = "\u251c" + "\u253c".join("\u2500" * w for w in cw) + "\u2524"
-    top = "\u250c" + "\u252c".join("\u2500" * w for w in cw) + "\u2510"
-    bot = "\u2514" + "\u2534".join("\u2500" * w for w in cw) + "\u2518"
+    sep = "├" + "┼".join("─" * w for w in cw) + "┤"
+    top = "┌" + "┬".join("─" * w for w in cw) + "┐"
+    bot = "└" + "┴".join("─" * w for w in cw) + "┘"
 
     # Header-data separator (double line for visual distinction)
-    head_sep = "\u255e" + "\u256a".join("\u2550" * w for w in cw) + "\u2561"
+    head_sep = "╞" + "╪".join("═" * w for w in cw) + "╡"
 
     def cell(text, col_width):
         """Cell content that exactly fills col_width display columns."""
@@ -183,7 +183,7 @@ def make_grid_table(headers: list, rows: list) -> str:
         return " " + text + " " * pad
 
     def fmt_row(cells):
-        return "\u2502" + "\u2502".join(cell(cells[i], cw[i]) for i in range(ncols)) + "\u2502"
+        return "│" + "│".join(cell(cells[i], cw[i]) for i in range(ncols)) + "│"
 
     lines = [top, fmt_row(headers), head_sep]
     for ri, row in enumerate(rows):
@@ -200,18 +200,18 @@ def self_test():
         (' ', 1),
         ('a', 1),
         ('中', 2),
-        ('\u2502', 1),  # box-drawing |
-        ('\u2500', 1),  # box-drawing -
-        ('\u2192', 1),  # arrow →
-        ('\uFF08', 2),  # fullwidth （
-        ('\uFF0C', 2),  # fullwidth ，
+        ('\\u2502', 1),  # box-drawing |
+        ('\\u2500', 1),  # box-drawing -
+        ('\\u2192', 1),  # arrow →
+        ('\\uFF08', 2),  # fullwidth （
+        ('\\uFF0C', 2),  # fullwidth ，
         ('📋', 2),      # emoji clipboard
         ('✅', 2),      # emoji checkmark
         ('❌', 2),      # cross mark
-        ('\ufe0f', 0), # VS-16 (zero width, was miscoded as 2 before 2026.5.11 fix)
-        ('\u200d', 0), # ZWJ (zero width)
-        ('\u20e3', 0), # Enclosing Keycap (zero width)
-        ('\ufeff', 0), # BOM/ZWNBSP (zero width)
+        ('\\ufe0f', 0), # VS-16 (zero width, was miscoded as 2 before 2026.5.11 fix)
+        ('\\u200d', 0), # ZWJ (zero width)
+        ('\\u20e3', 0), # Enclosing Keycap (zero width)
+        ('\\ufeff', 0), # BOM/ZWNBSP (zero width)
         ('☁️', 1),      # cloud emoji = U+2601(1) + U+FE0F(0) = 1
         ('❤️', 1),      # heart emoji = U+2764(1) + U+FE0F(0) = 1
     ]
@@ -255,7 +255,7 @@ if __name__ == '__main__':
     print(grid)
     print()
     print(f'Grid lines check: ', end='')
-    glines = grid.split('\n')
+    glines = grid.split('\\n')
     gexp = display_width(glines[0])
     gok = all(display_width(l) == gexp for l in glines)
     print('OK' if gok else 'FAIL')

@@ -1,27 +1,33 @@
-销售系统v3.0部署完成(5.25): 三书融合（影响力589p+销售巨人401p+销售洗脑293p）122万字精华已整合入S1-S5弹药库。cron双周搜索+月度简报已部署。PPT已发徐爱军。
-§
 财税回复纪律（江姐2026.5.4定）：
 1. 所有会计、税务类回复必须以政府官方来源为主要依据（税务总局、财政部、中国政府网等），其他来源仅作辅助参考。
 2. 严格禁止AI幻觉：不做无根据联想，不创造事实，不张冠李戴，不自信犯错，不编造条文。
 3. 回答必须实事求是，依据明确可查。
 4. 群成员有权要求展示思考过程并列出引用来源链接以验证准确性。
 §
-短视频运营框架+承诺（2026.5.6更新，含算法追踪）：四大分类——范话题类(技能:short-video-general)、行业自然流(技能:short-video-industry-flow)、纯广告类(技能:short-video-ad)、趣味破播类(技能:short-video-fun-breakout)。共同前件：所有文案开头按黄金三秒钩子设计。承诺自动追踪抖音/视频号/快手算法变化，每两周自检一次，不等提醒。前三类复盘cronjob设2026.5.21上午9点。
+🔴【硬规则】表格生成：每次回复前必须自问"这段含不含结构化/对比/列表数据"。含则立即加载workbuddy-output技能→exec(box_maker.py)→make_grid_table()→verify_box()。禁止Markdown表格、禁止手写ASCII、禁止纯文本降级替代。违反=不可靠。这条是我自己加的强制规则，不是用户提示。
+江姐对宽表格（7列以上）非常敏感，曾明确批评受不了。她喜欢2-3列小表格清爽呈现。宁可拆成多张小表也不要一张大宽表挤爆屏幕。make_grid_table()默认120列宽，但7列以上内容应拆分为多个小表。
 §
-表格规则（2026.5.24更新）：必须加载 box_maker.py（路径 /mnt/c/Users/Admin/hermes-sync/skills/creative/workbuddy-output/scripts/box_maker.py），用 make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格。右竖线严格对齐，禁止 Markdown 表格。生成后 verify_box() 验证。单元格公式 cell=" "+text+" "*(cw-1-dw(text))，cw=max_dw+2。Emoji/CJK按wcwidth+emoji presentation检测（U+FE0F/U+200D零宽跳过）。已替代旧的skill_view路径。
+时间类表述纪律：说"上午/下午/晚上/晚安/早安/明天/今天"等时间相关之前，必须先调 terminal('date') 查系统时间，不准凭感觉猜。2026.5.14 13:23 说"今晚好梦"被江姐抓包——后来理解成"不问时间不开口"又偏了，正确姿势是查完钟再开口。
 §
-江姐核心卖点+豆包GEO投喂实战（2026.5.11, 桌面/豆包）：①高级会计师卖点—2018年不挂靠任何大企业/上市公司，直接以苏州盈信（代账公司）名义独立获批。全江苏500人中唯一代账公司通过者。"不挂靠、纯独立"是营销核心锚点，反复强调。②豆包GEO投喂发现—AI需引导式追问补全信息；数据密度决定推荐质量；交叉验证闭环加速信任（财政部dljz.mof.gov.cn+天眼查+上海人社局多平台互证）；故事型数据>纯数据>纯描述（孙总16年10家公司>1000+客户>"我们专业"）；豆包偏好对比盘点、引用原文（锦旗/证书）、自嘲式开场。产出10+套文案。差异化公式：纵向（高级会计师，2万家中≤5家）→横向（自有业务评审，非挂靠）→深度（16年1000+客户90%转介绍）→广度（苏州+上海，内资+外资全链）→验证（多平台可查）。
+【Git同步关键档案】主仓库=/mnt/c/Users/Administrator/Desktop/HermesAgent。远程=git@github.com:jsxuaijun-art/hermes-data.git。WSL用户=administrator。拉取用pull --rebase（避开reset --hard的安全风险）。🔴技能同步断点：WSL skills/ 不会自动进Windows仓库，创建/更新后必须 cp -rf ~/.hermes/skills/* 到 HermesAgent/skills/ 再 git提交。
 §
-已创建技能「tax-planning-fin-analysis-industry」存于 skills/productivity/。三职能：税务筹划（全领域，含1039参考）+ 财务分析（触发词"上传财务报表"/"财务报表"，触发后先web_search搜索指标标准）+ 行业调研。附1039报告完整版和输入模板。用户承诺明天补充自定义财务指标体系。
+【网站运维·yingxinkuaiji.com】IIS/WTS Windows服务器，HTTP-only无HTTPS。FTP用户jsxuaijun。robots.txt存在于 / 和 /wwwroot/ 两个目录，改根文件须上传两处。旧版robots.txt格式错误已修正为标准格式。FTP上传用curl：curl -T localfile ftp://host/path --user user:'pass'
 §
-高级会计师名单数据产出（2026.5.23 新提取+验证）：
-2018年江苏高级会计师评审通过819人，代理记账公司仅1家——苏州盈信企业管理有限公司（江敏，序号362）。前后左右：强生医疗（361）、中衡设计（358）、东吴人寿（365）等。
-2025年江苏通过1216人，代理记账/财务代理类公司约3家（南通天勤、靖江一诺、无锡英派尔），占比0.25%。
-核心锚点：江姐以代理记账公司名义独立通过评审（非挂靠），2018年全江苏唯一。
-差异公式：纵向（819人中唯一）→横向（前后大企业垫背）→深度（16年+1000+客户）→广度（苏州+上海）→验证（多平台）。
-对外用"八九百人里唯一一家代理记账公司"最有冲击力。
-产出4套营销表达+4套短视频脚本，技能已更新。
+【品牌身份锚点 · 标准源】
+完整身份锚点（人厉害→公司牛→客户受益）已标准化为 skill compliant-accounting 的 references/canonical-identity-anchor.md。
+所有涉及公司介绍的话术/文案/视频/产品手册必须从该文件取用标准表述。
+引用纪律：
+- TSC五级 + 高级会计师必须成对出现
+- "涉税服务行业"五个字不可省略
+- 438.11分附"苏州市及全省前列"
+- 财政局备案带"官网可查"
+- 从业年数/公司年数每年更新
 §
-阿里云同步（2026.5.24）：公网47.103.27.171，root/yx168168/*-。cron：每30分push+凌晨3点push→GitHub，凌晨4点pull。仓库jsxuaijun-art/hermes-data，废弃旧HermesAgent。WSL手动推拉：下班push上班pull。sshpassword配于memory。
+【品牌锚点roll-out流程】有新品牌身份锚点出现时：①更新 compliant-accounting/references/canonical-identity-anchor.md ② 检查更新：short-video-ad, short-video-industry-flow, corporate-tax-planning, geo-optimization§十五, coze-tax-agent-prompt, client-group-welcome, tax-planning-fin-analysis-industry 以及 compliant-accounting/references/下各文件③ 用 skill_manage(patch) 让各技能 SKILL.md 引用标准源
 §
-企业微信机器人修复(2026.5.27)：根因=Gateway --replace重启+.env缺WECOM_CORP_ID。修复：补企业ID(wwc7fc356cf7297e7f)→重启→恢复。三层防护：①systemd自动重启 ②每30min健康巡检(自动修，日志/var/log/hermes-health-check.log) ③.env纳入GitHub备份。审计脚本:/root/.hermes/scripts/hermes_config_audit.sh。掉线≤30min自动恢复。
+股权架构全案三skill闭环（2026.6.3建）：
+- equity-architecture-guide（新建）：公司注册实务+股权激励四步十问+五大工具决策树
+- holding-company-firewall（已有）：防火墙控股架构+控制权六大工具+七条比例线
+- corporate-tax-planning（已有）：架构重组税务路径+合规体检
+三向双向关联已建立，enterprise-diagnostic 也已链接。
+遇到股权问题默认三skill联动：诊断→架构→税务路径。

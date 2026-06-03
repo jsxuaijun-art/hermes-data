@@ -203,7 +203,7 @@ graph TD
 |------|--------|---------|
 | 南通咖萌 | `references/nt-sports-case.md` | 信息收集失败→REV2改正；母子公司不能合并纳税；个体户注销补税 |
 | 个体户转有限公司 | `references/individual-to-company-conversion.md` | 增值税是"平移"的（转不转公司一般纳税人税率都一样）；核心差异在个税vs企税；"利润不分配"策略是核心卖点；进项充不充足决定增值税真实负担 |
-| 夫妻公司防火墙控股架构 | `references/firewall-holding-company-faqin-case.md` | 第三方12%打破"实质一人公司"认定；外部股东优先购买权处理；法律依据+判例汇总 |
+| 夫妻公司防火墙控股架构 | → 见 `holding-company-firewall` → `references/firewall-holding-company-case.md` | 第三方12%打破"实质一人公司"认定；外部股东优先购买权处理；法律依据+判例汇总。含三技能联动案例，Word版已输出至桌面 |
 | 股权架构知识库（Book 1） | → 见 holding-company-firewall/references/equity-book1-knowledge.md | 控制权工具、比例线、股东进出。与税务筹划双向关联 |
 | ⏳ 股权财税法顶层设计（Book 2） | 待提取（PDF 166MB, OCR未完成） | 预期内容：股权交易的增值税、企业所得税、个人所得税、土地增值税等税务处理；拟整合为独立的「股权交易税务筹划」子模块
 
@@ -232,5 +232,24 @@ graph TD
 ### 规则7：客户沟通话术
 方案交付后，同步给出与客户电话/微信沟通的话术草稿，让江姐可以直接用。
 
-### 规则8：股权相关问题 → 联动 equity-architecture-guide
-如果方案中涉及股权激励设计、公司注册实务（注册资本/主体类型/法定代表人）、股权分配比例等，请同时加载 `tax-planning/equity-architecture-guide` 技能，用其 references 中的工具选择和四步流程来补充方案中的股权模块。
+### 规则8：股权相关问题 → 三技能联动
+
+遇到股权架构/防火墙/税务重组复合问题时，按以下顺序加载三技能：
+
+```text
+1. equity-architecture-guide    → 诊断定位+框架选择+股权激励
+2. holding-company-firewall     → 架构设计+控制权安排+执行路线
+3. corporate-tax-planning       → 税务路径测算+合规体检
+```
+
+**联动交付标准流程（本轮已验证可执行）：**
+
+```text
+① 加载三技能 → ② 信息采集 → ③ 案例文件写入
+→ ④ 方案设计（架构→控制权→税务） → ⑤ Word文档生成（桌面.docx）
+→ ⑥ reference文件更新（标注三技能联动关系）
+```
+
+**输出格式：** 默认桌面 .docx（纯Python zipfile+XML生成，无需python-docx包）；终端ASCII表格辅助。
+
+**参考案例：** 见 `holding-company-firewall` → `references/firewall-holding-company-case.md`（含三技能联动标注）

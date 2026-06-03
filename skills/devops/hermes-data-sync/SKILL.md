@@ -380,11 +380,67 @@ with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
 | `系统找不到指定的路径` | `cd /d` 盘符不切或路径不存在 | 用 WSL 脚本代替 cmd cd |
 | `Hermes done` 等 WSL 输出被当命令执行 | WSL bash 输出回流到 cmd 解析 | .bat 只做触发器，WSL 脚本做全部工作 |
 
-### 4. git push rejected (non-fast-forward)
+### 4. git push rejected (non-fast-forward) — 正常分叉
 
-- Remote has commits you don't have locally (another PC pushed)
-- **Fix**: The script handles this via `fetch → rebase/merge → push` sequence
-- If manual intervention needed: `git pull --rebase origin main && git push`
+**场景**: 另一台电脑推送了正常提交，你本地的历史落后了（没有 force-push，历史完整）。
+
+- **Fix**: 脚本通过 `fetch → rebase/merge → push` 自动处理
+- 手动修复: `git pull --rebase origin main && git push`
+
+### 4b. 🔴 git push rejected — 远程被 force-push（历史重写分叉）
+
+**场景**: 某台电脑对远程仓库执行了 force-push（`git push --force` 或 `git reset --hard + git push --force`），远程的提交历史被重写。本地仓库的提交基于旧的历史，rebase 会失败或产生大量虚假冲突。
+
+**症状**:
+```
+ ! [rejected] main -> main (fetch first)
+```
+或
+```
+ ! [rejected] main -> main (non-fast-forward)
+```
+但执行 `git pull --rebase` 后产生大量冲突，或 rebase 后的文件内容丢失了本地新增的改动。
+
+**根因**: Force-push 重写了远程历史，本地 commit 的 parent 在远程已不存在，rebase 无法找到共同祖先。
+
+**正确修复 — `git reset --soft origin/main` 模式**:
+
+```bash
+# 1. 获取远程最新状态（不要 merge/rebase）
+git fetch origin main
+
+# 2. soft reset — 把本地分支头指针移到远程最新，保留所有本地改动在暂存区
+git reset --soft origin/main
+
+# 3. 把所有文件加回来（包括远程 force-push 删掉但本地有的文件）
+git add -A
+
+# 4. 创建新提交，包含本地全部改动
+git commit -m "merge: 同步本地全部变更"
+
+# 5. 推送（现在变成快进推了）
+git push origin main
+```
+
+**原理**:
+| 步骤 | 发生了什么 |
+|------|-----------|
+| `git fetch` | 下载远程最新历史，不合并 |
+| `git reset --soft origin/main` | 本地分支头指向远程最新，工作区和暂存区不变 |
+| `git add -A` | 把本地磁盘上所有文件（包括远程没有的）加入暂存区 |
+| `git commit` | 创建新提交，parent 是远程最新提交 |
+| `git push` | 现在是快进推送，不会被拒绝 |
+
+**跟正常分叉修复的对比**:
+
+| 特征 | 正常分叉 (pitfall #4) | 历史重写分叉 (pitfall #4b) |
+|------|----------------------|--------------------------|
+| 远程历史 | 完整，有共同祖先 | 被 force-push 重写 |
+| 修复命令 | `git pull --rebase` | `git fetch + reset --soft + add -A + commit` |
+| 本地改动 | 作为 commits 保留 | 作为 staged 重新提交 |
+| 风险 | 低 | 低（soft reset 不丢文件） |
+
+**特别注意**: `git reset --soft` 不会修改工作区和暂存区中的文件内容——你的所有本地修改（新建的 skill、修改的 memory 等）都安全地保留在磁盘上。如果 `git add -A` 后发现有不需要的文件，可以 `git reset HEAD <file>` 取消暂存。
 
 ### 5. Merge conflicts in shared config files
 

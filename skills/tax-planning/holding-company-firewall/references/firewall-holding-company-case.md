@@ -1,5 +1,11 @@
 # 防火墙控股架构 · 夫妻公司案例（2026.6.2）
 
+> 本案例由三技能联动完成：
+> ① **equity-architecture-guide** → 诊断定位+框架选择
+> ② **holding-company-firewall** → 架构设计+控制权+执行
+> ③ **corporate-tax-planning** → 税务路径测算
+> 完整方案已输出为 Word 文档 → `D:\360MoveData\Users\Admin\Desktop\防火墙控股架构方案_三技能联动版.docx`
+
 ## 场景描述
 
 自然人A（夫）和B（妻）名下共有4家公司：

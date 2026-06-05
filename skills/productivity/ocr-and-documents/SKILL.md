@@ -12,9 +12,9 @@ metadata:
 
 # PDF & Document Extraction
 
-For DOCX: use `python-docx` (parses actual document structure, far better than OCR).
+For DOCX: use `python-docx` (parses actual document structure, far better than OCR). See the **DOCX Table Extraction** section below for examples.
 For PPTX: see the `powerpoint` skill (uses `python-pptx` with full slide/notes support).
-This skill covers **PDFs and scanned documents**.
+This skill covers **PDFs, scanned documents, and DOCX data extraction**.
 
 ## Step 1: Remote URL Available?
 
@@ -318,3 +318,106 @@ For complex PDFs (XObject/3Tr approach), see `references/pdf-watermark-advanced.
 - marker-pdf downloads ~2.5GB of models to `~/.cache/huggingface/` on first use
 - For Word docs: `pip install python-docx` (better than OCR — parses actual structure)
 - For PowerPoint: see the `powerpoint` skill (uses python-pptx)
+
+---
+
+## DOCX Table Extraction (python-docx)
+
+When a user provides an existing .docx file with tables and asks you to extract/read/analyze the data, use python-docx to programmatically read the tables:
+
+### Install
+
+```bash
+pip install python-docx
+```
+
+### Basic: Read All Tables
+
+```python
+from docx import Document
+
+doc = Document("/path/to/file.docx")
+tables = doc.tables
+
+for t_idx, table in enumerate(tables):
+    print(f"\n=== Table {t_idx + 1} ({len(table.rows)} rows × {len(table.columns)} cols) ===")
+
+    # Print header row
+    if table.rows:
+        header = [cell.text.strip() for cell in table.rows[0].cells]
+        print(f"Headers: {header}")
+
+    # Print data rows
+    for r_idx, row in enumerate(table.rows):
+        cells = [cell.text.strip() for cell in row.cells]
+        print(f"  Row {r_idx}: {' | '.join(cells)}")
+```
+
+### Common Patterns
+
+| Pattern | Code |
+|---------|------|
+| **Count tables** | `len(doc.tables)` |
+| **Get row count** | `len(table.rows)` |
+| **Get column count** | `len(table.columns)` |
+| **Read specific cell** | `table.rows[1].cells[2].text.strip()` |
+| **Read headers** | `[c.text.strip() for c in table.rows[0].cells]` |
+| **Find table by header** | Iterate tables, inspect row 0 for a known column name |
+| **Map header→column index** | `{h: i for i, h in enumerate(headers)}` then access by name |
+| **Detect merged cells** | Check if `cell._tc.get_or_add_tcPr()` has `<w:gridSpan>` |
+| **Find all text outside tables** | `[p.text for p in doc.paragraphs]` |
+
+### Advanced: Extract as Dict (by Header Name)
+
+```python
+def tables_to_dicts(path):
+    """Convert all docx tables to list of dicts (header→value)."""
+    doc = Document(path)
+    result = []
+    for table in doc.tables:
+        headers = [c.text.strip() for c in table.rows[0].cells]
+        data = []
+        for row in table.rows[1:]:
+            vals = [c.text.strip() for c in row.cells]
+            data.append(dict(zip(headers, vals)))
+        result.append({"headers": headers, "rows": data})
+    return result
+```
+
+### Handle Large Files (Pagination)
+
+For tables with 50+ rows, print a preview first, then let the user decide:
+
+```python
+table = doc.tables[0]
+n = min(5, len(table.rows))
+for r in range(n):
+    print(' | '.join(c.text.strip()[:40] for c in table.rows[r].cells))
+print(f"... ({len(table.rows)} rows total)")
+```
+
+### Pitfalls
+
+1. **Empty cells**: `.text.strip()` may return `""`. Filter or replace with `"(empty)"`.
+2. **Merged cells**: python-docx represents merged cells as the same object across rows. `cell.text` still works but the merged area spans multiple columns. Check `cell._tc.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}gridSpan')` if you need to detect spans.
+3. **Nested tables**: `table.tables` (not `.tables` — nested access via `doc.tables` iterates top-level only). For nested, walk `table._tbl` manually.
+4. **Large docs**: Tables with 500+ cells can take seconds. Consider extracting only the table(s) you need.
+5. **Header detection**: python-docx doesn't natively mark "header row". Your code assumes row 0 is the header — verify by checking if cells contain column-like labels vs data values.
+6. **File paths from WSL**: Convert Windows paths — see the **Path Conversion** section below.
+
+### Path Conversion (WSL ⇄ Windows)
+
+```python
+# Windows path in WSL:
+win_path = r"D:\360MoveData\Users\Admin\Desktop\file.docx"
+wsl_path = win_path.replace("D:", "/mnt/d").replace("\\", "/")
+# Result: /mnt/d/360MoveData/Users/Admin/Desktop/file.docx
+```
+
+### Typical Use Cases
+
+- **Read a skill inventory** from a docx table → extract mapping as dict/memory entry
+- **Read financial data** from client-provided docx → import to analysis script
+- **Read license/permit registry** → extract for comparison/dedup
+- **Read org chart or process flow** represented in a Word table
+- **Batch extract** tables from multiple .docx files in a folder

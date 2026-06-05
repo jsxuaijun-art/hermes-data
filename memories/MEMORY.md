@@ -23,8 +23,7 @@
 - 财政局备案带"官网可查"
 - 从业年数/公司年数每年更新
 §
-【股权架构三skill闭环】已读 Book 1《一本书讲透股权》(宋俊生·王亚龙, 2025.12, 280页)全文 /tmp/equity_book1_full.txt。分配：eq-arch-guide←Ch2顶层设计+Ch3动态股权+Ch7注册+Ch8七条线+股权激励；hold-firewall←Ch4六大工具写法模板+案例+股东进出；corp-tax-plan←Ch2自然人vs法人税费+Ch5转让增资减税阴阳合同+核价六种。Book 2《股权财税法顶层设计》(郝德仁, 2025.05, 397页扫描PDF)待OCR后分配。三skill双向关联保留。
-§
-【防火墙架构案例·待续 2026.6.4】夫妻AB原计划新设控股公司，改为收购苏州HP旅游汽车有限公司（3位自然人股东，有道路运输经营许可证）作控股公司+实际运营。三技能已加载：holding-company-firewall / equity-architecture-guide / corporate-tax-planning。待用户提供组A(现有公司数据)、组B(HP公司详情)、组C(收购方案方向)、组D(许可证专项)信息后，输出完整方案+双版本PPT(实施版/引流成交版)到桌面。参考案例：同skill refs/firewall-holding-company-case.md
+【Skill中文名映射表 v2】来源Hermes_Agent_技能清单_v2.docx。你说"调用XX"，我中文名+说明2字模糊匹配。
+已命名：合规帐→compliant-accounting | 股权架构→corporate-tax-planning | 股权→equity-architecture-guide | 股权转让→suzhou-equity-transfer-guide | 洽谈→price-negotiation | 税务筹划→tax-planning-fin-analysis-industry | 税务合规→china-tax-compliance | 初次→enterprise-diagnostic | 短视频→short-video-copywriting | 纯广告→short-video-ad | 破播→short-video-fun-breakout | 范话题→short-video-general | 行业自然流→short-video-industry-flow | 扣子→coze-agent-engineering | 江姐财税→coze-tax-agent-prompt | 建群开场白→client-group-welcome | GEO→geo-optimization | 企微→wecom-external-service | 终端表格→table-formatter
 §
 【2026.6.4 股权转让教训】必须同时索要上年度末+最近一个月末两套财务报表，不能只问一头。被客户反问"为什么不要最近一期？不重要吗？"非常尴尬。已更新至suzhou-equity-transfer-guide skill的：①首要原则加了两期报表规则 ②财务分析加了净资产为负的分析框架 ③常见陷阱加了#8和#9 ④采集表v2.0新增资产合计/负债合计/未分配利润/利润总额字段+逻辑校验区+用途说明列。

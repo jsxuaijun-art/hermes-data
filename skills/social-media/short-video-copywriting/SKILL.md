@@ -174,6 +174,7 @@ tags: [短视频, 文案创作, 抖音, 视频号, 新媒体运营, 财税获客
 
 详见 `references/short-video-industry-flow.md`
 详见 `references/素材挖掘案例-高级会计师名单.md`
+详见 `references/行业自然流案例-高考公司注册.md`
 
 ---
 

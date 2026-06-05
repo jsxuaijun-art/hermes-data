@@ -225,6 +225,18 @@ def make_docx(path, html_body):
 
 See `references/generate-docx-without-python-docx.md` for the full implementation.
 
+## Categorized Multi-Section Document Pattern
+
+For generating **catalog-style documents** organized by categories (skill inventories, product catalogs, regulatory compilations, policy handbooks). Each category gets a bold section header followed by a styled grid table with alternating row colors.
+
+Key pattern: data → group by category → render section header + per-category table → verify with zipfile+regex content check.
+
+See `references/categorized-document-pattern.md` for:
+- Data preparation pattern with category groups
+- Full python-docx implementation (section headers, alternating rows, professional formatting)
+- **Docx content verification** technique — read back the zip XML to confirm content placement without opening Word
+- Category ordering validation, item-under-category checks
+
 ## Chinese Financial Template Patterns
 
 For Chinese government-document-style financial/accounting templates (税务合规报告、纳税调整表、期初余额调整表、会计政策说明书 etc.), the document structure follows a reusable pattern:

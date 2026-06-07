@@ -11,7 +11,7 @@ trigger: >-
 metadata:
   hermes:
     tags: [tax-planning, corporate-structure, compliance, entity-restructuring, case-methodology, equity-transfer, capital-increase]
-    related_skills: [coze-tax-agent-prompt, reference-material-integration, compliant-accounting, enterprise-diagnostic, tax-planning/holding-company-firewall, tax-planning/equity-architecture-guide, suzhou-equity-transfer-guide]
+    related_skills: [coze-tax-agent-prompt, reference-material-integration, compliant-accounting, enterprise-diagnostic, tax-planning/holding-company-firewall, tax-planning/equity-architecture-guide, tax-planning/tax-incentive-policy, suzhou-equity-transfer-guide]
 ---
 
 # 企业架构重组·税务筹划·合规方案 方法论

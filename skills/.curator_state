@@ -1,9 +1,9 @@
 {
-  "last_report_path": null,
-  "last_run_at": "2026-05-24T14:19:53.657284+00:00",
-  "last_run_duration_seconds": null,
-  "last_run_summary": "deferred first run — curator seeded, will run after one interval; use `hermes curator run --dry-run` to preview now",
-  "last_run_summary_shown_at": "2026-05-24T14:19:53.657284+00:00",
+  "last_report_path": "C:\\Users\\Admin\\.hermes\\logs\\curator\\20260607-064842",
+  "last_run_at": "2026-06-07T06:48:42.082142+00:00",
+  "last_run_duration_seconds": 1445.805568,
+  "last_run_summary": "auto: no changes; llm: Here's the final structured summary:\n\n## Human Summary\n\nI completed a systematic consolidation pass across 62 available agent-created skills. The work identified 4 clear umbrella clusters:\n\n1. **Autonomous coding agents** (claude-code, code…\narchived 10 skill(s):\n  • claude-code — pruned (stale)\n  • codex — pruned (stale)\n  • github-auth — pruned (stale)\n  • github-code-review — pruned (stale)\n  • github-issues — pruned (stale)\n  • github-pr-workflow — pruned (stale)\n  • github-repo-management — pruned (stale)\n  • kanban-orchestrator — pruned (stale)\n  • kanban-worker — pruned (stale)\n  • opencode — pruned (stale)\nfull report: hermes curator status",
+  "last_run_summary_shown_at": null,
   "paused": false,
-  "run_count": 0
+  "run_count": 1
 }

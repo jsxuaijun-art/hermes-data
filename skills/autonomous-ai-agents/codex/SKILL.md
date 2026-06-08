@@ -1,7 +1,7 @@
 ---
 name: codex
-description: "Delegate coding to OpenAI Codex CLI (features, PRs)."
-version: 1.0.0
+description: Delegate coding tasks to OpenAI Codex CLI agent — includes codex-bridge setup for custom providers (DeepSeek, Mimo, etc.). Use for building features, refactoring, PR reviews, and batch issue fixing. Requires the codex CLI and a git repository.
+version: 1.1.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -26,10 +26,91 @@ Requires the codex CLI and a git repository.
 ## Prerequisites
 
 - Codex installed: `npm install -g @openai/codex`
+- OpenAI API key configured (or **codex-bridge** for custom providers — see below)
 - **Must run inside a git repository** — Codex refuses to run outside one
 - Use `pty=true` in terminal calls — Codex is an interactive terminal app
 
-## Proxy Bridges (Non-OpenAI Models)
+## Custom Provider Setup (codex-bridge)
+
+Codex natively only talks to OpenAI. To connect it to **DeepSeek**, **Mimo**, or any OpenAI-compatible API, run a local proxy bridge:
+
+### 1. Install codex-bridge
+
+```bash
+git clone https://github.com/anthropics/codex-bridge.git ~/codex-bridge
+cd ~/codex-bridge && npm install
+```
+
+### 2. Configure the bridge
+
+Create `~/codex-bridge/.env` with your provider keys:
+
+```env
+PROVIDER_URL=https://api.deepseek.com/beta
+PROXY_AUTH_KEY=<generate-a-random-token>   # used for auth between Codex ↔ bridge
+CODEX_API_KEY=<anything-placeholder-if-not-needed>
+```
+
+For custom providers (e.g. hosted OpenRouter-style endpoints), set `PROVIDER_URL` to your endpoint.
+
+### 3. Set the auth key as env var
+
+```bash
+echo 'export CODEX_PROXY_KEY=<same-token-as-PROXY_AUTH_KEY>' >> ~/.bashrc
+source ~/.bashrc
+```
+
+This must match `PROXY_AUTH_KEY` in the bridge `.env` — it's how Codex authenticates to the bridge.
+
+### 4. Start the bridge
+
+```bash
+cd ~/codex-bridge
+node proxy.mjs &
+# Verify: curl -s localhost:4000/v1/models | head
+```
+
+Bridge serves on `localhost:4000` by default. Verify with:
+
+```bash
+curl -H "Authorization: Bearer $CODEX_PROXY_KEY" http://localhost:4000/v1/models
+# Expect: {"object":"list","data":[{"id":"deepseek-chat",...}]}
+```
+
+### 5. Configure Codex to use the bridge
+
+Create `~/.config/codex/config.toml`:
+
+```toml
+[[models]]
+model = "deepseek-v4-flash"
+provider = "openai"
+baseURL = "http://localhost:4000/v1"
+
+[[models]]
+model = "deepseek-v4-pro"
+provider = "openai"
+baseURL = "http://localhost:4000/v1"
+
+[[models]]
+model = "deepseek-chat"
+provider = "openai"
+baseURL = "http://localhost:4000/v1"
+```
+
+Now `codex exec` will route through the bridge to your custom provider.
+
+### Model Metadata Warning
+
+Codex only ships built-in metadata for **official OpenAI models** (o3, gpt-4o, etc.). Custom models like `deepseek-v4-flash` will display:
+
+```
+Model metadata for `deepseek-v4-flash` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.
+```
+
+**This is cosmetic** — Codex uses auto-detected fallback parameters. The model runs normally with no functional degradation. There is no way to suppress it without a Codex source code patch.
+
+## Proxy Bridges (Non-OpenAI Models) — Protocol Details
 
 When Codex connects through a proxy bridge (e.g. `ccswitch-deepseek`) to use non-OpenAI models like DeepSeek, two wire protocols interact:
 
@@ -212,6 +293,43 @@ terminal(command="codex exec 'Review PR #87. git diff origin/main...origin/pr/87
 # Post results
 terminal(command="gh pr comment 86 --body '<review>'", workdir="~/project")
 ```
+
+## WSL 重启后修复（2026.6.5）
+
+重启后 Codex 报错 `401 Unauthorized` 或 `Missing CODEX_PROXY_KEY`，原因为：
+1. **桥服务（proxy.mjs）不会随 WSL 自动重启**
+2. **CODEX_PROXY_KEY 环境变量未持久化**
+
+修复内容已写入 `~/.bashrc` 和 `~/codex-bridge/start.sh`：
+
+```bash
+# 打开任意 WSL 终端即可自动完成：
+# 1）设置 CODEX_PROXY_KEY 环境变量
+# 2）start.sh → 从 .env 读取 DEEPSEEK_BASE_URL / API Key → 启动桥
+# 3）PID 记录在 /tmp/codex-bridge.pid，日志在 /tmp/codex-bridge.log
+```
+
+**关键配置：**
+- `DEEPSEEK_BASE_URL=https://llm.chudian.site/v1`（第三方聚合平台，非官方 DeepSeek API）
+- `DEEPSEEK_API_KEY=sk-ag-...`（阿里云百炼格式 key，走第三方兼容层）
+- 如果 endpoint 变只改 `.env` 的 `DEEPSEEK_BASE_URL` 即可
+
+手动测试：
+```bash
+curl -H "Authorization: Bearer $CODEX_PROXY_KEY" http://localhost:4000/v1/models
+# → 返回模型列表即正常
+```
+
+## Pitfalls
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| `Missing environment variable: CODEX_PROXY_KEY` | Bridge configured but env var not set | `echo 'export CODEX_PROXY_KEY=...' >> ~/.bashrc && source ~/.bashrc` |
+| Bridge returns 401 on curl test | curl didn't send auth header | Add `-H "Authorization: Bearer $CODEX_PROXY_KEY"` |
+| 重启后 Codex 报 401/auth 错误 | 桥服务未自动启动 + CODEX_PROXY_KEY 未加载 | 修复已在 ~/.bashrc 和 start.sh 中做好，开新终端即可。检查: `curl -H "Authorization: Bearer $CODEX_PROXY_KEY" localhost:4000/v1/models` |
+| Codex hangs with no output | Missing `pty=true` | Codex is an interactive TUI — must use `pty=true` in terminal() |
+| `Model metadata not found` | Custom provider, not OpenAI official | Cosmetic only — ignore, no functional impact |
+| Bridge process died | Terminal session ended, `&` background got killed | Start with `nohup node proxy.mjs &` or Hermes `terminal(background=true)` |
 
 ## Rules
 

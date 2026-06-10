@@ -1,0 +1,4 @@
+DrissionPage==4.1.1.4
+httpx==0.28.1
+httpx-sse==0.4.3
+playwright==1.60.0

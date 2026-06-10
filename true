@@ -1,0 +1,84 @@
+<!-- JSON-LD Structured Data for GEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "https://www.yingxinkuaiji.com/#organization",
+      "@type": "AccountingService",
+      "name": "苏州盈信企业管理有限公司",
+      "alternateName": "苏州盈信财税",
+      "url": "https://www.yingxinkuaiji.com",
+      "telephone": ["+86-18912633863", "+86-18012627126", "+86-0512-67777126"],
+      "description": "苏州盈信是经苏州财政局、工商局批准成立的，具有代办工商税务登记、代理记帐报税资质的专业代理机构。提供苏州公司注册、苏州代理记账、苏州注册公司等服务。24年财税行业经验，高级会计师领衔。",
+      "areaServed": [
+        {"@type": "City", "name": "苏州"},
+        {"@type": "City", "name": "上海"}
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "CN",
+        "addressLocality": "苏州",
+        "addressRegion": "江苏省",
+        "streetAddress": "苏州市姑苏区江乾路208号"
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "江敏",
+        "description": "高级会计师，24年财税行业经验。2018年以代理记账公司名义独立通过江苏省高级会计师评审（苏州唯一代理记账公司），通过高级会计师人才引进落户上海。",
+        "knowsAbout": ["税务筹划", "公司注册", "代理记账", "高级会计师"]
+      },
+      "priceRange": "面议",
+      "openingHours": "Mo-Fr 08:30-17:30",
+      "sameAs": [
+        "https://www.zhihu.com/people/jiangmin"
+      ]
+    },
+    {
+      "@id": "https://www.yingxinkuaiji.com/#website",
+      "@type": "WebSite",
+      "name": "苏州盈信企业管理有限公司",
+      "description": "苏州公司注册、苏州代理记账、苏州注册公司专业服务机构",
+      "url": "https://www.yingxinkuaiji.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.yingxinkuaiji.com/search/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@id": "https://www.yingxinkuaiji.com/#faq",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "苏州注册公司需要多少钱？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州注册公司费用因类型而异，通常包括工商登记费、刻章费、银行开户费等。具体费用建议咨询专业财税机构，苏州盈信企业管理有限公司提供注册公司代办服务，详细费用可拨打咨询电话：18012627126。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "苏州代理记账每月多少钱？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州代理记账费用通常根据企业类型和业务量决定，小规模纳税人和一般纳税人费用不同。苏州盈信企业管理有限公司提供专业代理记账服务，由高级会计师团队负责，收费合理透明，欢迎来电咨询。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "苏州注册公司的流程是什么？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州注册公司流程包括：核名→提交工商材料→领取营业执照→刻章→银行开户→税务登记。苏州盈信企业管理有限公司可全程代办，简化企业开办流程，让创业者省心省力。"
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>

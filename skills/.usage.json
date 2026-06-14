@@ -42,14 +42,14 @@
     "archived_at": null,
     "created_at": "2026-05-30T09:26:59.098464+00:00",
     "created_by": "agent",
-    "last_patched_at": "2026-05-31T09:05:32.645803+00:00",
-    "last_used_at": "2026-06-12T11:03:40.766301+00:00",
-    "last_viewed_at": "2026-06-12T11:03:40.754768+00:00",
-    "patch_count": 23,
+    "last_patched_at": "2026-06-14T10:06:27.009423+00:00",
+    "last_used_at": "2026-06-14T10:05:51.921015+00:00",
+    "last_viewed_at": "2026-06-14T10:05:51.910705+00:00",
+    "patch_count": 24,
     "pinned": false,
     "state": "active",
-    "use_count": 33,
-    "view_count": 33
+    "use_count": 34,
+    "view_count": 34
   },
   "cron-template-jobs": {
     "archived_at": null,
@@ -68,14 +68,14 @@
     "archived_at": null,
     "created_at": "2026-05-31T02:28:21.545913+00:00",
     "created_by": "agent",
-    "last_patched_at": null,
-    "last_used_at": "2026-06-12T11:03:40.769836+00:00",
-    "last_viewed_at": "2026-06-12T11:03:40.762206+00:00",
-    "patch_count": 0,
+    "last_patched_at": "2026-06-14T10:06:53.807807+00:00",
+    "last_used_at": "2026-06-14T10:06:39.085257+00:00",
+    "last_viewed_at": "2026-06-14T10:06:39.080004+00:00",
+    "patch_count": 1,
     "pinned": false,
     "state": "active",
-    "use_count": 3,
-    "view_count": 3
+    "use_count": 4,
+    "view_count": 4
   },
   "english-learning": {
     "archived_at": null,
@@ -93,14 +93,14 @@
     "archived_at": null,
     "created_at": "2026-06-13T08:53:36.999190+00:00",
     "created_by": "agent",
-    "last_patched_at": "2026-06-14T06:53:09.954936+00:00",
-    "last_used_at": "2026-06-14T06:52:55.327770+00:00",
-    "last_viewed_at": "2026-06-14T06:52:55.323188+00:00",
-    "patch_count": 13,
+    "last_patched_at": "2026-06-14T12:11:53.735065+00:00",
+    "last_used_at": "2026-06-14T12:11:22.662282+00:00",
+    "last_viewed_at": "2026-06-14T12:11:22.658344+00:00",
+    "patch_count": 16,
     "pinned": false,
     "state": "active",
-    "use_count": 18,
-    "view_count": 18
+    "use_count": 24,
+    "view_count": 24
   },
   "gguf-quantization": {
     "archived_at": null,

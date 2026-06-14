@@ -8,7 +8,7 @@
 §
 【manager反馈偏好】manager对交付质量满意时会说"OK,你真棒"。偏好直接给结果、可操作的内容。对信息来源要求严格——报告中的信息需要标注来源链接，不能只说"综合知识"。
 §
-阿里云47.103.27.171(Ubuntu22.04 Hermes v0.15.1)。财税情报定时任务部署在阿里云。企微机器人：名称 yingxin_inner, BOTID aibCgyqs_UpoYBfLGf0QejX1YCmKfW176cM, Secret qCB8YuT6JSREfPAhV112EFk7D9XlCrCJ1Q4NFgidFy9
+阿里云47.103.27.171(Ubuntu22.04 Hermes v0.15.1)。财税情报定时任务每周一三五09:05执行，推送到企微群yingxin_inner（webhook key 41872151-7e41-410f-b006-a0db3f6f4e30）。脚本路径已修复，无需保存到本地。
 §
 Codex v0.135 + DeepSeek V4 Flash 配置：
 1. 代理 ~/.hermes/skills/.../codex/scripts/codex-proxy.py 监听:9090（WS+HTTP POST）
@@ -24,4 +24,4 @@ humanizer skill 已扩展：新增 Content Strategy Pre-Processing 模块（含2
 §
 用户使用QCNET99（ASP建站系统）管理yingxinkuaiji.com。对网站技术操作自称"小白"，需要极细致分步引导（说清点哪个按钮、输入什么）。其他技术工作（服务器、代码）仍偏好直接给结果。
 §
-geo-search-optimization skill 已补充：QCNET99 ASP后台实操部署流程（栏目→文章→菜单三步走）、PDF外化策略（PDF列表不可被AI抓取时的应对方案）、示范基地 sipkj.org.cn 作为权威信息源的引用模板。模板文件 schemaldjson.md 已更新，含 memberOf 示范基地类型的完整 JSONLD。
+GEO skill 已完整：含门户渠道策略（搜狐/新浪/网易/腾讯，70%行业分析+30%带盈信，文末作者简介，审核比知乎严，新浪最严），QCNET99后台三步操作（分类→文章→菜单，链接地址写相对路径），PDF外化策略（列举法手动记录+文字呈现），示范基地引用模板，知乎/公众号/小红书内容模板。参考文件含 portal-publishing-guide.md。

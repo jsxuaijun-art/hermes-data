@@ -1,9 +1,9 @@
 {
-  "last_report_path": null,
-  "last_run_at": "2026-05-24T14:19:53.657284+00:00",
-  "last_run_duration_seconds": null,
-  "last_run_summary": "deferred first run — curator seeded, will run after one interval; use `hermes curator run --dry-run` to preview now",
+  "last_report_path": "/home/jsxuaijun/.hermes/logs/curator/20260612-105713",
+  "last_run_at": "2026-06-12T10:57:13.671134+00:00",
+  "last_run_duration_seconds": 433.233912,
+  "last_run_summary": "auto: no changes; llm: All done. Here's the summary:\n\n---\n\n## Consolidation Summary\n\nI processed all 5 agent-created skills through one consolidation round.\n\n### Clusters Identified\n\n**Cluster 1: Cron/DevOps/Deployment (3 skills)**\n- `cron-template-jobs` — Class-…\narchived 1 skill(s):\n  • multi-environment-deployment → cron-template-jobs\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin cron-template-jobs",
   "last_run_summary_shown_at": null,
   "paused": false,
-  "run_count": 0
+  "run_count": 4
 }

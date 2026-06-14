@@ -1,6 +1,6 @@
 ---
 name: ocr-and-documents
-description: "Extract text from PDFs/scans (pymupdf, marker-pdf)."
+description: Extract text from PDFs and scanned documents. Use web_extract for remote URLs, pymupdf for local text-based PDFs, marker-pdf for OCR/scanned docs. For DOCX use python-docx, for PPTX see the powerpoint skill.
 version: 2.3.0
 author: Hermes Agent
 license: MIT
@@ -169,27 +169,3 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 - marker-pdf downloads ~2.5GB of models to `~/.cache/huggingface/` on first use
 - For Word docs: `pip install python-docx` (better than OCR — parses actual structure)
 - For PowerPoint: see the `powerpoint` skill (uses python-pptx)
-
-## Non-Standard Documents: Music Scores
-
-**Standard OCR pipelines (Tesseract, pytesseract) cannot read Chinese numbered musical notation (jianpu/简谱).** See `references/music-score-ocr.md` for a complete breakdown of approaches tried and their results.
-
-TL;DR: If `vision_analyze` is available (model supports image input), use it. Otherwise, OCR can recover only title/tempo/performance instruction text from the margins — the actual notation numbers (1–7) are unrecoverable via Tesseract. Fall back to human-assisted transcription: ask the user to read the numbers.
-
-### After Transcription: Generate Audio
-
-Once the user provides the jianpu numbers (even approximately), use `scripts/jianpu2midi.py` to:
-
-- Generate MIDI audio (GM#22 Harmonica ≈ 口风琴)
-- Print right-hand fingering annotations
-- Print a structured practice guide (phased tempo, breath control tips, difficulty assessment)
-
-```bash
-# Example: user provides notes, you generate audio + guide
-python scripts/jianpu2midi.py --guide --fingering --bpm 80 \
-  "5 5 6 5 | 3 2 1 — | 5 5 6 5 | 3 2 1 — |"
-```
-
-See `references/jianpu-to-audio.md` for the full workflow, input format table, instrument numbering, and melodica fingering rules.
-
-This applies to any document with mixed notation + text (sheet music, lead sheets, tablature) — not just Chinese jianpu.

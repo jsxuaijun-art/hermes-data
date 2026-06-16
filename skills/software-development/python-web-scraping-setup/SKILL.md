@@ -1,8 +1,130 @@
 ---
-name: scripts/verify-crawler-env
-description: 爬虫环境验证脚本 — Playwright + Scrapy + Requests/BS4 核心 + DrissionPage/scrapling/curl_cffi/curl-impersonate 拓展
+name: python-web-scraping-setup
+description: Cross-platform web scraping environment setup — DrissionPage, scrapling, curl_cffi, Playwright, curl-impersonate. Covers WSL (Hermes venv) + Aliyun (system Python) dual-env deployment, shared scripts via GitHub, and environment verification.
 ---
 
+# Python 爬虫环境设置
+
+## 安装策略（A方案 — 当前）
+
+所有工具统一安装到 **Hermes 主 Python 环境**，不建独立 venv：
+
+| 环境 | Python 路径 | 说明 |
+|------|------------|------|
+| **WSL 本地** | `~/.venv-hermes/` | Hermes 虚拟环境 |
+| **阿里云** | `/usr/local/lib/hermes-agent/venv/` | Hermes 专用 venv（非系统 Python） |
+
+> ⚠️ **关键路径坑**：阿里云 Hermes 的 venv 路径是 `/usr/local/lib/hermes-agent/venv/`，**不是** `$HOME/.venv-hermes` 也不是系统 Python。setup.sh 的自动检测必须覆盖这个路径，否则会装到系统 Python 而 Hermes 实际跑的还是旧的。
+
+### 一键安装
+
+```bash
+git pull                                          # 确保最新脚本
+bash scrapling/setup.sh                           # 自动检测环境 → 安装全部工具
+python scrapling/scripts/test-scrapling.py         # 验证 4 个工具全部就绪
+```
+
+`setup.sh` 自动完成：
+1. 检测 Hermes venv（优先级：`/usr/local/lib/hermes-agent/venv/` > `~/.venv-hermes/` > 系统 Python）
+2. 安装 DrissionPage + scrapling + curl_cffi + Playwright
+3. 安装 Playwright Chromium 浏览器
+4. 安装 curl-impersonate 系统二进制
+5. 验证所有工具就绪
+
+### 包含工具
+
+| 工具 | 层级 | 用途 | 安装方式 |
+|------|------|------|----------|
+| **Requests + BeautifulSoup** | ✅ 核心 | 基础 HTTP + HTML 解析 | 预装 |
+| **Scrapy** | ✅ 核心 | 大规模爬虫框架 | `pip install` |
+| **Playwright** | ✅ 核心 | 浏览器自动化（多浏览器） | pip + 二进制 |
+| **DrissionPage** | 🔧 拓展 | 多线程/多标签浏览器自动化 | pip 直装 |
+| **scrapling** | 🔧 拓展 | 自适应智能爬虫（55K+ Stars） | pip 直装 |
+| **curl_cffi** | 🔧 拓展 | TLS 指纹模拟（Python 版） | pip 直装 |
+| **curl-impersonate** | 🔧 拓展 | 系统级 curl 指纹模拟二进制 | 系统安装 |
+
+## 共享脚本架构
+
+爬虫脚本统一放在 `hermes-data/scrapling/scripts/` 目录，通过 GitHub 同步到所有机器：
+
+```
+hermes-data/
+├── scrapling/             ← Git 同步
+│   ├── setup.sh           ← 新电脑一键安装
+│   ├── activate.sh        ← 快速激活 Hermes 环境
+│   ├── README.md          ← 完整文档
+│   └── scripts/
+│       ├── test-scrapling.py      ← 环境验证（4 工具 + 深度导入）
+│       ├── tax-policy-monitor.py   ← 税务政策监控
+│       └── ...                     ← 后续添加
+```
+
+### 多机同步规则
+
+| 项目 | 同步方式 | 说明 |
+|------|---------|------|
+| 爬虫脚本 (scripts/) | ✅ GitHub | 写一次，所有机器 `git pull` |
+| 安装脚本 (setup.sh) | ✅ GitHub | 一次配置，多机复用 |
+| Python 包 | ❌ 每台手动装 | 平台依赖，不能 git 同步 |
+| Chromium 浏览器 | ❌ setup.sh 自动装 | ~170MB |
+| curl-impersonate 二进制 | ❌ setup.sh 自动装 | TLS 指纹模拟 |
+
+## WSL Playwright 依赖坑
+
+WSL 最小化安装缺音频/图形库，Playwright 启动报错：
+
+```
+error while loading shared libraries: libasound.so.2: cannot open shared object file
+```
+
+**修复**（一行搞定）：
+```bash
+sudo apt-get install -y libasound2 libgtk-3-0 libgbm1 libx11-xcb1 libnss3 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxrandr2 libxss1 libxtst6
+```
+
+## curl-impersonate 安装说明
+
+GitHub release 从中国下载不稳定。setup.sh 先尝试 Python requests 下载（走代理），失败则提示手动安装：
+
+```bash
+# 手动下载
+wget https://github.com/lwthiker/curl-impersonate/releases/download/v0.6.1/curl-impersonate-v0.6.1.x86_64-linux-gnu.tar.gz
+tar -xzf curl-impersonate-v0.6.1.x86_64-linux-gnu.tar.gz
+sudo cp curl_chrome* curl_ff* curl_edge* /usr/local/bin/
+```
+
+> **注意**：curl-impersonate 是**可选系统工具**。如果装不上，Python 端的 `curl_cffi` 提供了相同能力（TLS 指纹模拟），不影响爬虫开发。
+
+## 环境验证
+
+```bash
+# 完整验证
+python scrapling/scripts/test-scrapling.py
+
+# 快速验证（单行）
+python3 -c "import DrissionPage, scrapling, curl_cffi, playwright; print('All OK')"
+```
+
+验证脚本检查内容：
+- ✅ 4 个 Python 包版本号（**使用直接 import 取 `__version__`，不要用 `importlib.metadata.version()`** — 有 corrupt dist-info 时会异常退出）
+- ✅ DrissionPage.ChromiumPage 可导入
+- ✅ scrapling.Fetcher/StealthyFetcher 可导入
+- ✅ curl_cffi 实际请求（impersonate=chrome110）
+- ✅ playwright.sync_api 可导入
+
+> ⚠️ **importlib.metadata 陷阱**：某个包的 `.dist-info` 目录损坏（如 `~etuptools`）会导致 `importlib.metadata.version()` 抛异常，但 `import` 实际正常。验证脚本必须用 `pkg.__version__` 方式抓版本，不能用 `importlib.metadata.version(pkg)`。
+
+## 完整安装记录
+
+| 日期 | 操作 | 详情 |
+|------|------|------|
+| 2026-06-10 | 核心三件套（Playwright + Scrapy + BS4） | WSL 安装成功，Chromium 超时一次后重试通过 |
+| 2026-06-16 | 状态检查 | Playwright ✅ 已装，DrissionPage/scrapling/curl ❌ |
+| **2026-06-16** | **A方案决策** | **放弃独立 venv，全部装进 Hermes 主环境** |
+
+## 验证脚本（scripts/verify-crawler-env.py）
+
+```python
 #!/usr/bin/env python3
 """
 爬虫环境验证脚本 — 检测核心工具（Playwright + Scrapy + Requests/BS4）

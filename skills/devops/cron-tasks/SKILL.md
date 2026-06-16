@@ -86,3 +86,24 @@ After output, confirm:
 - [ ] Not repeating any message from a previous attempt
 - [ ] Default behavior is set if final attempt
 - [ ] No open-ended "please respond" at attempt 3
+
+## Cron Failure Diagnosis
+
+When a user reports a cron job "not starting" or showing `last_status=error`:
+
+1. Run `cronjob list` — check `last_status`, `enabled`, `last_run_at`
+2. Check `errors.log` for the actual error near `last_run_at` timestamp
+3. Most common cause: **API key 401** — key was valid when the cron was created but expired by fire time
+4. Manual re-run (`cronjob run`) reproduces the failure
+5. Fix the key in `.env`, re-run to confirm
+- **Same key works in CLI but not in cron?** → Check `base_url_env_var`
+  (even if config.yaml has the custom base_url, the credential path doesn't read it)
+- **Manual `cronjob run` creates an empty session?** → Pattern D — approval bypass
+  (scheduled runs auto-bypass, manual runs don't)
+   Even if `resolve_runtime_provider()` returns the correct base_url, the
+   actual API call may use a different endpoint. The fix is to set the
+   provider's `base_url_env_var` in `.env` (e.g. `DEEPSEEK_BASE_URL`).
+   See `references/cron-failure-diagnosis.md#pattern-b-config-loading-discrepancy-provider-base_url-resolver`
+   for the full mechanism and test script.
+
+See `references/cron-failure-diagnosis.md` for the full diagnostic workflow, common failure patterns (API key 401, config loading discrepancy, subagent auth failure), and a quick checklist.

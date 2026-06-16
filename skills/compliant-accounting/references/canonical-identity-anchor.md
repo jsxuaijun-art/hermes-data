@@ -125,6 +125,7 @@
 
 | 引用文件 | 引用位置 | 引用内容类型 |
 |--------|---------|------------|
+| `enterprise-diagnostic/SKILL.md` | description + §三-身份锚点 | 公司+个人标签，开场话术 |
 | `compliant-accounting/SKILL.md` | description 首行 | 公司+个人+团队简要标签 |
 | `compliant-accounting/SKILL.md` | §30秒电梯介绍 | 完整电梯话术 |
 | `marketing/client-group-welcome/SKILL.md` | §本人介绍（第43-46行） | 团队信息+高会信息 |

@@ -1,6 +1,6 @@
 ---
 name: github-auth
-description: Set up GitHub authentication for the agent using git (universally available) or the gh CLI. Covers HTTPS tokens, SSH keys, credential helpers, and gh auth — with a detection flow to pick the right method automatically.
+description: "GitHub auth setup: HTTPS tokens, SSH keys, gh CLI login."
 version: 1.1.0
 author: Hermes Agent
 license: MIT
@@ -233,49 +233,6 @@ fi
 
 ---
 
-## WSL-Specific: Pushing to HTTPS Remotes When Credentials Aren't Cached
-
-This is a common pain point on this user's setup: the hermes-data repo uses an HTTPS remote, but WSL has NO integration with Windows Credential Manager. `git push` fails with:
-
-```
-fatal: could not read Username for 'https://github.com': No such device or address
-```
-
-**Root cause**: WSL's `git` can't pop up a GUI credential prompt. The credential helper isn't configured. This happens every time the user does `git push` from within Hermes (WSL).
-
-### Fix: Embed Token in Remote URL (per-repo, immediate fix, preferred)
-
-```bash
-cd /path/to/hermes-data
-# Extract token from .hermes/.env (if configured there)
-TOKEN=$(grep "^GITHUB_TOKEN=" ~/.hermes/.env | head -1 | cut -d= -f2 | tr -d '\n\r')
-
-# Embed it in the remote URL (works immediately, no credential helper needed)
-# Replace USERNAME and REPO with actual values
-git remote set-url origin "https://USERNAME:${TOKEN}@github.com/USERNAME/REPO.git"
-```
-
-After this, `git push` works without any prompts. The token is embedded in the remote URL for that repo only.
-
-**Note on safety**: The token is in plaintext in `.git/config`. On this user's single-user WSL setup this is acceptable.
-
-### Fix: git credential store (one-time setup, persists for all repos)
-
-```bash
-git config --global credential.helper store
-# Then do any git operation that triggers auth — it'll prompt once (use token as password)
-# After that, credentials are saved to ~/.git-credentials
-```
-
-### Detection
-
-Use the `gh-env.sh` helper script (at `scripts/gh-env.sh` in the skill directory) to auto-detect which auth method is available:
-
-```bash
-source skills/github/github-auth/scripts/gh-env.sh
-# $GH_AUTH_METHOD is "gh", "curl", or "none"
-```
-
 ## Troubleshooting
 
 | Problem | Solution |
@@ -283,7 +240,6 @@ source skills/github/github-auth/scripts/gh-env.sh
 | `git push` asks for password | GitHub disabled password auth. Use a personal access token as the password, or switch to SSH |
 | `remote: Permission to X denied` | Token may lack `repo` scope — regenerate with correct scopes |
 | `fatal: Authentication failed` | Cached credentials may be stale — run `git credential reject` then re-authenticate |
-| `fatal: could not read Username for 'https://github.com': No such device or address` | WSL has no GUI credential prompt. Embed token in remote URL or set up `credential.helper store` (see WSL section above) |
 | `ssh: connect to host github.com port 22: Connection refused` | Try SSH over HTTPS port: add `Host github.com` with `Port 443` and `Hostname ssh.github.com` to `~/.ssh/config` |
 | Credentials not persisting | Check `git config --global credential.helper` — must be `store` or `cache` |
 | Multiple GitHub accounts | Use SSH with different keys per host alias in `~/.ssh/config`, or per-repo credential URLs |

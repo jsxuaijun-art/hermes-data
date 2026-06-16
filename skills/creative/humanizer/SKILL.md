@@ -4,7 +4,6 @@ description: "Humanize text: strip AI-isms and add real voice."
 version: 2.5.1
 author: Siqi Chen (@blader, https://github.com/blader/humanizer), ported by Hermes Agent
 license: MIT
-platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [writing, editing, humanize, anti-ai-slop, voice, prose, text]
@@ -27,12 +26,6 @@ Load this skill whenever the user asks to:
 - edit a draft (blog post, essay, PR description, docs, memo, email, tweet, resume bullet) to sound more natural
 - match their voice in writing they're producing
 - review text for AI tells before publishing
-- **write/plan a short video script for Douyin, video号, or 小红书** (pre-process with algorithm strategy first)
-- **optimize content for platform algorithm** (收藏率/搜索流量/完播率/7天周期)
-- **plan GEO strategy for AI search visibility** (get cited by 文心一言/Kimi/豆包/秘塔)
-- implement GEO technical strategy on website (add standalone qualification page, structured data, update navigation)
-- leverage government/institutional affiliations for GEO (PDF名单→可被AI抓取的内容)
-- guide a non-technical user through CMS operations (require step-by-step button-level instructions)
 
 Also apply this skill to **your own** output when writing user-facing prose — release notes, PR descriptions, documentation, long-form explanations, summaries. Hermes's baseline voice already strips most of these, but a focused pass catches what slips through.
 
@@ -484,119 +477,6 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 > When users hit a slow page, they leave.
 
 ---
-
-## Content Strategy Pre-Processing — GEO (生成式引擎优化)
-
-*此步骤在 humanization 之前执行。完整策略见 `geo-search-optimization` skill。本页仅做速查清单。*
-
-当需要**提升品牌在AI搜索中的可见度**时，在 humanize 之前先做一轮 GEO 策略检查：
-
-### 核心原则
-
-AI搜索回答问题时，更倾向于引用**权威来源 + 结构化内容 + 高频被其它信源同步引用的内容**。GEO 的核心不是追算法，而是让AI搜索"不得不"引用你。
-
-### GEO信息源价值排序
-
-1. **政府官网**（财政部、税务局）— 权威最高，但经常有认证墙/验证码，AI难以直接抓取
-2. **政府关联平台**（会计学会、示范基地、行业协会等）— 高权威，但PDF附件是"内容黑洞"
-3. **百科类**（百度百科、MBA智库）— 中段权威，容易被AI引用
-4. **知乎/公众号** — 高被引率的口碑来源
-5. **企业官网** — 被引率最低，除非内容极其专业
-
-### 三类权威信息的GEO策略
-
-#### 类型A：政府平台已收录你（需要"外化"）
-
-**典型场景：** 你在财政部、税务局等官方平台有备案信息，但AI搜不到。
-
-**策略：**
-- ⭐ 在自己官网建专题页转述政府数据，原文引用来源链接
-- ⭐ 加结构化数据（LD+JSON），用 `memberOf` / `affiliation` / `hasCredential` 标记权威关系
-- ⭐ 在知乎发问答回答时，引用政府数据+给出查询方法
-
-#### 类型B：官方PDF名单有你（需要"翻译"）
-
-**典型场景：** 你是某政府认证的示范基地/行业协会的成员单位，但成员名单存在PDF里，AI无法解读。
-
-**策略（四层）：**
-1. **找源头** — 联系官方，建议把PDF内容"外化"到页面上（列表展示）
-2. **自建桥梁** — 在自己官网声明成员身份+结构化数据
-3. **内容搬运** — 在知乎/公众号/小红书等AI高频引用平台"翻译"PDF内容为可读文章
-4. **链接有语义** — 引用PDF时用描述性文字，不只用无语义的下载链接
-
-#### 类型C：行业协会/学会会员（需要"强化"）
-
-**典型场景：** 你是某行业协会会员，但页面没突出展示。
-
-**策略：**
-- 官网加 `memberOf` 结构化数据
-- 在 About/资质页面突出展示会员身份
-- 内容中定期引用协会的权威数据（增加关联度）
-
-### 结构化数据检查清单
-
-为官网添加以下 LD+JSON 标记：
-
-- [ ] `ProfessionalService` 基础标记（名称、地址、服务区域）
-- [ ] `memberOf` 行业协会/学会会员关系
-- [ ] `affiliation` 示范基地/政府合作标记
-- [ ] `hasCredential` 高级会计师等专业资质
-- [ ] `aggregateRating` 客户评价/转介绍率
-- [ ] `FAQPage` 常见问答（AI搜索最爱引用）
-
-### 自查清单
-
-执行内容创作前，检查以下GEO因子：
-
-- [ ] 内容是否引用了可被AI搜索的权威来源？
-- [ ] 如果权威信息在PDF里，是否在内容中做了"翻译"？
-- [ ] 是否有结构化数据标记权威关系？
-- [ ] 引用的链接是否有语义（不是 download?id=xxx 这种格式）？
-- [ ] 内容是否在 AI 高频引用平台上发布了衍生版本？
-
----
-
-## Content Strategy Pre-Processing (短视频算法优化)
-
-*此步骤在 humanization 之前执行，确保内容结构已针对2026年算法优化。参考文件：
-- `references/douyin-2026-algorithm.md` — 数据权重（收藏率/搜索/7天周期）
-- `references/douyin-push-mechanism.md` — 行为机制（负反馈/人群资产/留存曲线/流量并轨）
-- 创作前先检查两篇参考文件，确保内容同时覆盖权重策略和行为策略*
-
-当内容将在**抖音/视频号/小红书**等平台发布时，在 humanize 之前先做一轮策略检查：
-
-### 算法权重检查清单（优先级排序）
-
-1. **收藏率优化** — 内容是否值得收藏？（干货/清单/避坑 > 资讯/观点）
-   - 评分标准：老板看完会不会收藏留着以后用？
-   - 如果不是→重构内容结构，增加实操干货
-2. **搜索流量覆盖** — 前5秒是否口播了核心关键词？
-   - 检查开头：用户搜索的关键词是否在视频前5秒被口头说出？
-   - 如果不是→重写开头，把关键词自然嵌入前5秒
-3. **铁粉互动设计** — 是否有引导铁粉互动的设计？
-   - 「老粉们觉得是不是这样？」「关注久的都知道」
-4. **完播率门槛** — 内容是否足够紧凑？
-   - 用 humanizer 的「冗余-精简」原则整体压缩
-5. **7天运营视角** — 内容发布后能否撑住7天不删？
-   - 避免时效性过强的标题，确保内容长期有效
-6. **收藏引导** — 结尾是否有明确的收藏引导？
-   - 「建议先收藏，以后遇到直接打开对照」
-
-### 爆款内容结构速查
-
-| 类型 | 适用场景 | 开头钩子 | 中段 | 结尾 |
-|------|----------|----------|------|------|
-| **风险型**（收藏率最高） | 税务合规/避坑 | 「公司这样做账等于送把柄」 | 后果放大+合规方案 | 引导免费诊断 |
-| **利益型**（搜索流量最佳） | 节税/政策解读 | 「合法省下XX万」 | 政策依据+操作步骤 | 引导私信领手册 |
-| **对比型**（完播率高） | 客户案例 | 「同样的收入税差40万」 | 原因分析+解决方案 | 引导关注 |
-
-### 快速自查
-
-- [ ] 前5秒口播了核心关键词？
-- [ ] 内容适合收藏？
-- [ ] 结尾引导收藏+私信？
-- [ ] 评论区预埋了引导话术？
-- [ ] 预计收藏率>5%？
 
 ## Process
 

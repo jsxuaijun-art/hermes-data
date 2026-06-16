@@ -87,9 +87,3 @@ After updating, always provide the user with a **structured audit of changes**:
 
 - writing-plans (for structured deliverable creation)
 - report-writing (if you have one — for long-form deliverable structure)
-
-## Reference Files
-
-| File | What it covers |
-|------|---------------|
-| `references/independent-research-credibility-assessment.md` | Methodology for independently researching a topic from scratch: paper retrieval via OpenAlex, journal/citation/type evaluation, evidence hierarchy, Python retrieval scripts, and client-facing expression framework |

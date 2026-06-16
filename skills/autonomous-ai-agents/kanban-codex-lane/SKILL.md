@@ -89,10 +89,9 @@ codex --version
 codex features list | grep -i goals || true
 ```
 
-**Provider limitation:** Codex CLI v0.135.0+ uses WebSocket Responses API (`wss://api.openai.com/v1/responses`) — it **only works with OpenAI**, not DeepSeek/OpenRouter/etc. The `OPENAI_BASE_URL` env var is **ignored**. See the `codex` skill's Provider Compatibility section for details and fallback options.
+If `/goal` support is required, enable or launch with the feature flag only after checking availability:
 
 ```bash
-# Enable goals feature if needed
 codex features enable goals || true
 codex --enable goals --version
 ```

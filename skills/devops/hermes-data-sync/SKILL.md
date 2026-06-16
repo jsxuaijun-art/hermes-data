@@ -380,11 +380,67 @@ with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
 | `系统找不到指定的路径` | `cd /d` 盘符不切或路径不存在 | 用 WSL 脚本代替 cmd cd |
 | `Hermes done` 等 WSL 输出被当命令执行 | WSL bash 输出回流到 cmd 解析 | .bat 只做触发器，WSL 脚本做全部工作 |
 
-### 4. git push rejected (non-fast-forward)
+### 4. git push rejected (non-fast-forward) — 正常分叉
 
-- Remote has commits you don't have locally (another PC pushed)
-- **Fix**: The script handles this via `fetch → rebase/merge → push` sequence
-- If manual intervention needed: `git pull --rebase origin main && git push`
+**场景**: 另一台电脑推送了正常提交，你本地的历史落后了（没有 force-push，历史完整）。
+
+- **Fix**: 脚本通过 `fetch → rebase/merge → push` 自动处理
+- 手动修复: `git pull --rebase origin main && git push`
+
+### 4b. 🔴 git push rejected — 远程被 force-push（历史重写分叉）
+
+**场景**: 某台电脑对远程仓库执行了 force-push（`git push --force` 或 `git reset --hard + git push --force`），远程的提交历史被重写。本地仓库的提交基于旧的历史，rebase 会失败或产生大量虚假冲突。
+
+**症状**:
+```
+ ! [rejected] main -> main (fetch first)
+```
+或
+```
+ ! [rejected] main -> main (non-fast-forward)
+```
+但执行 `git pull --rebase` 后产生大量冲突，或 rebase 后的文件内容丢失了本地新增的改动。
+
+**根因**: Force-push 重写了远程历史，本地 commit 的 parent 在远程已不存在，rebase 无法找到共同祖先。
+
+**正确修复 — `git reset --soft origin/main` 模式**:
+
+```bash
+# 1. 获取远程最新状态（不要 merge/rebase）
+git fetch origin main
+
+# 2. soft reset — 把本地分支头指针移到远程最新，保留所有本地改动在暂存区
+git reset --soft origin/main
+
+# 3. 把所有文件加回来（包括远程 force-push 删掉但本地有的文件）
+git add -A
+
+# 4. 创建新提交，包含本地全部改动
+git commit -m "merge: 同步本地全部变更"
+
+# 5. 推送（现在变成快进推了）
+git push origin main
+```
+
+**原理**:
+| 步骤 | 发生了什么 |
+|------|-----------|
+| `git fetch` | 下载远程最新历史，不合并 |
+| `git reset --soft origin/main` | 本地分支头指向远程最新，工作区和暂存区不变 |
+| `git add -A` | 把本地磁盘上所有文件（包括远程没有的）加入暂存区 |
+| `git commit` | 创建新提交，parent 是远程最新提交 |
+| `git push` | 现在是快进推送，不会被拒绝 |
+
+**跟正常分叉修复的对比**:
+
+| 特征 | 正常分叉 (pitfall #4) | 历史重写分叉 (pitfall #4b) |
+|------|----------------------|--------------------------|
+| 远程历史 | 完整，有共同祖先 | 被 force-push 重写 |
+| 修复命令 | `git pull --rebase` | `git fetch + reset --soft + add -A + commit` |
+| 本地改动 | 作为 commits 保留 | 作为 staged 重新提交 |
+| 风险 | 低 | 低（soft reset 不丢文件） |
+
+**特别注意**: `git reset --soft` 不会修改工作区和暂存区中的文件内容——你的所有本地修改（新建的 skill、修改的 memory 等）都安全地保留在磁盘上。如果 `git add -A` 后发现有不需要的文件，可以 `git reset HEAD <file>` 取消暂存。
 
 ### 5. Merge conflicts in shared config files
 
@@ -527,7 +583,143 @@ pause
 - 它的特殊性：保留 `chcp 65001`（交互式终端需要UTF-8）和 `-- bash -c`（内联长命令），但必须额外加 `2>nul`
 - 已在线修复此文件（详见 `references/heritage/batch-scripts-v1.md`）
 
-### 16. 🔴 Rebase 自动合并选择旧版文件（最隐蔽的数据丢失）
+### 18. 🔴 本环境缺少 GitHub PAT，无法通过 API 修改仓库设置（2026.6.15 新增）
+
+**场景**：需要修改 GitHub 仓库的设置（如改为私密、添加 Collaborator、Webhook 配置等），但本地只有 SSH key 没有 Personal Access Token（PAT）。
+
+**症状**：
+```bash
+# SSH key 认证成功（可 git push/pull）
+ssh -T git@github.com
+# → Hi jsxuaijun-art! You've successfully authenticated
+
+# 但 GitHub API 调用失败（401）
+curl -X PATCH -H "Authorization: Bearer xxx" \
+  https://api.github.com/repos/jsxuaijun-art/hermes-data \
+  -d '{"private": true}'
+# → {"message": "Bad credentials"}
+```
+
+**根本原因**：SSH key 只能做 git 操作（clone/fetch/push/pull），不能调 GitHub REST API。API 需要：
+- `Authorization: Bearer <PAT>`（Personal Access Token）
+- 或 `Authorization: token <PAT>`（旧格式）
+- 或 OAuth token
+
+**修复方案**：
+
+```bash
+# 1. 生成 PAT（GitHub 网页操作）
+#    Settings → Developer settings → Personal access tokens → Fine-grained tokens
+#    → Generate new token
+#    Repository access: Only select repositories → hermes-data
+#    Permissions: Administration (Read and write)  ← 改私密/visible 需要这个
+#    → Generate token
+
+# 2. 存到 ~/.hermes/.env
+echo 'GITHUB_TOKEN=github_pat_xxxxxxxxxxxx' >> ~/.hermes/.env
+chmod 600 ~/.hermes/.env
+
+# 3. 验证
+source ~/.hermes/.env
+curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+  https://api.github.com/repos/jsxuaijun-art/hermes-data | \
+  python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('name','?'), 'private:', d.get('private'))"
+```
+
+**如果 GH Token 已在别处（如 Windows 环境变量）**：可从 PowerShell 导出到 WSL：
+```bash
+# 从 Windows 注册表取 GitHub token（如果存过）
+powershell.exe -Command "cmdkey /list | findstr github" 2>/dev/null
+```
+
+**当前状态（2026.6.15）**：
+- ✅ SSH key 可用 → git push/pull ✅
+- ❌ `.env` 无 GITHUB_TOKEN → API 操作 ❌
+- ❌ 无法改仓库 visibility / 加成员 / 设 webhook / 读 API 元数据
+- **要改私密 → 手动在网页操作**（Settings → General → Danger Zone → Change visibility）
+
+**症状**: 在 Windows 上（GitHub Desktop 或 git.exe）执行 `git pull` 时报错：
+```
+error: invalid path nul.updateing e969d4e..0c5f90c
+```
+或
+```
+error: invalid path nul/somefile.md
+fatal: unable to checkout working tree
+```
+
+**根本原因**: Windows 文件系统保留了一批**设备名**作为系统关键字，文件和目录不能叫这些名字（任何扩展名都不行）：
+
+| 保留字 | 说明 | 常见误触场景 |
+|--------|------|------------|
+| `nul` | 空设备（类似 `/dev/null`） | 同步脚本创建临时 `.updating` 锁文件 |
+| `con` | 控制台 | 文件名含 "con" 单独成段 |
+| `prn` | 打印机 | 罕见 |
+| `aux` | 辅助设备 | 罕见 |
+| `com1`-`com9` | 串口 | 程序生成命名时撞上 |
+| `lpt1`-`lpt9` | 并口 | 同上 |
+
+**典型触发场景**: 阿里云服务器上的自动同步脚本在推送过程中创建了一个临时文件（如 `nul.updateing` 表示正在更新中的状态锁），这个文件被 git add 并 push 到了远程仓库。Windows 客户端拉取时遇到 `nul` 保留字，Git 直接拒绝 checkout。
+
+**排查命令**（在 WSL/Linux 端执行，因为这些系统不阻止 `nul` 文件名）：
+
+```bash
+# 找当前仓库中所有含保留字的文件
+cd /mnt/c/Users/Admin/hermes-sync
+git ls-files | grep -inE '\b(nul|con|prn|aux|com[1-9]|lpt[1-9])\b'
+
+# 从远程仓库中搜索
+git ls-tree -r origin/main --name-only | grep -inE '\b(nul|con|prn|aux|com[1-9]|lpt[1-9])\b'
+
+# 查看reflog中是否有可疑提交
+git reflog --all | grep -i nul
+```
+
+**修复方案**:
+
+```bash
+# 方案A（推荐）：在 WSL/Linux 端删除问题文件后重新 push
+cd /mnt/c/Users/Admin/hermes-sync
+# 找到问题文件后删除
+git rm --cached "path/to/nul.file"
+# 或整个目录
+git rm -r --cached "path/containing/nul/"
+# 提交并推送
+git commit -m "fix: remove Windows reserved name file (nul)"
+git push origin main
+
+# 方案B（如果无法确定具体文件名）：直接从远程重写历史移除
+# 先拉取最新
+git fetch origin main
+git rebase -i HEAD~5  # 找到引入nul文件的提交，改为 edit 或 drop
+# 或直接用 filter-branch（谨慎使用）
+git filter-branch --tree-filter 'rm -rf *nul* *con* *prn*' HEAD
+
+# 方案C（紧急修复 — 不管文件直接强制同步到最新）
+git fetch origin main
+git reset --hard origin/main  # 这会丢失本地未推送的改动！
+```
+
+**验证修复**: 修复后在 Windows 端（GitHub Desktop 或 git.exe）重新拉取，不再报错：
+
+```bash
+/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" pull origin main
+```
+
+**预防措施**:
+- 阿里云同步脚本中增加 `.gitignore` 规则：`*.updateing`、`*.lock`、`nul*`
+- 或同步前检查文件名：`find . -name '*nul*' -o -name '*con*'` 提前预警
+- 推送脚本增加一个 pre-commit hook 检查保留字文件名
+
+**跟 Pitfall #14 的关系**:
+| 特征 | 保留字冲突 (pitfall #16) | 脏文件冲突 (pitfall #14) |
+|------|--------------------------|--------------------------|
+| 报错关键信息 | `invalid path nul` | `would be overwritten by merge` |
+| 根因 | Windows FS 限制 | 本地未提交改动 |
+| 修复方向 | WSL 端删除文件 + push | `reset --hard` 或 stash |
+| 涉及平台 | Windows 拉取时触发 | 任何平台 |
+
+### 17. 🔴 Rebase 自动合并选择旧版文件（最隐蔽的数据丢失）
 
 **场景**: Windows 仓库执行 `git pull --rebase` 时产生冲突，auto-merge 自动解决了冲突但**使用了远程旧版**，覆盖了 Hermes Agent 在 WSL `~/.hermes/skills/` 中修改过的文件。
 

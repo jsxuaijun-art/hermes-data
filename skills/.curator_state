@@ -1,9 +1,9 @@
 {
-  "last_report_path": "/home/jsxuaijun/.hermes/logs/curator/20260612-105713",
-  "last_run_at": "2026-06-12T10:57:13.671134+00:00",
-  "last_run_duration_seconds": 433.233912,
-  "last_run_summary": "auto: no changes; llm: All done. Here's the summary:\n\n---\n\n## Consolidation Summary\n\nI processed all 5 agent-created skills through one consolidation round.\n\n### Clusters Identified\n\n**Cluster 1: Cron/DevOps/Deployment (3 skills)**\n- `cron-template-jobs` — Class-…\narchived 1 skill(s):\n  • multi-environment-deployment → cron-template-jobs\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin cron-template-jobs",
+  "last_report_path": "C:\\Users\\Admin\\.hermes\\logs\\curator\\20260607-064842",
+  "last_run_at": "2026-06-07T06:48:42.082142+00:00",
+  "last_run_duration_seconds": 1445.805568,
+  "last_run_summary": "auto: no changes; llm: Here's the final structured summary:\n\n## Human Summary\n\nI completed a systematic consolidation pass across 62 available agent-created skills. The work identified 4 clear umbrella clusters:\n\n1. **Autonomous coding agents** (claude-code, code…\narchived 10 skill(s):\n  • claude-code — pruned (stale)\n  • codex — pruned (stale)\n  • github-auth — pruned (stale)\n  • github-code-review — pruned (stale)\n  • github-issues — pruned (stale)\n  • github-pr-workflow — pruned (stale)\n  • github-repo-management — pruned (stale)\n  • kanban-orchestrator — pruned (stale)\n  • kanban-worker — pruned (stale)\n  • opencode — pruned (stale)\nfull report: hermes curator status",
   "last_run_summary_shown_at": null,
   "paused": false,
-  "run_count": 4
+  "run_count": 1
 }

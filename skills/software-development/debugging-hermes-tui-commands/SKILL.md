@@ -4,7 +4,6 @@ description: "Debug Hermes TUI slash commands: Python, gateway, Ink UI."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
-platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [debugging, hermes-agent, tui, slash-commands, typescript, python]

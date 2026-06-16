@@ -1,6 +1,6 @@
 ---
 name: hermes-agent
-description: Complete guide to using and extending Hermes Agent — CLI usage, setup, configuration, spawning additional agents, gateway platforms, skills, voice, tools, profiles, and a concise contributor reference. Load this skill when helping users configure Hermes, troubleshoot issues, spawn agent instances, or make code contributions.
+description: "Configure, extend, or contribute to Hermes Agent."
 version: 2.0.0
 author: Hermes Agent + Teknium
 license: MIT
@@ -115,7 +115,7 @@ hermes tools disable NAME   Disable a toolset
 
 hermes skills list          List installed skills
 hermes skills search QUERY  Search the skills hub
-hermes skills install ID    Install a skill
+hermes skills install ID    Install a skill (ID can be a hub identifier OR a direct https://…/SKILL.md URL; pass --name to override when frontmatter has no name)
 hermes skills inspect ID    Preview without installing
 hermes skills config        Enable/disable skills per platform
 hermes skills check         Check for updates
@@ -248,7 +248,6 @@ Type these during an interactive chat session.
 ```
 /config              Show config (CLI)
 /model [name]        Show or change model
-/provider            Show provider info
 /personality [name]  Set personality
 /reasoning [level]   Set reasoning (none|minimal|low|medium|high|xhigh|show|hide)
 /verbose             Cycle: off → new → all → verbose
@@ -282,7 +281,6 @@ Type these during an interactive chat session.
 ### Utility
 ```
 /branch (/fork)      Branch the current session
-/btw                 Ephemeral side question (doesn't interrupt main task)
 /fast                Toggle priority/fast processing
 /browser             Open CDP browser connection
 /history             Show conversation history (CLI)
@@ -338,7 +336,6 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | `memory` | `memory_enabled`, `user_profile_enabled`, `provider` |
 | `security` | `tirith_enabled`, `website_blocklist` |
 | `delegation` | `model`, `provider`, `base_url`, `api_key`, `max_iterations` (50), `reasoning_effort` |
-| `smart_model_routing` | `enabled`, `cheap_model` |
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 
 Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
@@ -362,10 +359,6 @@ Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/con
 | MiniMax | API key | `MINIMAX_API_KEY` |
 | MiniMax CN | API key | `MINIMAX_CN_API_KEY` |
 | Kimi / Moonshot | API key | `KIMI_API_KEY` |
-| Xiaomi MiMo | API key | `XIAOMI_API_KEY` |
-
-> **Provider reference**: `references/mimo-provider-guide.md` — MiMo pricing, model tiers, credits system, and configuration.
-> **China market reference**: `references/china-ai-model-selection.md` — domestic vs foreign model comparison for Chinese tax/finance work, Flash↔Pro switching, price comparison.
 | Alibaba / DashScope | API key | `DASHSCOPE_API_KEY` |
 | Xiaomi MiMo | API key | `XIAOMI_API_KEY` |
 | Kilo Code | API key | `KILOCODE_API_KEY` |
@@ -409,6 +402,63 @@ Tool changes take effect on `/reset` (new session). They do NOT apply mid-conver
 
 ---
 
+## Security & Privacy Toggles
+
+Common "why is Hermes doing X to my output / tool calls / commands?" toggles — and the exact commands to change them. Most of these need a fresh session (`/reset` in chat, or start a new `hermes` invocation) because they're read once at startup.
+
+### Secret redaction in tool output
+
+Secret redaction is **off by default** — tool output (terminal stdout, `read_file`, web content, subagent summaries, etc.) passes through unmodified. If the user wants Hermes to auto-mask strings that look like API keys, tokens, and secrets before they enter the conversation context and logs:
+
+```bash
+hermes config set security.redact_secrets true       # enable globally
+```
+
+**Restart required.** `security.redact_secrets` is snapshotted at import time — toggling it mid-session (e.g. via `export HERMES_REDACT_SECRETS=true` from a tool call) will NOT take effect for the running process. Tell the user to run `hermes config set security.redact_secrets true` in a terminal, then start a new session. This is deliberate — it prevents an LLM from flipping the toggle on itself mid-task.
+
+Disable again with:
+```bash
+hermes config set security.redact_secrets false
+```
+
+### PII redaction in gateway messages
+
+Separate from secret redaction. When enabled, the gateway hashes user IDs and strips phone numbers from the session context before it reaches the model:
+
+```bash
+hermes config set privacy.redact_pii true    # enable
+hermes config set privacy.redact_pii false   # disable (default)
+```
+
+### Command approval prompts
+
+By default (`approvals.mode: manual`), Hermes prompts the user before running shell commands flagged as destructive (`rm -rf`, `git reset --hard`, etc.). The modes are:
+
+- `manual` — always prompt (default)
+- `smart` — use an auxiliary LLM to auto-approve low-risk commands, prompt on high-risk
+- `off` — skip all approval prompts (equivalent to `--yolo`)
+
+```bash
+hermes config set approvals.mode smart       # recommended middle ground
+hermes config set approvals.mode off         # bypass everything (not recommended)
+```
+
+Per-invocation bypass without changing config:
+- `hermes --yolo …`
+- `export HERMES_YOLO_MODE=1`
+
+Note: YOLO / `approvals.mode: off` does NOT turn off secret redaction. They are independent.
+
+### Shell hooks allowlist
+
+Some shell-hook integrations require explicit allowlisting before they fire. Managed via `~/.hermes/shell-hooks-allowlist.json` — prompted interactively the first time a hook wants to run.
+
+### Disabling the web/browser/image-gen tools
+
+To keep the model away from network or media tools entirely, open `hermes tools` and toggle per-platform. Takes effect on next session (`/reset`). See the Tools & Skills section above.
+
+---
+
 ## Voice & Transcription
 
 ### STT (Voice → Text)
@@ -444,6 +494,235 @@ stt:
 Voice commands: `/voice on` (voice-to-voice), `/voice tts` (always voice), `/voice off`.
 
 ---
+
+## Upgrading
+
+### Pre-Upgrade Quick Diagnosis
+
+Before upgrading, run this 3-command diagnostic to pick the right upgrade path:
+
+```bash
+# 1. Check current version AND project path (tells you git vs non-git)
+hermes --version
+# Output includes: Project: /path/to/hermes-agent/
+
+# 2. Check if it's a git installation (ls .git = git install)
+ls -la /path/to/hermes-agent/.git 2>/dev/null && echo "GIT INSTALL" || echo "NON-GIT INSTALL"
+
+# 3. Find latest release tag (this API endpoint works when raw tarball URL doesn't)
+curl -sL --max-time 30 'https://api.github.com/repos/NousResearch/hermes-agent/releases/latest' \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tag_name','unknown'))"
+# Alternative (fails more often in restricted networks):
+# curl -sI -o /dev/null -w '%{redirect_url}' 'https://github.com/NousResearch/hermes-agent/releases/latest'
+```
+
+**Diagnosis → Action:**
+
+| Diagnosis | Action |
+|-----------|--------|
+| Git install → version behind latest | `hermes update` |
+| Non-git install → version behind latest | Manual upgrade (see below) |
+| Can't reach GitHub API at all | Download tarball via browser on Windows host |
+
+---
+
+### Built-in: `hermes update`
+
+The `hermes update` command auto-updates Hermes to the latest release. It requires a **git installation** — it works by pulling from the upstream repository.
+
+```bash
+hermes update               # Update to latest version
+hermes update --check       # Preflight check without updating
+```
+
+**Limitations:**
+- **Non-git installations (tarball/ZIP)** — `hermes update` fails with `"Not a git repository. Please reinstall"`. Do NOT retry — the error is definitive.
+  - **`hermes update --check`** also fails with the same error. Don't use it as a diagnostic tool on non-git installs; use the Pre-Upgrade Quick Diagnosis section instead.
+- **Windows NTFS filter drivers** — On Windows, the built-in update auto-detects file I/O issues and switches to a ZIP-download fallback.
+- **Windows NTFS filter drivers** — On Windows, the built-in update auto-detects file I/O issues and switches to a ZIP-download fallback.
+- **Slow/unreliable network** — The built-in update has no built-in resume logic. For flaky connections, use the manual procedure below.
+
+### Manual Upgrade (Tarball/Non-Git Installation)
+
+Use this when Hermes was deployed from a tarball (e.g., `setup-hermes.sh` or manual `curl` install) rather than `git clone`.
+
+#### Prerequisites: Python version
+
+**Hermes v0.14.0 requires Python ≥ 3.11.** Check before upgrading:
+
+```bash
+python3 --version
+# If 3.10.x, install 3.11:
+sudo apt-get install -y python3.11 python3.11-venv python3.11-dev
+```
+
+Create a **new** venv (do NOT reuse the old Python 3.10 one):
+
+```bash
+python3.11 -m venv ~/.venv-hermes-311
+source ~/.venv-hermes-311/bin/activate
+pip install --upgrade pip setuptools wheel
+```
+
+#### Step-by-step
+
+1. **Check current version:**
+   ```bash
+   cd /path/to/hermes-agent/
+   python -m hermes_cli.main --version
+   ```
+
+2. **Find the latest release tag:**
+   ```bash
+   # Query GitHub for the latest tag
+   curl -sI -o /dev/null -w '%{redirect_url}' \
+     "https://github.com/NousResearch/hermes-agent/releases/latest"
+   # Extract tag from output: e.g. .../tag/v2026.5.16
+   ```
+
+3. **Download the tarball:**
+   ```bash
+   mkdir -p /path/to/new-version-directory
+   cd /path/to/new-version-directory
+   ```
+
+   **Option A (fastest — WSL with Windows proxy):**
+   ```bash
+   WIN_IP=$(ip route | grep default | awk '{print $3}')
+   curl -L --max-time 600 --proxy "http://$WIN_IP:7890" \
+     "https://github.com/NousResearch/hermes-agent/archive/refs/tags/v<LATEST_TAG>.tar.gz" \
+     -o hermes-source.tar.gz
+   ```
+   If proxy not reachable, verify Clash's "Allow LAN" is ON and port matches (default 7890).
+
+   **Option B (manual — 100% reliable):**
+   Download via Windows browser to Desktop, then:
+   ```bash
+   cp /mnt/c/Users/<user>/Desktop/v<LATEST_TAG>.tar.gz hermes-source.tar.gz
+   ```
+
+   **Option C (resume loop — for slow/dropping connections):**
+   ```bash
+   for i in $(seq 1 20); do
+     echo "=== Attempt $i ==="
+     curl -L --max-time 1800 --retry 3 -C - \
+       "https://github.com/NousResearch/hermes-agent/archive/refs/tags/v<LATEST_TAG>.tar.gz" \
+       -o hermes-source.tar.gz 2>&1 | tail -3
+     size=$(stat -c%s hermes-source.tar.gz 2>/dev/null)
+     [ "$size" -gt 27000000 ] && echo "Done!" && break
+     sleep 5
+   done
+   ```
+
+4. **Extract — ⚠️ on Linux filesystem, NOT NTFS:**
+   ```bash
+   # Extract to /tmp (tmpfs, Linux native — fast and avoids NTFS permission issues)
+   cd /tmp
+   tar xzf /path/to/new-version-directory/hermes-source.tar.gz
+   cd hermes-agent-<tag>/
+
+   # Verify extraction is complete
+   ls tools/checkpoint_manager.py || echo "MISSING: incomplete extraction!"
+   # If missing directories, re-extract or supplement:
+   # tar xzf /path/to/hermes-source.tar.gz --strip-components=1 "hermes-agent-<tag>/tools/"
+   ```
+
+   ⚠️ **Do NOT extract directly to Windows NTFS mount** — the archive has 1000+ files and `tar` may timeout (72MB expanded). Warnings like `Cannot utime: Operation not permitted` are harmless.
+
+5. **Install from Linux filesystem:**
+   ```bash
+   # MUST be on /tmp or a Linux-native fs — pip install -e . FAILS on NTFS ([Errno 1])
+   pip install -e .
+   ```
+
+6. **Sync to Windows project directory** (if keeping source on Windows):
+   ```bash
+   mkdir -p /path/to/new-version-directory/hermes-agent-<tag>/tools/
+   cp -r /tmp/hermes-agent-<tag>/tools/* /path/to/new-version-directory/hermes-agent-<tag>/tools/
+   ```
+
+7. **Update start script** (if using `start-hermes.sh`):
+   ```bash
+   # Update venv path: ~/.venv-hermes → ~/.venv-hermes-311
+   # Update cd path to new version directory
+   ```
+
+8. **Verify:**
+   ```bash
+   python -m hermes_cli.main --version
+   # Should show v0.14.0+ and Python 3.11.x
+
+   # Test actual agent initialization:
+   python -m hermes_cli.main chat -q "说'测试通过'就结束" -Q
+   # Note: -q replaced -z in v0.14.0
+   ```
+
+#### Network Resilience (Slow/Unstable Connections)
+
+When downloading from GitHub is slow (~20-30KB/s) and unstable, prioritize proxy-based download over retry loops.
+
+**Step 0: Check for Windows proxy (Clash/TUN).** This is the fastest path:
+
+```bash
+WIN_IP=$(ip route | grep default | awk '{print $3}')
+curl -sI --proxy "http://$WIN_IP:7890" "https://google.com"
+# If 200 → proxy works, use it directly (1.3MB/s, 20s)
+# If connection refused → enable "Allow LAN" in proxy software
+```
+
+**If proxy available**, use it and skip retry loops entirely:
+
+```bash
+# Single shot, no loop needed — proxy is stable at 1.3MB/s
+curl -L --max-time 600 --proxy "http://$WIN_IP:7890" \
+  "https://github.com/.../v<TAG>.tar.gz" -o hermes-source.tar.gz
+```
+
+**If proxy unavailable**, use a **loop with resume**:
+
+```bash
+cd /path/to/target-directory
+rm -f hermes-source.tar.gz
+
+for i in $(seq 1 20); do
+  echo "=== Attempt $i ==="
+  curl -L --max-time 600 --retry 3 --retry-delay 5 \
+    -C - \
+    "https://github.com/NousResearch/hermes-agent/archive/refs/tags/v<LATEST_TAG>.tar.gz" \
+    -o hermes-source.tar.gz 2>&1 | tail -5
+
+  if [ -f hermes-source.tar.gz ]; then
+    size=$(stat -c%s hermes-source.tar.gz)
+    echo "Size: $size bytes"
+    if [ "$size" -gt 27000000 ]; then
+      echo "Download complete!"
+      break
+    fi
+  fi
+  sleep 5
+done
+```
+
+**⚠️ Critical pitfalls with retry-loop scripts:**
+- **DO NOT put `rm -f` at the top of the loop** — it resets progress on every retry iteration. The `rm -f` goes before the `for` loop, NOT inside it.
+- **`-C -` (resume) vs fresh start**: If the file doesn't exist or is 0 bytes, `-C -` is equivalent to downloading from scratch. Only delete and restart if the partial file is corrupted.
+- **`max-time` must be longer than anticipated worst-case**: 600s minimum at slow speeds; a 28MB tarball at 20KB/s takes ~24 minutes (1440s). Use `--max-time 1800` for headroom.
+- **Verify file size before declaring success**: The last `curl` call may exit code 0 but with a partial file (e.g., HTTP error response body). Always check size > 27MB.
+
+**Key findings from testing (WSL2, China-based network):**
+- **Linux curl with HTTP/2** — most reliable option. Gets data at 20-30KB/s but drops ~40-50% through with `HTTP/2 stream CANCEL (err 8)` or `Error in the HTTP2 framing layer`. Resume with `-C -` recovers each time.
+- **Linux curl with `--http1.1`** — fails immediately: `OpenSSL SSL_read: error:0A000126:SSL routines::unexpected eof while reading`. GitHub forces HTTP/2 on some CDN nodes; HTTP/1.1 falls back to a different TLS path that fails.
+- **Windows curl.exe (`curl.exe` from WSL)** — highly unreliable: `Recv failure: Connection was reset` within 20s of connecting. Avoid.
+- **`--limit-rate 100k`** — paradoxically makes connections *less* stable because the TCP window doesn't grow fast enough; don't use.
+- **Chinese mirrors** (ghproxy.com, fastgit, gh.api.99988866.xyz) — all timed out in testing. No working mirror found.
+- **`wget --continue`** — a strong alternative to curl. Achieved higher throughput than curl (38KB/s vs 26KB/s) and reached 67% of the tarball before dropping. Use `--retry-connrefused --read-timeout=120` flags. wget uses HTTP/2 by default and handles connection resets better than curl in some WSL2 environments.
+
+**Worst-case contingency:** If download cannot complete after 10+ attempts, the fastest path is to download the tarball manually via a browser on the Windows host and copy to WSL at `/mnt/c/Users/<user>/Desktop/`.
+
+**Do NOT use `hermes update --check` on non-git installations** — it also checks for `.git` and will fail with `"Not a git repository. Please reinstall"`.
+
+> **📖 Detailed reference:** For full error transcripts, symptom tables, and WSL2-specific network diagnostics, see `references/non-git-upgrade-wsl-network.md` in this skill.
+
 
 ## Spawning Additional Hermes Instances
 
@@ -557,60 +836,20 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 ### Gateway issues
 Check logs first:
 ```bash
-grep -i "failed to send\|error" ~/.hermes/logs/gateway.log | tail -20
+grep -i "failed to send\|error\|pair\|\shut" ~/.hermes/logs/gateway.log | tail -20
 ```
 
 Common gateway problems:
 - **Gateway dies on SSH logout**: Enable linger: `sudo loginctl enable-linger $USER`
 - **Gateway dies on WSL2 close**: WSL2 requires `systemd=true` in `/etc/wsl.conf` for systemd services to work. Without it, gateway falls back to `nohup` (dies when session closes).
 - **Gateway crash loop**: Reset the failed state: `systemctl --user reset-failed hermes-gateway`
-
+- **"I don't recognize you yet" in WeCom/DingTalk** — Pairing data was lost (common on remote servers that restart). See `references/gateway-pairing-troubleshooting.md` for the full diagnostic workflow including credential pool drift between CLI and gateway servers, credential exhaustion vs config mismatch, and re-pairing procedure.
+- **"Gateway shutting down — Your current task will be interrupted"** — The gateway process was replaced (e.g. via `--replace` flag, systemd restart, or reconnect cycle). Usually a one-time event; start a new conversation. If frequent, check `/root/.hermes/logs/gateway.log` for crash causes or credential exhaustion (see troubleshooting reference above).
+- **Platform-specific issues ...**
 ### Platform-specific issues
 - **Discord bot silent**: Must enable **Message Content Intent** in Bot → Privileged Gateway Intents.
 - **Slack bot only works in DMs**: Must subscribe to `message.channels` event. Without it, the bot ignores public channels.
 - **Windows HTTP 400 "No models provided"**: Config file encoding issue (BOM). Ensure `config.yaml` is saved as UTF-8 without BOM.
-
-### Startup Warnings (Harmless)
-
-Hermes may show warnings on startup that look concerning but are safe to fix:
-
-**Warning: `tirith security scanner enabled but not available`**
-
-Tirith is an optional security tool for command sandboxing. If not installed, this warning fires because `tirith_enabled: true` in config. Fix:
-
-```yaml
-# ~/.hermes/config.yaml — change to false
-security:
-  tirith_enabled: false
-```
-
-No restart needed — takes effect next session.
-
-**Warning: `DeprecationWarning: There is no current event loop`**
-
-Python 3.12+ changed `asyncio.get_event_loop()` behavior. Some libraries call it at import time without a running event loop, triggering this harmless warning. Fix via `.pth` file in the venv (better than `sitecustomize.py` because the system-level `/usr/lib/python3.xx/sitecustomize.py` loads first):
-
-1. Create `_suppress_asyncio_warning.py` in the venv site-packages:
-```python
-import warnings
-import re
-warnings.filters.insert(0, (
-    'ignore',
-    re.compile('There is no current event loop'),
-    DeprecationWarning,
-    None,  # all modules
-    0,     # all lines
-))
-```
-
-2. Create `_suppress_asyncio_warning.pth` in the same directory with one line:
-```
-import _suppress_asyncio_warning
-```
-
-Path for Hermes' venv: `~/.hermes/hermes-agent/venv/lib/python3.xx/site-packages/`
-
-The `.pth` file runs `import` at Python startup. `warnings.filters.insert(0, ...)` puts this filter before Python's default `('default', None, DeprecationWarning, '__main__', 0)` so the warning is silently consumed no matter which module fires it.
 
 ### Auxiliary models not working
 If `auxiliary` tasks (vision, compression, session_search) fail silently, the `auto` provider can't find a backend. Either set `OPENROUTER_API_KEY` or `GOOGLE_API_KEY`, or explicitly configure each auxiliary task's provider:
@@ -618,46 +857,6 @@ If `auxiliary` tasks (vision, compression, session_search) fail silently, the `a
 hermes config set auxiliary.vision.provider <your_provider>
 hermes config set auxiliary.vision.model <model_name>
 ```
-
-### hermes update timeout or incomplete
-
-`hermes update` can time out (default 120s) if npm install, pip install, or other post-pull steps take too long. The git pull itself usually completes first. Recovery steps:
-
-1. **Check if pull succeeded** — the git log and version check tell you:
-   ```bash
-   cd ~/.hermes/hermes-agent && git log --oneline -3
-   hermes --version
-   ```
-   If you see recent commits and `hermes --version` reports "Up to date", the core update worked.
-
-2. **Restore stashed changes** — the update auto-stashes local modifications before pulling:
-   ```bash
-   git stash list          # Look for "hermes-update-autostash-*"
-   git stash pop           # Restore and drop stash
-   ```
-
-3. **Resolve merge conflicts** — if local changes conflict with upstream (e.g., localized setup prompts), the stash pop will report conflicts:
-   ```bash
-   # Find conflict markers
-   grep -n "<<<<<<<\|=======\|>>>>>>>" <conflicted_file>
-   # Edit to merge, then
-   git add <conflicted_file>
-   ```
-
-4. **Clean up** — if `git stash pop` reports a conflict, the stash entry is KEPT (not dropped). Drop it manually after resolving:
-   ```bash
-   git stash drop
-   ```
-
-5. **Verify** — confirm the version and clean working tree:
-   ```bash
-   git status              # Should show clean working tree
-   hermes --version        # Confirm new version
-   ```
-
-**Pitfalls:**
-- If you kill the terminal session during an update, `git stash pop` is skipped entirely — always check `git stash list` before assuming the update completed fully.
-- The stash is named `hermes-update-autostash-<timestamp>` — easy to identify.
 
 ---
 

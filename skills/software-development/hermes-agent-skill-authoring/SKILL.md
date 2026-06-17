@@ -147,9 +147,7 @@ Pick the closest existing category. Don't invent new top-level categories casual
 
 5. **Writing a skill that duplicates a peer.** Before creating, `ls skills/<category>/` and open 2-3 peers. Prefer extending an existing skill to creating a narrow sibling.
 
-8. **Expecting the current session to see the new skill.** It won't. The skill loader is initialized at session start. Verify in a fresh session or via `skill_view` using the exact path.
-
-9. **Interpreting `category` in YAML frontmatter as a filesystem subdirectory.** The `category` field is **metadata only** — it tags the skill for organizational purposes but does NOT dictate filesystem placement. A skill with `category: marketing` should still go in `~/.hermes/skills/geo-optimization/SKILL.md`, NOT `~/.hermes/skills/marketing/geo-optimization/SKILL.md`. Creating the latter creates a duplicate that loads simultaneously, causing nondeterministic behavior (whichever `skill_view()` finds first wins). **Rule:** `skill_manage(action='create')` always uses `<skill-dir>/<name>/`, never `<skill-dir>/<category>/<name>/`. If you want category-based grouping, consider symlinks or a separate index; don't duplicate the SKILL.md.
+6. **Expecting the current session to see the new skill.** It won't. The skill loader is initialized at session start. Verify in a fresh session or via `skill_view` using the exact path.
 
 7. **Linking to skills that don't exist in-repo.** `related_skills: [some-user-local-skill]` works for you but breaks for other clones. Prefer only in-repo links.
 

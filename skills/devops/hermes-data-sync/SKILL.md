@@ -380,11 +380,67 @@ with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
 | `系统找不到指定的路径` | `cd /d` 盘符不切或路径不存在 | 用 WSL 脚本代替 cmd cd |
 | `Hermes done` 等 WSL 输出被当命令执行 | WSL bash 输出回流到 cmd 解析 | .bat 只做触发器，WSL 脚本做全部工作 |
 
-### 4. git push rejected (non-fast-forward)
+### 4. git push rejected (non-fast-forward) — 正常分叉
 
-- Remote has commits you don't have locally (another PC pushed)
-- **Fix**: The script handles this via `fetch → rebase/merge → push` sequence
-- If manual intervention needed: `git pull --rebase origin main && git push`
+**场景**: 另一台电脑推送了正常提交，你本地的历史落后了（没有 force-push，历史完整）。
+
+- **Fix**: 脚本通过 `fetch → rebase/merge → push` 自动处理
+- 手动修复: `git pull --rebase origin main && git push`
+
+### 4b. 🔴 git push rejected — 远程被 force-push（历史重写分叉）
+
+**场景**: 某台电脑对远程仓库执行了 force-push（`git push --force` 或 `git reset --hard + git push --force`），远程的提交历史被重写。本地仓库的提交基于旧的历史，rebase 会失败或产生大量虚假冲突。
+
+**症状**:
+```
+ ! [rejected] main -> main (fetch first)
+```
+或
+```
+ ! [rejected] main -> main (non-fast-forward)
+```
+但执行 `git pull --rebase` 后产生大量冲突，或 rebase 后的文件内容丢失了本地新增的改动。
+
+**根因**: Force-push 重写了远程历史，本地 commit 的 parent 在远程已不存在，rebase 无法找到共同祖先。
+
+**正确修复 — `git reset --soft origin/main` 模式**:
+
+```bash
+# 1. 获取远程最新状态（不要 merge/rebase）
+git fetch origin main
+
+# 2. soft reset — 把本地分支头指针移到远程最新，保留所有本地改动在暂存区
+git reset --soft origin/main
+
+# 3. 把所有文件加回来（包括远程 force-push 删掉但本地有的文件）
+git add -A
+
+# 4. 创建新提交，包含本地全部改动
+git commit -m "merge: 同步本地全部变更"
+
+# 5. 推送（现在变成快进推了）
+git push origin main
+```
+
+**原理**:
+| 步骤 | 发生了什么 |
+|------|-----------|
+| `git fetch` | 下载远程最新历史，不合并 |
+| `git reset --soft origin/main` | 本地分支头指向远程最新，工作区和暂存区不变 |
+| `git add -A` | 把本地磁盘上所有文件（包括远程没有的）加入暂存区 |
+| `git commit` | 创建新提交，parent 是远程最新提交 |
+| `git push` | 现在是快进推送，不会被拒绝 |
+
+**跟正常分叉修复的对比**:
+
+| 特征 | 正常分叉 (pitfall #4) | 历史重写分叉 (pitfall #4b) |
+|------|----------------------|--------------------------|
+| 远程历史 | 完整，有共同祖先 | 被 force-push 重写 |
+| 修复命令 | `git pull --rebase` | `git fetch + reset --soft + add -A + commit` |
+| 本地改动 | 作为 commits 保留 | 作为 staged 重新提交 |
+| 风险 | 低 | 低（soft reset 不丢文件） |
+
+**特别注意**: `git reset --soft` 不会修改工作区和暂存区中的文件内容——你的所有本地修改（新建的 skill、修改的 memory 等）都安全地保留在磁盘上。如果 `git add -A` 后发现有不需要的文件，可以 `git reset HEAD <file>` 取消暂存。
 
 ### 5. Merge conflicts in shared config files
 
@@ -526,6 +582,57 @@ pause
 - `hermes.bat`（CLI 启动脚本）之前也缺失 `2>nul`，是乱码幽灵命令的第二个触发源
 - 它的特殊性：保留 `chcp 65001`（交互式终端需要UTF-8）和 `-- bash -c`（内联长命令），但必须额外加 `2>nul`
 - 已在线修复此文件（详见 `references/heritage/batch-scripts-v1.md`）
+
+### 16. 🔴 Rebase 自动合并选择旧版文件（最隐蔽的数据丢失）
+
+**场景**: Windows 仓库执行 `git pull --rebase` 时产生冲突，auto-merge 自动解决了冲突但**使用了远程旧版**，覆盖了 Hermes Agent 在 WSL `~/.hermes/skills/` 中修改过的文件。
+
+**典型发生在**: 先通过 Hermes CLI 修改了 skill 文件（WSL 侧），然后在 Windows 仓库手动 push 时触发 rebase。
+
+**症状**:
+- Rebase 报告 "Auto-merging ..." 并成功继续，但文件内容变成了旧版
+- 检查 git diff 发现应该有的改动（TSC五级、年份更新等）不见了
+- 这些改动在 WSL `~/.hermes/skills/` 中还在，但 Windows 仓库里已经被旧版覆盖
+
+**根本原因**: git auto-merge 在处理 `add/add` 冲突（双方都新增了同一文件）时，会选择它认为更合理的版本——但这不一定是你真正想保留的 WSL 版本。
+
+**恢复方案**: 从 WSL 的 `~/.hermes/skills/` 复制正确的修改版本到 Windows 仓库，然后继续 rebase：
+
+```bash
+# 1. 确认哪些文件被覆盖了
+# 查看 WSL 修改过的文件（保留的备份）
+ls -la ~/.hermes/skills/compliant-accounting/SKILL.md  # 示例
+
+# 2. 从 WSL 复制正确版本到 Windows 仓库
+cp -f ~/.hermes/skills/compliant-accounting/SKILL.md \
+  "/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md"
+
+# 重复所有被覆盖的文件...
+
+# 3. 标记已解决并继续 rebase
+git add -A
+GIT_EDITOR=true git rebase --continue
+```
+
+**预防措施**:
+- 推送到 Windows 仓库前，先在 WSL 侧执行 `git pull --rebase` 把远程变更合并进来
+- 或优先使用同步脚本（`Hermes同步-推送.bat`）而非手动 Windows 仓库操作
+- 当 Hermes CLI 创建/修改了 skill 后，**立即执行一次推送**，减少跨平台时间差
+- 若必须手动在 Windows 仓库操作，rebese 后验证关键 skill 文件的版本是否正确
+
+**验证命令**:
+```bash
+# 检查 Windows 仓库中的文件是否包含你期待的内容
+grep -c "TSC五级\|25年\|科班" "/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md"
+# 如果返回 0，说明文件被旧版覆盖了
+```
+
+**对比 WSL vs Windows 仓库版本**:
+```bash
+# 检查文件大小差异
+echo "WSL: $(wc -c < ~/.hermes/skills/compliant-accounting/SKILL.md)"
+echo "Git: $(wc -c < '/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md')"
+```
 
 ## 同步范围
 

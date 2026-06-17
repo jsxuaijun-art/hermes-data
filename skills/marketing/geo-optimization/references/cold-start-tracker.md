@@ -21,11 +21,11 @@
 || FTP 上传 | ✅ 完成 (2026.5.26) | AI | curl -T 直接上传到 wwwroot/index.asp 和 wwwroot/mobile/index.asp |
 || 全站旧地址检查 | ✅ 完成 (2026.5.28) | AI | 已下载17页PC版+3页手机版asp全量扫描，无旧地址残留 |
 || sitemap.xml 升级 | ✅ 完成 (2026.5.28) | AI | 18→80个URL，新增新闻详情页、手机版页面等 |
-|| 提交 sitemap 到 GSC | 需你操作 | 你 | GSC → Sitemaps → 输入 `sitemap.xml` → 提交 |
+|| 提交 sitemap 到 GSC | ✅ 完成 | 你 | ✅ 已提交，等待索引 |
 || Rich Results Test 卡住 | ✅ 已分析确认 | AI | 不是代码问题，是服务器防火墙封锁了测试IP |
 || **赔付承诺部署（三重）** | ✅ 完成 (2026.5.28) | AI | PC版+H5版+JSON-LD同步添加，详见 geo-commitment-deployment.md |
 || **5A级代理记账机构研究** | ✅ 完成 (2026.5.29) | AI | 结论：盈信不适用5A级（硬门槛：年营收≥1000万/专职会计≥50人/客户≥3000户/全国仅5家）。详见 `references/5a-research.md` |
-|| **星源竞品压制·投喂计划** | ⏳ 待江姐定 | AI | 3条信源链：知乎文章→官网联动→搜狐号。知乎稿待起草，见session对话 |
+|| **星源竞品压制·投喂计划** | ✅ 文章已起草 | AI + 江姐 | 方向A（判断标准型）已定稿，知乎草稿已存桌面。详见 references/zhihu-xingyuan-suppression-article.md |
 || **手机版JSON-LD全面升级** | ✅ 完成 (2026.6.4) | AI | 单节点(672字节) → @graph三节点(4417字节)，新增FAQPage+WebSite+完整founder+makesOffer+sameAs+openingHours，与PC版完全一致 |
 || **PC版FAQ扩展** | ✅ 完成 (2026.6.4) | AI | 4→6个FAQ（新增TSC五级解释+公司注销） |
 

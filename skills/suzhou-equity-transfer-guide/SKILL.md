@@ -9,7 +9,7 @@ trigger: >-
 metadata:
   hermes:
     tags: [equity-transfer, suzhou-local, tax-compliance,实操辅导, internal-tool]
-    related_skills: [corporate-tax-planning, equity-architecture-guide, holding-company-firewall]
+    related_skills: [corporate-tax-planning, equity-architecture-guide]
 linked_files:
   references:
     - 承诺书(2019年以前成立).docx — 高新区专用：声明此前无股权转让行为

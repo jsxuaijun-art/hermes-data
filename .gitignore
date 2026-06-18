@@ -5,6 +5,7 @@
 # Exclude everything by default
 *
 !.gitignore
+!.gitattributes
 
 # Whitelist files to sync
 !SOUL.md
@@ -19,6 +20,7 @@
 !skills/**
 !obsidian-vault/
 !obsidian-vault/**
+/obsidian-vault/.obsidian/
 !claw-memory/
 !claw-memory/**
 !README.md

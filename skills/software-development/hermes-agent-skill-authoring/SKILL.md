@@ -4,10 +4,11 @@ description: "Author in-repo SKILL.md: frontmatter, validator, structure."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
+platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [skills, authoring, hermes-agent, conventions, skill-md]
-    related_skills: [writing-plans, requesting-code-review]
+    related_skills: [plan, requesting-code-review]
 ---
 
 # Authoring Hermes-Agent Skills (in-repo)
@@ -53,6 +54,12 @@ metadata:
 ```
 
 `version` / `author` / `license` / `metadata` are NOT enforced by the validator, but every peer has them — omit and your skill sticks out.
+
+## Linked Reference Files
+
+This skill ships with a `references/` directory. Load via `skill_view(name='hermes-agent-skill-authoring', file_path='references/<file>.md')`:
+
+- `external-skill-formats-compatibility.md` — How book-to-skill tools (virgiliojr94, apple-ouyang) relate to Hermes skill format, adaptation checklist, and auto-generate vs. manual-create decision framework.
 
 ## Size Limits
 

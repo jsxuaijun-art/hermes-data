@@ -114,6 +114,149 @@ python3 -c "import DrissionPage, scrapling, curl_cffi, playwright; print('All OK
 
 > ⚠️ **importlib.metadata 陷阱**：某个包的 `.dist-info` 目录损坏（如 `~etuptools`）会导致 `importlib.metadata.version()` 抛异常，但 `import` 实际正常。验证脚本必须用 `pkg.__version__` 方式抓版本，不能用 `importlib.metadata.version(pkg)`。
 
+## 用户偏好：快速失败策略
+
+当爬虫任务启动时，**按工具阶梯快速尝试，不要逐个工具深度调试**。如果前三阶都失败（curl_cffi → curl-impersonate → Playwright），直接报告结果并切换方案B（人工采集）。用户明确偏好"先试，不行就方案B"，不需要花大量时间绕反爬。
+
+**江姐的爬虫工具清单**（用户指定的可用工具，按优先级排列）：
+1. scrapling（自适应智能爬虫）— 注意需 `pip install patchright` 一起装
+2. Playwright（浏览器自动化）— 注意反检测注入脚本
+3. DrissionPage（多标签浏览器自动化）— 注意需要Chrome二进制
+4. curl_cffi（Python TLS模拟）— 纯HTTP，过不了JS签名
+5. curl-impersonate（系统二进制）— 绕过TLS但可能触发CAPTCHA
+6. agent-reach（备用）
+
+**用户流程偏好**：
+- 不要深入调试单一工具超过3次尝试
+- 工具失败后立即切换，记录结果即可
+- 全部失败后给完整表格报告，建议人工方案
+- 用户会批准方案B（手动采集20-30条），数据质量第一
+
+## 反爬绕过策略（多工具轮替阶梯）
+
+当目标网站有强反爬（抖音、小红书等）时，按此阶梯依次尝试，每级失败后降级到下一级：
+
+### 阶梯1: curl_cffi（TLS 指纹模拟）
+
+```python
+from curl_cffi import requests
+s = requests.Session()
+s.get('https://target.com/', impersonate='chrome120', timeout=15)
+# 然后尝试 API 请求
+r = s.get('https://target.com/api/endpoint', impersonate='chrome120')
+```
+
+**适用场景**: 仅 TLS 指纹检测的网站（Cloudflare 第一层）
+**抖音实测结果**: 首页 200，acrawler JS 加密反爬挡 API（返回 200 空 body）
+
+### 阶梯2: curl-impersonate（系统二进制）
+
+```bash
+curl-impersonate-chrome -s \
+  -H 'User-Agent: Mozilla/5.0 ...' \
+  --cookie-jar cookies.txt \
+  'https://target.com/'
+```
+
+**适用场景**: TLS 指纹 + 基础 cookie 验证
+**抖音实测结果**: 触发验证码中间页（CAPTCHA）
+
+### 阶梯3: Playwright（浏览器自动化 + 反检测初始化脚本）
+
+```python
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(
+        headless=True,
+        args=['--disable-blink-features=AutomationControlled']
+    )
+    context = browser.new_context(
+        viewport={'width': 1920, 'height': 1080},
+        user_agent='Mozilla/5.0 ... Chrome/120.0.0.0 ...',
+        locale='zh-CN',
+        timezone_id='Asia/Shanghai',
+    )
+    page = context.new_page()
+    # 绕过 CDP/webdriver 检测
+    page.add_init_script("""
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+        Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh'] });
+        window.chrome = { runtime: {} };
+    """)
+    page.goto(url, wait_until='domcontentloaded')
+```
+
+**适用场景**: 页面级 JS 反爬、acrawler、验证码前
+**抖音实测结果**: 无头模式被抖音超时拦截（IP 环境标记）
+
+### 阶梯4: DrissionPage（浏览器自动化，指定已登录的 Chrome 实例）
+
+```python
+from DrissionPage import ChromiumPage
+# 需要先指定已安装的 Chrome 路径
+page = ChromiumPage()
+page.set.cookies(cookies)  # 可通过已有浏览器导入
+page.get(url)
+```
+
+**注意**: DrissionPage 需要找到 Chrome 可执行文件。WSL 默认找不到，需手动指定路径或使用 `chrome_path` 参数。
+**抖音实测结果**: 本环境未成功启动（Chrome 未安装）
+
+### 阶梯5: 方案B — 人工采集
+
+当以上自动化手段全部失败时，切换人工方案：
+1. 手机端手动浏览目标账号
+2. 按「最多点赞」排序
+3. 采集 20-30 条爆款数据（标题、点赞、评论、时长、发布时间）
+4. 用于后续 RIA-TV 萃取分析
+
+## 抖音/短视频平台反爬专项
+
+| 工具 | 首页加载 | API 请求 | 视频列表 | 文案获取 |
+|------|----------|----------|----------|----------|
+| curl_cffi (chrome120) | ✅ 200 | ❌ 空 body | ❌ acrawler 拦截 | ❌ |
+| curl-impersonate | ✅ 200 | ❌ CAPTCHA | ❌ | ❌ |
+| Playwright 无头 | ❌ Timeout | ❌ | ❌ | ❌ |
+| DrissionPage | ❌ 缺浏览器 | ❌ | ❌ | ❌ |
+
+**抖音反爬机制总结**：
+1. **acrawler 签名** — 所有 API 请求需要 `X-Bogus` 签名（动态 JS 生成）
+2. **CAPTCHA 验证码** — 异常 IP 直接触发人机验证
+3. **IP 信誉系统** — 公共云/机房 IP 被标记（WSL、阿里云等环境基本上不了）
+4. **__ac_nonce** — 每次会话动态生成，需配合 acrawler 签名
+
+**可行路线**（已验证）：
+- 获取真实手机/PC 登录态 Cookie + acrawler 签名 SDK
+- 抖音开放平台 OAuth API（需企业资质申请）
+- 使用已登录的浏览器（非无头）+ 代理环境重试
+- 第三方数据平台（蝉妈妈、新抖、飞瓜数据）付费获取
+
+## 爬虫调试流水账
+
+| 日期 | 目标 | 尝试工具 | 结果 |
+|------|------|----------|------|
+| 2026-06-21 | 彭会计财税(抖音) | scrapling(缺patchright) → curl_cffi(200空body) → Playwright(超时) → DrissionPage(缺浏览器) → curl-impersonate(CAPTCHA) | ❌ 全失败，切换方案B |
+
+## ⚠️ 已知坑点
+
+### scrapling 缺 patchright 依赖
+scrapling 0.4.9 的 `StealthyFetcher` 依赖 `patchright` 包。如果只 `pip install scrapling` 而未同时安装 `patchright`，会报：
+```
+ModuleNotFoundError: No module named 'patchright'
+```
+**修复**：`pip install patchright`（注：patchright 是 Playwright 的 fork，安装前需确认兼容性）
+
+### DrissionPage 找不到 Chrome 可执行文件
+```
+FileNotFoundError: 未找到浏览器。
+```
+DrissionPage 默认自动检测 Chrome 路径。WSL 中如果没有安装 Chrome，需要：
+1. 安装 Chrome 到 WSL（或使用 Chromium）
+2. 或指定路径：`ChromiumPage(chrome_path='/path/to/chrome')`
+3. 或连接到已运行的 Chrome 实例（`ChromiumPage(addr_or_opts=...)`）
+
 ## 完整安装记录
 
 | 日期 | 操作 | 详情 |

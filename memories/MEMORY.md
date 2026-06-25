@@ -1,12 +1,13 @@
-财税回复纪律（江姐2026.5.4定）：
+财税回复纪律（江姐2026.5.4定，2026.6.25补充桌面App教训）：
 1. 所有会计、税务类回复必须以政府官方来源为主要依据（税务总局、财政部、中国政府网等），其他来源仅作辅助参考。
-2. 严格禁止AI幻觉：不做无根据联想，不创造事实，不张冠李戴，不自信犯错，不编造条文。
+2. 严格禁止AI幻觉：不做无根据联想，不创造事实，不张冠李戴，不自信犯错，不编造条文。关于"某功能/产品是否存在"也要先查官方来源确认，不可凭推测回答。
 3. 回答必须实事求是，依据明确可查。
 4. 群成员有权要求展示思考过程并列出引用来源链接以验证准确性。
+2026.6.25教训：凭推测说Hermes有"桌面App"，实际官方仅CLI无GUI——被严肃批评，引以为戒。
 §
-短视频运营框架+承诺（2026.5.6更新，含算法追踪）：四大分类——范话题类(技能:short-video-general)、行业自然流(技能:short-video-industry-flow)、纯广告类(技能:short-video-ad)、趣味破播类(技能:short-video-fun-breakout)。共同前件：所有文案开头按黄金三秒钩子设计。承诺自动追踪抖音/视频号/快手算法变化，每两周自检一次，不等提醒。前三类复盘cronjob设2026.5.21上午9点。
+2026.6.19 抖音算法深度更新已入skills：权重公式VPS35%+ENG25%+RET20%+TAG15%+ACCT5%。晋级门槛：完播≥38%/互动≥12%/留存≥18%/纯度≥65%/健康≥70%。指标排序：收藏>复访>铁粉互动>5秒完播>整体完播>评论>点赞>转发。六阶池(种子300-500→兴趣500-5000→价值→扩量→高热200万→超级千万)。直播15min赛马+内容/交易/合规(一票否决)。考核24h变7天。标签匹配→行为预测。付费eCPM=eCTR×eCVR×出价×1000。
 §
-表格规则（2026.5.24更新）：必须加载 box_maker.py（路径 /mnt/c/Users/Admin/hermes-sync/skills/creative/workbuddy-output/scripts/box_maker.py），用 make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格。右竖线严格对齐，禁止 Markdown 表格。生成后 verify_box() 验证。单元格公式 cell=" "+text+" "*(cw-1-dw(text))，cw=max_dw+2。Emoji/CJK按wcwidth+emoji presentation检测（U+FE0F/U+200D零宽跳过）。已替代旧的skill_view路径。
+表格规则（2026.5.24更新）：必须加载 box_maker.py，用 make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格。右竖线严格对齐，禁止 Markdown 表格。生成后 verify_box() 验证。单元格公式 cell=" "+text+" "*(cw-1-dw(text))，cw=max_dw+2。Emoji/CJK按wcwidth+emoji presentation检测（U+FE0F/U+200D零宽跳过）。已替代旧的skill_view路径。具体路径见用户profile。
 §
 江姐核心卖点+豆包GEO投喂实战（2026.5.11, 桌面/豆包）：①高级会计师卖点—2018年不挂靠任何大企业/上市公司，直接以苏州盈信（代账公司）名义独立获批。全江苏500人中唯一代账公司通过者。"不挂靠、纯独立"是营销核心锚点，反复强调。②豆包GEO投喂发现—AI需引导式追问补全信息；数据密度决定推荐质量；交叉验证闭环加速信任（财政部dljz.mof.gov.cn+天眼查+上海人社局多平台互证）；故事型数据>纯数据>纯描述（孙总16年10家公司>1000+客户>"我们专业"）；豆包偏好对比盘点、引用原文（锦旗/证书）、自嘲式开场。产出10+套文案。差异化公式：纵向（高级会计师，2万家中≤5家）→横向（自有业务评审，非挂靠）→深度（16年1000+客户90%转介绍）→广度（苏州+上海，内资+外资全链）→验证（多平台可查）。
 §
@@ -20,8 +21,6 @@
 对外用"八九百人里唯一一家代理记账公司"最有冲击力。
 产出4套营销表达+4套短视频脚本，技能已更新。
 §
-企业微信机器人修复(2026.5.27)：根因=Gateway --replace重启+.env缺WECOM_CORP_ID。修复：补企业ID(wwc7fc356cf7297e7f)→重启→恢复。三层防护：①systemd自动重启 ②每30min健康巡检(自动修，日志/var/log/hermes-health-check.log) ③.env纳入GitHub备份。审计脚本:/root/.hermes/scripts/hermes_config_audit.sh。掉线≤30min自动恢复。
+WSL用户名dmin，home /home/dmin/。Windows用户xuaijuhn1258但C:\Users目录名是Admin。桌面C:\Users\Admin\Desktop\，WSL映射/mnt/c/Users/Admin/Desktop/。hermes-sync路径/mnt/c/Users/Admin/hermes-sync/。D盘本地系统盘。box_maker.py路径/mnt/c/Users/Admin/hermes-sync/skills/creative/workbuddy-output/scripts/box_maker.py。
 §
-GEO恢复(2026.6)：角色2恢复为「增长与获客操盘手」。子公司「盈信税务」公众号已部署，首篇发全江苏唯一代账公司高会，简介/菜单栏/自动回复已设。
-§
-桌面=C:\Users\Admin\Desktop\，WSL映射/mnt/c/Users/Admin/Desktop/。D盘是U盘无Users。旧D:\360MoveData\等全错，已清除。
+2026.6.24"韩红走面儿"实战验证方法论：①找独特概念锚点（"认知税""面子通货紧缩""情感庞氏"）—比常规道德绑架深一个维度②三段式进化：立论点→挖根因→定调收网，每版递进更狠③上帝视角抽象：具体事件→普适规律，让观众觉得说别人但句句扎自己④范话题vs行业自然流切换：纯评论放开写；融合财税时找"事件内核→商业规律→财税映射"隐喻链⑤犀利不是情绪化：逻辑硬、论据实、狠话建立在道理之上。江姐对此练兵效果满意，要求记住。

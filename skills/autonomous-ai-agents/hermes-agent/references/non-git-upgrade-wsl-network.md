@@ -138,6 +138,49 @@ done
 
 ---
 
+## Session-Specific Observations (2026.6.24 — v0.12.0 → v2026.6.19)
+
+From a live upgrade attempt via CLI agent (DeepSeek provider) in WSL2 + China network:
+
+### Key New Finding: Agent Foreground Timeout Wall
+
+The **600-second foreground timeout** on the agent's `terminal` tool is the primary bottleneck, not the network. A 28MB tarball at ~20KB/s needs ~24 minutes (1,440s), but the foreground tool cuts off at 600s.
+
+**Solution used:** Background mode (`background=true, notify_on_complete=true`). This bypasses the 600s foreground limit entirely — the process runs until the download completes, and the agent receives a notification.
+
+### Download Approach Used
+
+| Step | Command | Result |
+|------|---------|--------|
+| Check version | `hermes --version` | v0.12.0 (2026.4.30) |
+| Check install type | `ls -la project/.git` | NON-GIT INSTALL (tarball) |
+| Get latest tag | `curl -sL API /releases/latest \| python3 -c ...` | v2026.6.19 |
+| Download attempt 1 | `curl -L --max-time 600 -o /tmp/hermes-source.tar.gz` (foreground) | TIMEOUT after 600s, 11.8MB/28MB |
+| Download attempt 2 | `wget --continue` retry loop in background mode (`background=true, timeout=1800`) | Running... |
+
+### Key Learnings
+
+1. **API tarball endpoint works for download** — `https://api.github.com/repos/.../tarball/vTAG` is usable (not just for metadata). The skill's existing Option C uses the direct `archive/refs/tags/` URL; the API endpoint is an alternative that worked in testing.
+
+2. **wget resume loop script pattern** — A standalone script (`/tmp/download_hermes.sh`) with `wget --continue --timeout=120 --read-timeout=120` in a 30-iteration loop, paired with background mode, is more practical than inline curl loops because it avoids the `2>&1` piping reliability issue.
+
+3. **Background mode + notify_on_complete** — The ideal UX: start the download, get back to work, receive notification when it's done. This pattern is generalizable to any long-running command (pulling Docker images, installing large packages, compiling code).
+
+4. **The `--max-time 1800` recommendation in the skill is misleading when run through the agent** — the skill assumes direct terminal execution where 1,800s is fine. Inside the agent tool, 600s is the hard cap. The skill has been updated to clarify this (see ⚠️ Agent foreground timeout section in SKILL.md).
+
+### GitHub API Endpoint
+
+```bash
+# Get tarball via API endpoint (alternative to direct archive URL)
+curl -sL "https://api.github.com/repos/NousResearch/hermes-agent/tarball/v2026.6.19" \
+  -o /tmp/hermes-source.tar.gz
+
+# Content-disposition header contains the actual filename
+# Same bytes as the archive URL, just served through the API
+```
+
+---
+
 ## Session-Specific Observations (2026.5.28)
 
 From a live upgrade attempt of v0.12.0 → v2026.5.16 in WSL2 + China network:

@@ -661,6 +661,41 @@ pip install --upgrade pip setuptools wheel
 
 When downloading from GitHub is slow (~20-30KB/s) and unstable, prioritize proxy-based download over retry loops.
 
+##### ⚠️ Agent foreground timeout (600s wall)
+
+**Critical pitfall when running downloads INSIDE the agent** (via `terminal` tool):
+
+The agent's `terminal` tool has a **foreground timeout cap of 600 seconds**. A 28MB tarball at 20KB/s needs ~1,400s — 800s more than the limit. Any `--max-time` > 600 is irrelevant because the tool itself will terminate at 600s:
+
+```bash
+# ❌ This will timeout — foreground limit hits before max-time
+terminal(command="curl -L --max-time 1800 ... -o hermes-source.tar.gz", timeout=600)
+
+# ⚡ Result: curl exits at 600s with exit code 124, partial file (~11MB)
+```
+
+**Two ways to bypass:**
+
+| Method | How | When to use |
+|--------|-----|-------------|
+| **Background mode** | `terminal(command="...", background=true, notify_on_complete=true, timeout=1800)` | Agent is doing other work; best for this class of task |
+| **Standalone script** | Write retry-loop to `/tmp/download.sh`, run in background | Complex retry logic; script survives agent restart |
+
+**Background mode (preferred):** Set `background=true` + `notify_on_complete=true`. The process runs until completion regardless of foreground timeout. The agent receives a notification when done:
+
+```bash
+terminal(command="bash /tmp/download_hermes.sh", background=true, notify_on_complete=true, timeout=1800)
+```
+
+**Standalone retry-loop script (`wget --continue`):** Write to `/tmp/download_hermes.sh` and run it in background. The script at `scripts/wget-resume-loop.sh` in this skill is ready to use — copy it, edit the TAG variable, and run:
+
+```bash
+# Copy and run in background
+cp /path/to/skill/scripts/wget-resume-loop.sh /tmp/download_hermes.sh
+# Edit TAG inside the script to match the target version
+terminal(command="bash /tmp/download_hermes.sh", background=true, notify_on_complete=true, timeout=1800)
+```
+
 **Step 0: Check for Windows proxy (Clash/TUN).** This is the fastest path:
 
 ```bash
@@ -857,6 +892,45 @@ If `auxiliary` tasks (vision, compression, session_search) fail silently, the `a
 hermes config set auxiliary.vision.provider <your_provider>
 hermes config set auxiliary.vision.model <model_name>
 ```
+
+#### Common pitfall: proxy/relay endpoint + auto-detection mismatch
+
+**Symptom:** Main agent replies work fine, but auxiliary tasks (title_generation, vision, compression) fail with `401 Authentication Fails` even though the API key works when tested directly.
+
+**Root cause:** The main agent uses a custom proxy/relay endpoint (e.g. `llm.chudian.site/v1`) that accepts a proxy-specific API key. The auxiliary `auto` provider detection finds `DEEPSEEK_API_KEY` (or similar) in the environment and tries to connect **directly** to the provider's native API — but the key only works through the proxy, not with direct API access.
+
+**The config resolution chain:**
+```
+auxiliary.title_generation config → `_resolve_task_provider_model`:
+  1. if base_url is set (from config) → returns provider="custom"
+  2. if provider is set (not "auto") → returns that provider
+  3. if cfg_base_url from task config → returns "custom"
+  4. if cfg_provider from task config → returns that provider
+  5. → returns "auto" (auto-detection)
+```
+
+With `provider: auto`, the auto chain finds `DEEPSEEK_API_KEY` and connects directly to `https://api.deepseek.com/v1` — which fails if the key only works through the proxy.
+
+**Fix:** Explicitly configure the auxiliary task with the same proxy endpoint + API key:
+
+```yaml
+# In config.yaml under auxiliary:
+title_generation:
+  provider: custom          # ← NOT "auto" — bypasses auto-detection
+  model: deepseek-v4-flash  # or whatever model the main agent uses
+  base_url: https://llm.chudian.site/v1  # ← same proxy as the main agent
+  api_key: '${DEEPSEEK_API_KEY}'          # ← env var expansion works here
+  timeout: 30
+  extra_body: {}
+```
+
+**Verification:**
+```bash
+grep "Auxiliary title_generation" ~/.hermes/logs/agent.log | tail -3
+# Should show the resolved provider (e.g. "custom") and the proxy base URL
+```
+
+**Key insight:** `api_key: '${DEEPSEEK_API_KEY}'` uses the config's `_expand_env_vars()` function which recursively expands `${VAR}` references in all config values — not just top-level ones. This works in any `auxiliary.<task>` section.
 
 ---
 

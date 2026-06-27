@@ -9,18 +9,16 @@
 §
 表格规则（2026.5.24更新）：必须加载 box_maker.py，用 make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格。右竖线严格对齐，禁止 Markdown 表格。生成后 verify_box() 验证。单元格公式 cell=" "+text+" "*(cw-1-dw(text))，cw=max_dw+2。Emoji/CJK按wcwidth+emoji presentation检测（U+FE0F/U+200D零宽跳过）。已替代旧的skill_view路径。具体路径见用户profile。
 §
-江姐核心卖点+豆包GEO投喂实战（2026.5.11, 桌面/豆包）：①高级会计师卖点—2018年不挂靠任何大企业/上市公司，直接以苏州盈信（代账公司）名义独立获批。全江苏500人中唯一代账公司通过者。"不挂靠、纯独立"是营销核心锚点，反复强调。②豆包GEO投喂发现—AI需引导式追问补全信息；数据密度决定推荐质量；交叉验证闭环加速信任（财政部dljz.mof.gov.cn+天眼查+上海人社局多平台互证）；故事型数据>纯数据>纯描述（孙总16年10家公司>1000+客户>"我们专业"）；豆包偏好对比盘点、引用原文（锦旗/证书）、自嘲式开场。产出10+套文案。差异化公式：纵向（高级会计师，2万家中≤5家）→横向（自有业务评审，非挂靠）→深度（16年1000+客户90%转介绍）→广度（苏州+上海，内资+外资全链）→验证（多平台可查）。
+2026.6.27 商事登记(注册/变更/注销)正式确认为核心业务线，与税务合规/代理记账/高级会计师背书并列。企微内部机器人名yingxin_inner，热点视频链接发给它。
 §
-已创建技能「tax-planning-fin-analysis-industry」存于 skills/productivity/。三职能：税务筹划（全领域，含1039参考）+ 财务分析（触发词"上传财务报表"/"财务报表"，触发后先web_search搜索指标标准）+ 行业调研。附1039报告完整版和输入模板。用户承诺明天补充自定义财务指标体系。
+高级会计师名单锚点（2026.5.23）：2018江苏819人中江姐是唯一以代账公司名义通过高级会计师评审者（非挂靠）。2025年1216人中仅3家代账公司。差异公式：纵向819唯一→横向大厂垫背→深度16年→广度苏州上海→验证多平台。对外用"八九百人里唯一一家代账公司"最有冲击力。已在skills存档。
 §
-高级会计师名单数据产出（2026.5.23 新提取+验证）：
-2018年江苏高级会计师评审通过819人，代理记账公司仅1家——苏州盈信企业管理有限公司（江敏，序号362）。前后左右：强生医疗（361）、中衡设计（358）、东吴人寿（365）等。
-2025年江苏通过1216人，代理记账/财务代理类公司约3家（南通天勤、靖江一诺、无锡英派尔），占比0.25%。
-核心锚点：江姐以代理记账公司名义独立通过评审（非挂靠），2018年全江苏唯一。
-差异公式：纵向（819人中唯一）→横向（前后大企业垫背）→深度（16年+1000+客户）→广度（苏州+上海）→验证（多平台）。
-对外用"八九百人里唯一一家代理记账公司"最有冲击力。
-产出4套营销表达+4套短视频脚本，技能已更新。
+韩红走面儿方法论：锚点(认知税/面子通缩/情感庞氏)→三段(立论点→挖根因→定调收网)→上帝视角抽象真普适→融合财税找隐喻链。犀利=硬逻辑非情绪。江姐满意。
 §
-WSL用户名dmin，home /home/dmin/。Windows用户xuaijuhn1258但C:\Users目录名是Admin。桌面C:\Users\Admin\Desktop\，WSL映射/mnt/c/Users/Admin/Desktop/。hermes-sync路径/mnt/c/Users/Admin/hermes-sync/。D盘本地系统盘。box_maker.py路径/mnt/c/Users/Admin/hermes-sync/skills/creative/workbuddy-output/scripts/box_maker.py。
+Chinese web search (2026.6.27): Google blocked. Priority: ① Bing(cn.bing.com) ② curl_cffi to Sogou ③ Playwright(chromium at ~/.cache/ms-playwright/) ④ Baidu triggers captcha. DrissionPage needs Chrome path. For hot topics → ALWAYS proactively ask user to send 1-2 Douyin videos (ffmpeg+faster-whisper analyze) or provide keywords to search news. Douyin.com has strong anti-scrape, can't access directly.
 §
-2026.6.24"韩红走面儿"实战验证方法论：①找独特概念锚点（"认知税""面子通货紧缩""情感庞氏"）—比常规道德绑架深一个维度②三段式进化：立论点→挖根因→定调收网，每版递进更狠③上帝视角抽象：具体事件→普适规律，让观众觉得说别人但句句扎自己④范话题vs行业自然流切换：纯评论放开写；融合财税时找"事件内核→商业规律→财税映射"隐喻链⑤犀利不是情绪化：逻辑硬、论据实、狠话建立在道理之上。江姐对此练兵效果满意，要求记住。
+2026.6.27 商事登记文案方法论已验证：热点→专业→CTA三段式，商事登记6个切入角度(比价/注销/变更/体检/类型/注册资本)。脚本上限5条放桌面不存memory。工作流：江姐给热点→我问有视频没→她发企微yingxin_inner→我ffmpeg+whisper分析→出文案。CTRL:统一用"找江姐"。
+§
+x
+§
+Win桌面C:\Users\Admin\Desktop\(WSL=/mnt/c/Users/Admin/Desktop/)。D盘无桌面，以后不用D盘。hermes-sync/mnt/c/Users/Admin/hermes-sync/。

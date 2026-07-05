@@ -13,9 +13,26 @@ metadata:
 
 ## Overview
 
-This umbrella skill covers all GitHub interactions the agent performs. Each major workflow is documented in its own reference file under `references/`. The shared **auth detection** and **owner/repo extraction** boilerplate lives here once instead of being duplicated across 7 files.
+This umbrella skill covers all GitHub interactions the agent performs. Each major workflow is documented in its own reference file under `references/`. The shared **auth detection** and **owner/repo extraction** boilerplate lives here once instead of being duplicated.
 
-## Quick Auth Detection (shared)
+## Quick Links
+
+- `references/github-auth.md` — setup: HTTPS tokens, SSH keys, gh CLI login
+- `references/repo-management.md` — clone, create, fork, releases, CI, secrets
+- `references/issues.md` — create, triage, label, assign, search, close
+- `references/pr-workflow.md` — branch → commit → PR → CI → merge
+- `references/code-review.md` — review local changes, PRs, inline comments
+- `references/github-api-cheatsheet.md` — curl API quick reference
+- `references/ci-troubleshooting.md` — CI failure diagnostics
+- `references/conventional-commits.md` — commit message format
+- `references/windows-msys-git-pitfalls.md` — MSYS2/Git-Bash on Windows pitfalls
+- `templates/bug-report.md` — issue template
+- `templates/feature-request.md` — feature request template
+- `templates/pr-body-bugfix.md` — PR body template (bugfix)
+- `templates/pr-body-feature.md` — PR body template (feature)
+- `scripts/gh-env.sh` — auth detection helper script
+
+## Auth Detection (used by all subsections)
 
 Use this before any GitHub operation that needs API access:
 
@@ -62,3 +79,29 @@ All GitHub skills support two access modes:
 - **`git` + `curl`** — works anywhere `git` is installed. Uses `GITHUB_TOKEN` from `~/.hermes/.env` or `~/.git-credentials`.
 
 For environments where `git clone` and `raw.githubusercontent.com` are blocked (restricted networks, Docker containers), see `references/github-repo-access.md` for advanced fallback strategies including CDN workarounds and shallow clones.
+
+## Cross-Reference
+
+### Hermes Config Sync (GitHub ↔ Local)
+
+For using a GitHub repository as a sync hub for Hermes configuration files (SOUL.md, memories, skills):
+
+- Repository pattern: a single GitHub repo (`OWNER/REPO`) acts as the cloud hub
+- Sync scope: SOUL.md, SOUL_Pro.md, SOUL_Edu.md, config.yaml, README.md, memories/, skills/, claw-memory/ (defined by `.gitignore` whitelist)
+- Pull strategy: try `git pull`, fall back to `git fetch --depth=1`, then to `git reset --hard origin/main`
+- Push strategy: `git push`; if rejected (remote ahead), `git push --force` is acceptable for personal sync repos
+- Local sync: `cp` files bidirectionally between the git repo directory and `~/.hermes/`
+- Scheduling: use `cronjob` action=create with `script` pointing to `scripts/hermes-config-sync.sh`
+- When local edits should take priority over GitHub (e.g., cron pushes from Windows), set `LOCAL_PRIORITY=true`
+
+### git count-objects -v
+```bash
+# Shows garbage files from interrupted pack operations
+git count-objects -v
+# 'garbage: N' indicates orphaned tmp_pack files
+# Usually safe to ignore on MSYS; they clear on reboot.
+```
+
+## Consolidated Sub-Skills
+
+The former standalone sub-skills under `github/` directory — `github-auth`, `github-code-review`, `github-issues`, `github-pr-workflow`, `github-repo-management`, `codebase-inspection`, and `github-workflows` — were consolidated into this umbrella in 2026-06. Their content is already available under `references/` files listed above. Original directories preserved at `.archive/github/`.

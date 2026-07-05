@@ -137,9 +137,58 @@ tags: [wecom, 企业微信, 内部群, 外部群, 客户服务, 数据安全, �
 
 ---
 
-> 📎 快速决策参考文件：
+## 十一、Webhook 文档推送方案（2026.7.1 新增）
+
+当需要向企微群推送文档（如Word/PDF/Excel）时，使用群机器人Webhook，无需依赖WebSocket机器人。
+
+### 推送流程
+
+```
+POST https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=KEY
+```
+
+- 支持消息类型：text、markdown、file、image、news
+- 文件上传：`POST https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key=KEY&type=file`
+  → 返回 media_id → 再用 `/send` 推送
+- 文件大小限制：20MB
+
+### 推荐组合推送（先摘要后文件）
+
+1. 先发 markdown 消息（摘要/目录）
+2. 再发文件（Word完整版文档）
+
+```python
+import requests
+
+KEY = "your-webhook-key"
+
+# 1. 上传文件
+resp = requests.post(
+    f"https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key={KEY}&type=file",
+    files={"media": ("文档名.docx", open("path.docx","rb"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
+)
+media_id = resp.json()["media_id"]
+
+# 2. 发markdown摘要
+requests.post(f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={KEY}", json={
+    "msgtype": "markdown",
+    "markdown": {"content": "# 标题\\n\\n摘要内容"}
+})
+
+# 3. 发文件
+requests.post(f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={KEY}", json={
+    "msgtype": "file",
+    "file": {"media_id": media_id}
+})
+```
+
+### 注意事项
+- Webhook地址格式：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+- Webhook地址在群设置→群机器人中获取（不是在企业管理后台）
+- 建议群机器人名称：\"文档推送助手\"
 > - `references/decision-quickref.md` — 完整方案列表、推荐顺序、常见陷阱
 > - `references/cloud-provider-for-wecom.md` — 阿里云/腾讯云选型对比与推荐配置
+> - `references/企微Webhook推送文件工作流.md` — 通过群Webhook推送文件到企微群（2026.7.1新增）
 > **每次引用此章节前建议先加载相关参考文件**，避免遗漏细节。
 
 ## 八、替代架构（外部群部署方案选型）
@@ -465,3 +514,16 @@ grep "wecom" ~/.hermes/config.yaml | head -3
 - 对同事：专业、简洁、偏正式
 - 全员群内不提及具体客户数据，注意群聊可见性
 - 出现技术问题（连接断开、响应超时等）→ 主动说明原因，不装死
+
+---
+
+## 十一、文档推送 — Webhook文件发送工作流
+
+当需要推送文档/报告到企微内部群时，使用群Webhook机器人（非AI机器人通道）：
+
+**流程：** Markdown摘要消息 → 上传文件 → 发送文件消息
+
+**参考文件：** `references/wecom-webhook-file-push.md`（含完整Python代码、文件类型支持表、限制说明）
+
+**注意：** Webhook仅支持推送到内部群，不支持外部客户群。
+

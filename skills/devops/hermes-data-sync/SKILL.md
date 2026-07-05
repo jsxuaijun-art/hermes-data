@@ -5,7 +5,7 @@ description: Cross-PC data sync for Hermes Agent (SOUL.md, memories, skills, con
 
 # Hermes Data Sync (跨电脑同步)
 
-**Last updated**: 2026-05-12 — Added Sync Readiness Check section (新机器诊断), expanded pitfall #11 to cover cross-machine WSL username variance, added GitHub API fallback technique. Reorganized headings.
+**Last updated**: 2026-06-30 — 新增 Pitfall #16 分支安全守卫（真实案例+自动切回方案）; 扩展 Pitfall #6 新增 reset --soft 绕过 push protection 方案; 同步范围加入脚本自同步; 全面重新编号 Pitfalls #16-#19。
 
 ## When to Use
 
@@ -450,14 +450,38 @@ git push origin main
 - For skill files with same content but different line endings (CRLF vs LF): take either side
 - Script attempts auto-merge via `rebase origin/main || merge origin/main --no-edit`
 
-### 6. GitHub Push Protection (secret scanning)
+### 6. 🔴 GitHub Push Protection (secret scanning)
 
 - If a GitHub Token or API key leaks into a commit, push is blocked
 - Symptom: `remote: error: GH013: Repository rule violations found`
-- **Fix options**:
-  - A) Allow the specific secret via GitHub's unblock URL (safe if token already revoked)
-  - B) `git rebase -i --rebase-merges` to edit out the secret, then `git push --force`
-- **Prevention**: Never store tokens in synced files like claw_memories/ or MEMORY.md
+- The error includes a URL to unblock: `https://github.com/<owner>/<repo>/security/secret-scanning/unblock-secret/<id>`
+- **Fix options** (ordered by safety):
+
+  **A) Allow the specific secret via GitHub's unblock URL** — safest if token already revoked. Open the URL from the error message, click "Allow secret."
+
+  **B) `git reset --soft <last-pushed-commit>` + recommit cleanly** — when the secret is in an old ancestor commit that was pulled in via a merge from a stale branch, and you don't want to force-push:
+
+  ```bash
+  # 1. Find the last commit that was successfully pushed
+  git log origin/main --oneline -1
+
+  # 2. Soft reset — keep all changed files in staging, move HEAD back
+  git reset --soft <last-pushed-hash>
+
+  # 3. Re-commit all changes as a single clean commit (no old history)
+  git commit -m "squash: all changes since last push"
+
+  # 4. Push normally (fast-forward, no force needed)
+  git push origin main
+  ```
+
+  This avoids rewriting history entirely — you just don't push the tainted commit. All file changes are preserved.
+
+  **C) `git rebase -i --rebase-merges` to edit out the secret** — when you must keep the exact commit history (e.g., the tainted commit is recent and contains important authorship/context). Then `git push --force`.
+
+  **D) `git filter-branch` or `git filter-repo`** — last resort, rewrites all history from the tainted commit onward. Requires force push and coordination with all other machines.
+
+- **Prevention**: Never store tokens in synced files like claw_memories/ or MEMORY.md. Add a `.gitattributes` with `*.md text=auto` to normalize line endings and reduce false positives.
 
 ### 7. `git rebase --rebase-merges` required for history with merge commits
 
@@ -583,7 +607,49 @@ pause
 - 它的特殊性：保留 `chcp 65001`（交互式终端需要UTF-8）和 `-- bash -c`（内联长命令），但必须额外加 `2>nul`
 - 已在线修复此文件（详见 `references/heritage/batch-scripts-v1.md`）
 
-### 18. 🔴 本环境缺少 GitHub PAT，无法通过 API 修改仓库设置（2026.6.15 新增）
+### 16. 🔴 同步脚本只操作 main 分支 — 推到其他分支的文件永远过不来
+
+**症状**: 一台电脑有某个 skill 文件（如 `wechat-publish`），每天跑同步脚本推送到 GitHub；另一台电脑每天跑拉取脚本，但文件就是没出现。
+
+**根因**: 两台电脑的同步脚本（`sync-push-wsl.sh`、`sync-pull-wsl.sh`）硬编码了 `git push origin main` 和 `git pull origin main`。如果有人——哪怕是误操作——在非 main 分支上提交并推送了，同步脚本根本不会碰那些文件。
+
+**真实案例（2026.6.30）**：另一台电脑的 `wechat-publish` skill（含 SKILL.md + 主题库）被提交到了 `temp-skill-push` 分支而非 `main`，两台电脑的 daily sync 来回跑了半个月，文件从未抵达。
+
+**修复方案 — 分支安全守卫（已部署）：**
+
+在两个同步脚本开头加入分支自动检测+切换逻辑：
+
+```bash
+# 在 git add / git pull / git push 之前执行
+cd "$SYNC_DIR"
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+    echo "⚠️  当前分支: $CURRENT_BRANCH（非 main）"
+    echo ">>> 自动暂存改动并切回 main ..."
+    git stash push -m "auto-stash before branch switch $(date)" 2>/dev/null || true
+    git checkout main 2>/dev/null || { echo "❌ 切回 main 失败"; exit 1; }
+    echo "✅ 已切回 main 分支"
+fi
+```
+
+关键特性：
+- **自动暂存**：非 main 分支上的未提交改动不会丢失（`git stash push`）
+- **静默兼容**：已经在 main 上时无额外输出，不影响正常流程
+- **失败即终止**：切不回 main 时脚本退出，不产生静默错误
+
+**预防措施**：
+- 同步脚本本身也要加入同步范围（`sync-push-wsl.sh` 复制自己到 sync 目录）
+- 另一台电脑 pull 后会自动更新到加固版脚本
+- 定期清理远程分支：`git branch -r | grep -v main | xargs -r git push origin --delete`
+- 桌面 .bat 快捷方式也锁定为只调用 `~/.hermes/sync-push-wsl.sh`（不接收分支参数）
+
+**验证脚本是否已加固**：
+```bash
+grep -c 'CURRENT_BRANCH' ~/.hermes/sync-push-wsl.sh
+# 返回 1+ → 已加固；返回 0 → 需要更新
+```
+
+### 17. 🔴 本环境缺少 GitHub PAT，无法通过 API 修改仓库设置（2026.6.15 新增）
 
 **场景**：需要修改 GitHub 仓库的设置（如改为私密、添加 Collaborator、Webhook 配置等），但本地只有 SSH key 没有 Personal Access Token（PAT）。
 
@@ -636,7 +702,9 @@ powershell.exe -Command "cmdkey /list | findstr github" 2>/dev/null
 - ✅ SSH key 可用 → git push/pull ✅
 - ❌ `.env` 无 GITHUB_TOKEN → API 操作 ❌
 - ❌ 无法改仓库 visibility / 加成员 / 设 webhook / 读 API 元数据
-- **要改私密 → 手动在网页操作**（Settings → General → Danger Zone → Change visibility）
+要改私密 → 手动在网页操作（Settings → General → Danger Zone → Change visibility）
+
+### 18. 🔴 Windows 保留字文件名（nul/con 等）导致 Windows Git 拉取失败
 
 **症状**: 在 Windows 上（GitHub Desktop 或 git.exe）执行 `git pull` 时报错：
 ```
@@ -712,14 +780,14 @@ git reset --hard origin/main  # 这会丢失本地未推送的改动！
 - 推送脚本增加一个 pre-commit hook 检查保留字文件名
 
 **跟 Pitfall #14 的关系**:
-| 特征 | 保留字冲突 (pitfall #16) | 脏文件冲突 (pitfall #14) |
+| 特征 | 保留字冲突 (pitfall #18) | 脏文件冲突 (pitfall #14) |
 |------|--------------------------|--------------------------|
 | 报错关键信息 | `invalid path nul` | `would be overwritten by merge` |
 | 根因 | Windows FS 限制 | 本地未提交改动 |
 | 修复方向 | WSL 端删除文件 + push | `reset --hard` 或 stash |
 | 涉及平台 | Windows 拉取时触发 | 任何平台 |
 
-### 17. 🔴 Rebase 自动合并选择旧版文件（最隐蔽的数据丢失）
+### 19. 🔴 Rebase 自动合并选择旧版文件（最隐蔽的数据丢失）
 
 **场景**: Windows 仓库执行 `git pull --rebase` 时产生冲突，auto-merge 自动解决了冲突但**使用了远程旧版**，覆盖了 Hermes Agent 在 WSL `~/.hermes/skills/` 中修改过的文件。
 
@@ -778,6 +846,7 @@ echo "Git: $(wc -c < '/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/comp
 | config.yaml | sessions.db（太大） |
 | memories/* | state.db |
 | skills/* | logs/, checkpoints/ |
+| sync-push-wsl.sh, sync-pull-wsl.sh（2026.6.30 起自同步） | .hermes_history, auth.json |
 | claw_memories/ (WSL Claw) | .hermes_history, auth.json |
 
 ## 🔧 V1 Heritage: Setup Guide & FAQ

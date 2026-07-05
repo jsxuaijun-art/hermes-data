@@ -93,12 +93,13 @@ print(box)
 verify_box(box)
 ```
 
-## 坑 & 注意事项
+## 坑 &amp; 注意事项
 
 1. **`skill_view('workbuddy-output')` 可能返回"not found"** — 因为缓存未刷新。直接读 `scripts/box_maker.py` 路径。
 2. **emoji 后跟 U+FE0F（VS16）** — 会被渲染为 2 格宽，即使 wcwidth 说它是 1。`box_maker.py` 已处理此逻辑（2026.5.11 修复）。
 3. **零宽字符** — U+200D (ZWJ)、U+FE0F、U+20E3、U+FEFF (BOM) 宽度为 0，不影响对齐。
 4. **画框线和 CJK 混合时** — 每个 CJK 字符 / emoji 占 2 格，ASCII 字符占 1 格。`box_maker.py` 的 `display_width()` 会正确计算。
+5. **多行单元格（单元格内换行）** — `make_grid_table()` 不支持单元格内换行。如果某条数据含换行符，表格会被渲染为多行且每行宽度不一致，`verify_box()` 会报错。解决方案：单元格内不要放换行，改用多列拆分数据，或用 `make_box()` 卡片代替表格。
 
 ## 样式要求（江姐2026.5.24定）— 从用户纠错中沉淀
 

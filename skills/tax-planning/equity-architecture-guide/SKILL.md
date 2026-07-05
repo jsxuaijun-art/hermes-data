@@ -43,6 +43,10 @@ metadata:
       - enterprise-diagnostic
       - compliant-accounting
       - coze-tax-agent-prompt
+
+## Consolidated Sub-Skills
+
+The former standalone skill `holding-company-firewall` (firewall holding company architecture design, third-party shareholding for escaping de facto one-person company designation, external shareholder strategies, equity transfer tax paths) was fully consolidated into this umbrella in 2026-06. Its unique reference content — acquisition questionnaire, equity book knowledge, firewall cases — is preserved at `references/firewall/`. Its script `generate_firewall_docx.py` is at `scripts/`.
 ---
 
 # 股权架构全案知识库（含防火墙架构）

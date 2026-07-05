@@ -85,5 +85,9 @@ After updating, always provide the user with a **structured audit of changes**:
 
 ## Related Skills
 
-- writing-plans (for structured deliverable creation)
-- report-writing (if you have one — for long-form deliverable structure)
+- `plan` (for structured deliverable creation)
+- `report-writing` (if you have one — for long-form deliverable structure)
+
+## Consolidated Sub-Skills
+
+The former standalone skill `coze-tax-agent-prompt` (a COZE platform System Prompt for tax agents and Hermes-compatible execution engine) was consolidated under this umbrella in 2026-06 as a reference integration case study. Its content is preserved at `.archive/reference-material-integration/coze-tax-agent-prompt/`.

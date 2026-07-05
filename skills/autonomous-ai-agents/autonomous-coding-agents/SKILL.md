@@ -200,3 +200,15 @@ opencode pr 42
 4. **Cost tracking** — Claude Code's `--output-format json` includes `total_cost_usd`. OpenCode has `opencode stats`. Codex has no built-in cost reporting.
 5. **Always clean up** — kill tmux sessions and remove worktrees when done to avoid resource leaks.
 6. **Slash commands** (`/review`, `/compact`) only work in interactive mode, never in one-shot mode.
+
+## Consolidated Sub-Skills
+
+The following standalone skills were consolidated into this umbrella as reference files:
+
+| Archived Skill | Reference File | Primary Content |
+|----------------|---------------|-----------------|
+| `claude-code` | `references/claude-code.md` | Full Claude Code CLI guide — Windows/MSYS2 install, Cygwin PTY, PATH resolution, binary extraction, OneDrive path workarounds, and authoritative install/upgrade workflows |
+| `codex` | `references/codex.md` | Codex CLI — install, auth, one-shot and interactive patterns, sandbox modes, PR review, and cost considerations |
+| `opencode` | `references/opencode.md` | OpenCode CLI — multi-provider setup, session management, bash mode, and OpenRouter integration |
+
+Each reference file contains the complete install, auth, and troubleshooting detail that was previously in its own skill. Load these references when you need deep per-agent guidance beyond what this umbrella provides.

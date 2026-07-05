@@ -209,5 +209,8 @@ metadata:
 | 文件名 | 内容 | 文件号索引 |
 |--------|------|-----------|
 | `references/disabled-persons-incentives.md` | 残疾人就业全套优惠政策 | 财税〔2016〕52号、财税〔2009〕70号、财政部公告2023年第8号 |
+| `references/利润拿出来_20条国家政策框架.md` (位于同梯队技能productivity/tax-planning-fin-analysis-industry/references/) | 企业利润合规提取20条政策详解（4场景全面覆盖） | 见该文件 |
+
+**跨技能引用：** 当用户问"利润怎么拿出来"或"公转私"时，加载 `tax-planning-fin-analysis-industry` 技能并调其 `references/利润拿出来_20条国家政策框架.md`
 
 **每新完成一次税收优惠研究，追加一条到本表。**

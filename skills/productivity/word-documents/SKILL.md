@@ -85,10 +85,202 @@ def shade_cell(cell, color):
     cell._tc.get_or_add_tcPr().append(shading)
 ```
 
+### Cell Border Helper
+
+```python
+def set_bdr(c, **kw):
+    \"\"\"Set individual cell borders.\"\"\"
+    tc = c._tc; p = tc.get_or_add_tcPr(); b = OxmlElement('w:tcBorders')
+    for edge, val in kw.items():
+        e = OxmlElement(f'w:{edge}')
+        e.set(qn('w:val'), val.get('val','single'))
+        e.set(qn('w:sz'), val.get('sz','4'))
+        e.set(qn('w:color'), val.get('color','000000'))
+        e.set(qn('w:space'), '0'); b.append(e)
+    p.append(b)
+
+def bdr_all(c, color='DDD'):
+    \"\"\"Uniform border on all 4 sides.\"\"\"
+    set_bdr(c, top={'val':'single','sz':'4','color':color},
+            bottom={'val':'single','sz':'4','color':color},
+            start={'val':'single','sz':'4','color':color},
+            end={'val':'single','sz':'4','color':color})
+```
+
+### 6-Column Grid Table (Compact Vocabulary Review)
+
+For vocabulary review books — 2 word entries per row, 6 columns total. **Number columns at ABSOLUTE MINIMUM (0.15cm)**, fill-in columns widest. Each review section must fit ONE PAGE (50 words = 25 data rows).
+
+```python
+def sixcol_review_table(doc, word_list, mode='cn2en'):
+    """
+    6-column review: [序号, content, fill-in, 序号, content, fill-in]
+    mode: 'en2cn'=English→Chinese, 'cn2en'=Chinese→English, 'phonetic'=phonetic→both
+    """
+    total = len(word_list)
+    rows_needed = math.ceil(total / 2)
+    t = doc.add_table(rows=rows_needed + 1, cols=6)
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    
+    # Full page width
+    tbl = t._tbl; tblPr = tbl.tblPr
+    if tblPr is None:
+        tblPr = OxmlElement('w:tblPr')
+        tbl.insert(0, tblPr)
+    tblW = OxmlElement('w:tblW')
+    tblW.set(qn('w:w'), '11000')  # ~19.4cm = A4 at 0.8cm margins
+    tblW.set(qn('w:type'), 'dxa')
+    tblPr.append(tblW)
+    
+    # ⚡ Minimum-width number columns
+    col_widths = [Cm(0.15), Cm(3.5), Cm(5.35), Cm(0.15), Cm(3.5), Cm(5.35)]
+    
+    # Header row — headers MUST say "序号" (not "序")
+    headers = {
+        'en2cn': ['序号','英文','中文（填空）','序号','英文','中文（填空）'],
+        'cn2en': ['序号','中文释义','英文（填空）','序号','中文释义','英文（填空）'],
+        'phonetic': ['序号','🔊音标','英+中（填空）','序号','🔊音标','英+中（填空）'],
+    }[mode]
+    
+    for ci in range(6):
+        c = t.cell(0, ci); c.text = ''
+        p = c.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.line_spacing = Pt(8)
+        r = p.add_run(headers[ci])
+        r.font.size = Pt(6); r.font.bold = True
+        r.font.color.rgb = RGBColor(0x33,0x33,0x33)
+        set_shd(c, 'EAEAEA')
+        c.width = col_widths[ci]
+    
+    # Data rows — compact spacing (no ✓□ ✗□)
+    for ri in range(rows_needed):
+        for col_offset, idx in [(0, ri), (3, ri + rows_needed)]:
+            if idx >= total: continue
+            w = word_list[idx]
+            sm = '★ ' if w.get('star') else ''
+            
+            # Number cell
+            c = t.cell(ri+1, col_offset); c.text = ''
+            p = c.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.line_spacing = Pt(8)
+            r = p.add_run(str(idx+1)); r.font.size = Pt(6)
+            r.font.color.rgb = RGBColor(0x99,0x99,0x99)
+            
+            # Content cell
+            c = t.cell(ri+1, col_offset+1); c.text = ''
+            p = c.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.line_spacing = Pt(8)
+            if mode == 'en2cn':
+                r = p.add_run(f"{sm}{w['word']}")
+                r.font.size = Pt(7); r.font.bold = True
+            elif mode == 'cn2en':
+                r = p.add_run(w['definition'][:30])
+                r.font.size = Pt(6.5)
+            elif mode == 'phonetic':
+                r = p.add_run(f"🔊{w['phonetic']}")
+                r.font.size = Pt(6.5)
+            r.font.color.rgb = RGBColor(0x44,0x44,0x44)
+            
+            # Fill-in cell — NO checkmarks
+            c = t.cell(ri+1, col_offset+2); c.text = ''
+            p = c.paragraphs[0]; p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.line_spacing = Pt(8)
+            filler = f"({'＿'*14})" if mode != 'phonetic' else f"英[{'＿'*8}]中[{'＿'*8}]"
+            r = p.add_run(filler)
+            r.font.size = Pt(6); r.font.color.rgb = RGBColor(0xCC,0xCC,0xCC)
+```
+
+### Ocean Theme Cover Page (Full-Bleed)
+
+Full-page cover using a single table cell with dark blue background (#0A2463). **Must set page margins to 0 before building cover**, then add a **section break** and restore margins for content.
+
+```python
+# STEP 1: Zero margins for cover section
+for sec in doc.sections:
+    sec.top_margin = Cm(0); sec.bottom_margin = Cm(0)
+    sec.left_margin = Cm(0); sec.right_margin = Cm(0)
+
+# STEP 2: Build cover table — width = 11906 dxa (A4 full width at 0 margins)
+build_ocean_cover(doc, title, subtitle, slogan, footer_lines)
+
+# STEP 3: Add section break → restore margins for content
+new_sec = doc.add_section()
+new_sec.top_margin = Cm(0.8); new_sec.bottom_margin = Cm(0.8)
+new_sec.left_margin = Cm(0.8); new_sec.right_margin = Cm(0.8)
+```
+
+**⚠️ CRITICAL**: The cover table width must be **11906 dxa** (21cm A4 × 567 = 11907 ≈ 11906). Using 17000 dxa (an earlier incorrect value) makes the table wider than the page — Word clips the overflow and the cover appears NOT full-bleed.
+
+Implementation:
+
+```python
+def build_ocean_cover(doc, title, subtitle, slogan, footer_lines):
+    \"\"\"Full-bleed blue ocean cover with table filling entire page.\"\"\"
+    bg = doc.add_table(rows=1, cols=1); bg.alignment = WD_TABLE_ALIGNMENT.CENTER
+    # ⚡ Width must be 11906 dxa for 0-margin A4 (NOT 17000)
+    tbl = bg._tbl
+    tblPr = tbl.tblPr
+    if tblPr is None:
+        tblPr = OxmlElement('w:tblPr')
+        tbl.insert(0, tblPr)
+    # Remove any existing tblW
+    for child in list(tblPr):
+        if child.tag == qn('w:tblW'):
+            tblPr.remove(child)
+    tblW = OxmlElement('w:tblW')
+    tblW.set(qn('w:w'), '11906')  # ← CORRECT: 21cm A4 = 11906 dxa
+    tblW.set(qn('w:type'), 'dxa')
+    tblPr.append(tblW)
+    
+    cell = bg.cell(0,0); set_shd(cell, '0A2463')
+    set_bdr(cell, top={'val':'none','sz':'0','color':'auto'},
+            bottom={'val':'none','sz':'0','color':'auto'},
+            start={'val':'none','sz':'0','color':'auto'},
+            end={'val':'none','sz':'0','color':'auto'})
+    # Cell full height + vertical center
+    tc = cell._tc; tcPr = tc.get_or_add_tcPr()
+    tcW = OxmlElement('w:tcW')
+    tcW.set(qn('w:w'), '11906'); tcW.set(qn('w:type'), 'dxa')
+    tcPr.append(tcW)
+    vAlign = OxmlElement('w:vAlign'); vAlign.set(qn('w:val'),'center')
+    tcPr.append(vAlign)
+    
+    def ctr(sp_before=0, sp_after=0):
+        p = cell.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(sp_before)
+        p.paragraph_format.space_after = Pt(sp_after)
+        p.paragraph_format.line_spacing = Pt(14)
+        return p
+    
+    p = ctr(10,0); r = p.add_run('✨    ⭐    ✨    ✨    ⭐    ✨')
+    r.font.size = Pt(16); r.font.color.rgb = RGBColor(0xFF,0xE7,0x82)
+    p = ctr(30,4); r = p.add_run(title)
+    r.font.size = Pt(34); r.font.bold = True; r.font.color.rgb = RGBColor(0xFF,0xFF,0xFF)
+    p = ctr(2,6); r = p.add_run(subtitle)
+    r.font.size = Pt(16); r.font.color.rgb = RGBColor(0xFF,0xD7,0x66)
+    p = ctr(14,4); r = p.add_run('🌊🌊  ⛵  ⛵⛵  🌊🌊🌊  ⛵  🌊🌊')
+    r.font.size = Pt(22)
+    p = ctr(16,6); r = p.add_run(slogan)
+    r.font.size = Pt(24); r.font.bold = True; r.font.color.rgb = RGBColor(0xFF,0xFF,0xFF)
+    for i, text in enumerate(footer_lines):
+        p = ctr(1,1); r = p.add_run(text)
+        r.font.size = Pt(12) if i == 0 else Pt(9)
+        r.font.color.rgb = RGBColor(0xFF,0xFF,0xFF)
+```
+
 ### Tables with Header Row + Alternating Row Colors
 
 ```python
 def add_table(headers, rows, col_widths=None):
+```
     t = doc.add_table(rows=1 + len(rows), cols=len(headers))
     t.style = 'Table Grid'
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -170,11 +362,28 @@ ls -lh /mnt/c/Users/jiangmin/Desktop/输出文件.docx
   - 生成路径：先出 .xlsx（用 openpyxl），让用户确认可打开
   - 再补 .docx 版本（用 python-docx），供正式存档/打印使用
 
-### Windows 路径速查
+### 文件保存路径
 
-用户桌面路径（WSL映射）：
+```python
+# 用户桌面路径（WSL映射）：
+DESKTOP_C = '/mnt/c/Users/Admin/Desktop/'       # C盘 主桌面
 ```
-/mnt/d/360MoveData/Users/Admin/Desktop/
+
+### ⚠️ WSL Python 路径陷阱
+
+在 WSL 中运行 Python 脚本时，Windows 路径不能写成 `D:\...` 格式。WSL Python 把反斜杠当成字面文件名：
+
+```python
+# 错误写法 — 文件会存到当前工作目录，文件名带反斜杠
+doc.save(r'D:\360MoveData\Users\Admin\Desktop\file.docx')
+
+# 正确写法 — 用 /mnt/ 映射路径
+doc.save(r'/mnt/c/Users/Admin/Desktop/file.docx')
+```
+
+排查方法：用户说 "文件不在桌面" 时，先检查当前工作目录有没有奇葩文件名：
+```bash
+ls -lhtr *关键词*
 ```
 
 ### 操作流程
@@ -213,9 +422,9 @@ def make_docx(path, html_body):
 </w:document>'''
     # ... construct full OOXML with [Content_Types].xml, document.xml, rels
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
-        z.writestr('word/document.xml', document_xml)
-        z.writestr('[Content_Types].xml', content_types_xml)
-        # etc.
+```python
+# This approach writes clean OOXML XML directly into a ZIP archive
+# No python-docx dependency required
 ```
 
 ### When to use
@@ -224,6 +433,10 @@ def make_docx(path, html_body):
 - Simple documents with basic formatting (fonts, sizes, paragraphs)
 
 See `references/generate-docx-without-python-docx.md` for the full implementation.
+
+## Consolidated Sub-Skills
+
+The former standalone skills `generate-docx-without-python-docx`, `markdown-to-word-converter`, and `nano-pdf` were consolidated into this umbrella in 2026-06. Their content is available under `references/` and preserved at `.archive/productivity/`.
 
 ## Categorized Multi-Section Document Pattern
 
@@ -246,6 +459,29 @@ Title → Applicability → Formula Flowchart → Main Table → Detail Schedule
 ```
 
 See `references/chinese-financial-template-patterns.md` for the full structural pattern, font/size/table conventions, and per-scenario adaptations.
+
+## Vocabulary Workbook Pattern
+
+For generating Gaokao English vocabulary workbooks with root grouping, Ebbinghaus schedule, and compact 6-column review layout. Covers:
+
+- Word root (词根) grouping strategy — group by root, not prefix
+- Real writing frequency data from the FrequencyWords corpus (1-5 stars)
+- **6-column review layout with ultra-narrow number columns (0.15cm)** — each review section fits ONE page (50 words = 25 rows)；row height = **600 dxa** (≈1.06cm) to fill page vertically
+- **Full-bleed ocean theme cover page** — margins=0 with `doc.add_section()` break; table width = **11906 dxa** (NOT 17000)
+- 2-row learning card format (no 正确/错误 row)
+- Ebbinghaus 6-round schedule (Day 1 → **Day 30**, not day 31)
+- **Page headers centered** — `p.alignment = WD_ALIGN_PARAGRAPH.CENTER`
+- No checkmarks (✓□ ✗□) in review cells
+- "序号" (not "序"), "写作指数" (not "写作")
+
+**⚠️ Key updates from user corrections (2026-07-03):**
+- Number columns must be **0.25cm minimum** — user said the earlier 0.3cm was still "too wide"
+- Cover full-bleed requires **11906 dxa** + proper section break technique
+- All review sections (except DAY 7) must fit **one page** — achieved via Pt(0) spacing, Pt(7) fonts, Pt(8) line height
+- Center-aligned page headers (user explicitly requested)
+- Day 31 → Day 30
+
+See `references/vocabulary-workbook-pattern.md` for the complete workflow, code snippets, and configuration values.
 
 ### Excel Workbook Alternative
 

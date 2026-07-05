@@ -1,8 +1,8 @@
-姓名江敏(江姐)，苏州盈信企业管理创始人/法定代表人/高级会计师。上海苏州双城。偏好：文件存C:\Users\Admin\Desktop\（非D盘）；反感复杂CLI；脚本文案放桌面不存memory；交付要带Office版。有Obsidian知识库D:\ObsidianVault，已配OBSIDIAN_VAULT_PATH。电脑Intel UHD Graphics集显（无NVIDIA GPU）。
+姓名江敏(江姐)，苏州盈信创始人/高级会计师。上海苏州双城。文件存C:\Users\Admin\Desktop\，反感复杂CLI，交付只出.docx。有Obsidian知识库D:\ObsidianVault。电脑Intel UHD集显。英语学习用艾宾浩斯1/2/4/7/15/31天背高考3875词，要求按词根分组、非字母顺序、英汉交替复习。打印版式：学习页单栏卡片(词根拆解)，复习页六栏(编号|原文|填空||编号|原文|填空)，中文释义+下划线同行，表头只留姓名/日期/正确数。参考样稿D:\360MoveData\Users\Admin\Desktop\上海中考英语单词_第2-3页.pdf
 §
 Windows用户名xuaijuhn1258但C:\Users目录名是Admin。桌面C:\Users\Admin\Desktop\。D盘本地系统盘。Chrome主力浏览器。反感复杂CLI操作（heredoc/多层转义python -c/nano粘贴易出错），偏好GUI编辑器或极简命令。
 §
-用户偏好：务实高效，直接要结果，不需要过度解释。技术操作谨慎细致，偏好逐步确认后再推进。长任务会主动索要进度更新。交付物通过文件发送。对信息来源要求严格，需要标注来源链接。满意时会说"OK,你真棒"。输出用WorkBuddy风格（emoji+粗体标题，ASCII边框卡片，表格对比）。每次生成文档默认出Markdown和Word两个版本。
+交付物默认只出Word .docx版本，不再额外生成Markdown。Markdown对于日常工作场景无实际用途。
 §
 短视频运营是其新拓展方向，有三类文案需求：范话题类、行业自然流（融合财税）、纯广告类。原则需灵活进化，不接受一成不变，需要我主动追踪平台算法变化并提出修改建议。
 工作风格：分层决策——我提出分析和建议（记忆/技能/第一原则归类），由她拍板。
@@ -10,7 +10,7 @@ Windows用户名xuaijuhn1258但C:\Users目录名是Admin。桌面C:\Users\Admin\
 §
 江姐喜欢的沟通风格：机智幽默、勤恳不木讷、专业不死板。回复要带适度幽默感，用emoji，轻松但不轻浮，专业但不刻板。被夸奖风格好时要记住并保持，不要退化回干巴巴的AI味。
 §
-交付物默认生成Word .docx版本，不发企业微信群给团队看。文件直接放桌面 D:\360MoveData\Users\Admin\Desktop\。
+交付物默认生成Word .docx版本，不发企业微信群给团队看。文件直接放桌面 C:\Users\Admin\Desktop\（WSL路径: /mnt/c/Users/Admin/Desktop/）。注意：WSL中Python不能写D:\...路径，必须用/mnt/格式。
 §
 2026.5.10 角色设定更新：
 - 角色2从「增长与获客操盘手」改为「非财税型业务咨询」，不再提供GEO/抖音策略/爆款文案/广告投放等服务

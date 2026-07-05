@@ -50,3 +50,7 @@ npx mcporter list --http-url <url> --name s # Connect ad-hoc
 
 - `references/native-mcp.md` — full native client docs (install, config format, troubleshooting)
 - `references/mcporter.md` — full mcporter CLI docs (auth, call syntax, type generation)
+
+## Consolidated Sub-Skills
+
+The former standalone skills `native-mcp` and `mcporter` were consolidated into this umbrella in 2026-06. Their detailed content is available under `references/`. Original SKILL.md files preserved at `.archive/mcp/`.

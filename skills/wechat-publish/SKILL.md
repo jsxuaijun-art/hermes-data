@@ -53,6 +53,7 @@ title: 文章标题（吸引点击）
 author: 苏州盈信财税
 cover: /tmp/cover_article.jpg   # 发布前替换为 asset://xxx 或 http://127.0.0.1:8080/images/xxx.jpg
 abstract: 120字以内摘要，显示在卡片上
+reading_time: X分钟    # 预计阅读时间，根据文章长度估算后填入
 ---
 ```
 
@@ -200,7 +201,9 @@ publish -f /tmp/article.md \
 
 ### ✅ 方案A实操步骤（2026-06-30 验证通过）
 
-**核心原理：** 在阿里云ECS上搭nginx静态文件服务（端口8080），从Unsplash下载主题相关图片放入服务目录，markdown正文中用 `http://localhost:8080/images/xxx.jpg` 引用。wenyan publish 时自动抓取图片上传到微信CDN，文章发布后图片走微信HTTPS。
+**核心原理：** 在阿里云ECS上搭nginx静态文件服务（端口8080），从Unsplash下载主题相关图片放入服务目录，markdown正文中用 `http://127.0.0.1:8080/images/xxx.jpg` 引用。wenyan publish 时自动抓取图片上传到微信CDN，文章发布后图片走微信HTTPS。
+
+**一键安装/检查：** `scripts/setup-nginx-image-server.sh setup`（首次），`scripts/setup-nginx-image-server.sh check`（日常检查）
 
 **① 确保nginx安装并配置图片服务**
 

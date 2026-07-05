@@ -7,11 +7,15 @@
 ## 服务器连接
 
 ```bash
-# SSH 密码登录（仅限本 agent 使用）
+# SSH 密钥登录（推荐，本环境可用）
+ssh -o StrictHostKeyChecking=no root@47.103.27.171 '<command>'
+
+# SSH 密码登录（备用，需 SSH_ASKPASS 脚本）
 SSH_ASKPASS=/tmp/sshpass.sh setsid ssh -o StrictHostKeyChecking=no -o BatchMode=no root@47.103.27.171 '<command>'
 ```
 
 SSH_ASKPASS 脚本 `/tmp/sshpass.sh` 包含密码（仅 root 可读），由本 agent 自动维护。
+**2026.6.30 确认：SSH key 认证可用（~/.ssh/id_ed25519），无需密码脚本。**
 
 ## API 端点
 
@@ -90,35 +94,42 @@ if 'output' in resp and isinstance(resp['output'], str):
 - `renderResult` 里的图片引用需已通过 /upload 上传
 - `content` 字段为原始 Markdown 内容
 
-## wenyan CLI 已知问题
+## wenyan CLI 发布（推荐，一键完成）
 
-`wenyan publish -f <file> --server <url>` 命令：
-- ❌ 返回 EXIT_CODE=0 但无任何 stdout/stderr 输出
-- ❌ 无法从 CLI 判断发布是否成功
-- ❌ 无法获取 media_id
-- ✅ 替代方案：直接用上面 3 个 API 端点
+`wenyan publish -f <file> --server <url>` 命令（2026.6.30 已验证）：
+- ✅ 发布成功时输出 `"发布成功，Media ID: <id>"`
+- ✅ 可正常获取 media_id
+- ⚠️ `@wenyan-md/core` 包未安装，核心渲染嵌入在 CLI 包内，直接调 CLI 即可
 
-## wenyan core 渲染（生成 HTML payload）
-
+**2026.6.30 实测工作命令：**
 ```bash
-cd /usr/lib/node_modules/@wenyan-md/cli
-NODE_OPTIONS='--experimental-require-module' node -e "
-import('/usr/lib/node_modules/@wenyan-md/core/dist/core.js').then(m => {
-  const { prepareRenderContext } = m;
-  const ctx = prepareRenderContext('/tmp/article_draft.md');
-  console.log(JSON.stringify({
-    renderResult: ctx.content,
-    images: ctx.imageList || [],
-    title: ctx.frontMatter.title,
-    cover: ctx.frontMatter.cover,
-    author: ctx.frontMatter.author,
-    abstract: ctx.frontMatter.abstract || '',
-    frontMatter: ctx.frontMatter,
-    content: ctx.rawContent || ''
-  }));
-});
-" 2>/dev/null > /tmp/publish_payload.json
+NODE_OPTIONS='--experimental-require-module' \
+node /usr/lib/node_modules/@wenyan-md/cli/dist/cli.js \
+publish -f /tmp/article_draft.md \
+--server http://localhost:3000 \
+-c /etc/wenyan/yingxin-theme.css
 ```
+
+**完整工作流（3步 vs 旧4步）：**
+
+以前需要：上传封面 → 手动调用 core 渲染 → 上传 payload → 发布
+现在简化：上传封面 → CLI publish（一步完成渲染+发布）
+
+```
+Step 1: scp 文章到服务器 → /tmp/article_draft.md
+Step 2: curl Unsplash 封面图 → /tmp/cover_article.jpg
+Step 3: curl POST /upload 上传封面 → 拿到 asset:// URL
+Step 4: sed 替换 cover 路径 → 运行 CLI publish → 拿到 Media ID
+```
+
+> 注：`wenyan-server` 的 `/` 端点返回 `Cannot GET /`（非错误），已确认 `/upload` 和 `/publish` 端点正常工作。
+
+## wenyan core 渲染（⚠️ 核心包未单独安装，直接调 CLI 即可）
+
+`@wenyan-md/core` 包**未安装在服务器上**（`/usr/lib/node_modules/@wenyan-md/core/` 不存在），核心渲染能力已嵌入 CLI 包内。
+
+不要单独调 core 渲染 —— 直接用 `CLI publish` 一步完成。
+如仍需要手动生成 HTML payload，可改用 CLI 的 serve 或传入主题参数。
 
 ## wenyan-server 日志
 

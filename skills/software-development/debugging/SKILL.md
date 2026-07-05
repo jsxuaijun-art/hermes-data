@@ -44,3 +44,7 @@ For **root cause analysis**, not runtime-specific tool commands, use the `system
 - `references/node-inspect-debugger.md` — node inspect, CDP automation, CPU profiles
 - `references/debugging-hermes-tui-commands.md` — Hermes TUI 3-layer architecture, sync issues
 - `systematic-debugging` — the process methodology (separate skill, not a reference)
+
+## Archived References
+
+The former standalone skills `debugging-hermes-tui-commands`, `node-inspect-debugger`, and `python-debugpy` were consolidated into this umbrella in 2026-06 — their reference files were already present under `references/`. The original standalone SKILL.md files (with `platforms:` frontmatter) are preserved at `.archive/debugging-references/` for historical reference.

@@ -120,6 +120,25 @@ codex doctor 2>&1 | grep -E "(proxy|connectivity)" | head -5
 
 ---
 
+## ⚠️ 关键陷阱：背景进程重设代理
+
+**症状**：在 terminal 命令中 `unset http_proxy` 后，下一个 `terminal(background=true)` 的 pip 命令仍然走代理。
+
+**根因**：`~/.bashrc` 中 `source ~/.hermes/proxy.sh`。每个新的 background shell 都会重新 source bashrc，导致代理变量又被设上。`--proxy ""` 对 pip 无效，因为环境变量优先级更高。
+
+**绕过**：写脚本到 `/tmp/`，用 `bash --norc` 执行干净 shell：
+```bash
+cat > /tmp/upgrade.sh << 'EOF'
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+export no_proxy="*"
+pip install --upgrade hermes-agent 2>&1
+EOF
+
+env -i HOME="$HOME" PATH="$PATH" bash --norc /tmp/upgrade.sh
+```
+
+---
+
 ## 典型问题排查
 
 ### 问题 1：Codex 报 "Model metadata not found"

@@ -21,4 +21,8 @@ Chinese web search (2026.6.27): Google blocked. Priority: ① Bing(cn.bing.com) 
 §
 x
 §
-Win桌面C:\Users\Admin\Desktop\(WSL=/mnt/c/Users/Admin/Desktop/)。D盘无桌面，以后不用D盘。hermes-sync/mnt/c/Users/Admin/hermes-sync/。
+同步脚本已加固：push/pull前自动检查分支，非main自动暂存+切回。sync-push-wsl.sh和sync-pull-wsl.sh加入自同步机制（会被推送到GitHub，另一台电脑pull时自动更新）。所有老旧分支已清空（temp-skill-push/temp-repair/master/test-reject-checker），以后只走main。
+§
+英语词频数据源：用curl从 raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2016/en/en_50k.txt 下载，14K+常用英文词频计数。可本地grep查词频，零token成本。
+§
+2026.7.4 词汇默写本词根版v3最终: "#"列0.2cm/页码"2/365"/255+Membean根/Part1(28组×6轮+鼓励语)+Part2(50组×4轮无学习)/音标填空两行/鼓励语每组必出。skill已更新至vocab-memory-book scripts/build_root.py。

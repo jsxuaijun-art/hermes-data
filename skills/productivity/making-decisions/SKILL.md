@@ -146,7 +146,12 @@ metadata:
 
 ---
 
-## 案例库
+## See Also
 
-- [W：拓宽选择案例](references/cases-widen-options.md)
-- [A：留出距离案例](references/cases-attain-distance.md)
+- `/reality-testing-decisions` — 用实验替代预测（以最小代价验证假设）
+- `/seeking-disconfirming-evidence` — 主动寻找反对证据（打破共识幻觉）
+- `/decision-tripwires` — 设定止损点和触发器（准备出错）
+
+## Consolidated Sub-Skills
+
+The former standalone skills `reality-testing-decisions`, `seeking-disconfirming-evidence`, and `decision-tripwires` were consolidated into this umbrella in 2026-06. Their unique content — experiment mini-protocol templates, disconfirmation questioning patterns, and tripwire trigger formulas — is preserved at `.archive/productivity/decision-tripwires/`, `reality-testing-decisions/`, and `seeking-disconfirming-evidence/` respectively. This umbrella skill schedules them via dispatch lines in the `R` and `P` sections above.

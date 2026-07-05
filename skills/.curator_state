@@ -1,9 +1,8 @@
 {
-  "last_report_path": "C:\\Users\\Admin\\.hermes\\logs\\curator\\20260607-064842",
-  "last_run_at": "2026-06-07T06:48:42.082142+00:00",
-  "last_run_duration_seconds": 1445.805568,
-  "last_run_summary": "auto: no changes; llm: Here's the final structured summary:\n\n## Human Summary\n\nI completed a systematic consolidation pass across 62 available agent-created skills. The work identified 4 clear umbrella clusters:\n\n1. **Autonomous coding agents** (claude-code, code…\narchived 10 skill(s):\n  • claude-code — pruned (stale)\n  • codex — pruned (stale)\n  • github-auth — pruned (stale)\n  • github-code-review — pruned (stale)\n  • github-issues — pruned (stale)\n  • github-pr-workflow — pruned (stale)\n  • github-repo-management — pruned (stale)\n  • kanban-orchestrator — pruned (stale)\n  • kanban-worker — pruned (stale)\n  • opencode — pruned (stale)\nfull report: hermes curator status",
-  "last_run_summary_shown_at": null,
+  "last_report_path": "/home/dmin/.hermes/logs/curator/20260630-100719",
+  "last_run_at": "2026-06-30T10:07:19.795490+00:00",
+  "last_run_duration_seconds": 1951.417274,
+  "last_run_summary": "auto: no changes; llm: Here's the final consolidation summary.\n\n---\n\n## Umbrella Consolidation Report\n\nThis pass consolidated **20 agent-created sub-skills** into 6 umbrella skills, reducing active skill count by **27 skill directories** (the 20 plus 7 no-longer-…",
   "paused": false,
-  "run_count": 1
+  "run_count": 2
 }

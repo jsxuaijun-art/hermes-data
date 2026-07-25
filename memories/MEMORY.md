@@ -1,10 +1,3 @@
-财税回复纪律（江姐2026.5.4定，2026.6.25补充桌面App教训）：
-1. 所有会计、税务类回复必须以政府官方来源为主要依据（税务总局、财政部、中国政府网等），其他来源仅作辅助参考。
-2. 严格禁止AI幻觉：不做无根据联想，不创造事实，不张冠李戴，不自信犯错，不编造条文。关于"某功能/产品是否存在"也要先查官方来源确认，不可凭推测回答。
-3. 回答必须实事求是，依据明确可查。
-4. 群成员有权要求展示思考过程并列出引用来源链接以验证准确性。
-2026.6.25教训：凭推测说Hermes有"桌面App"，实际官方仅CLI无GUI——被严肃批评，引以为戒。
-§
 2026.6.19 抖音算法深度更新已入skills：权重公式VPS35%+ENG25%+RET20%+TAG15%+ACCT5%。晋级门槛：完播≥38%/互动≥12%/留存≥18%/纯度≥65%/健康≥70%。指标排序：收藏>复访>铁粉互动>5秒完播>整体完播>评论>点赞>转发。六阶池(种子300-500→兴趣500-5000→价值→扩量→高热200万→超级千万)。直播15min赛马+内容/交易/合规(一票否决)。考核24h变7天。标签匹配→行为预测。付费eCPM=eCTR×eCVR×出价×1000。
 §
 表格规则（2026.5.24更新）：必须加载 box_maker.py，用 make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格。右竖线严格对齐，禁止 Markdown 表格。生成后 verify_box() 验证。单元格公式 cell=" "+text+" "*(cw-1-dw(text))，cw=max_dw+2。Emoji/CJK按wcwidth+emoji presentation检测（U+FE0F/U+200D零宽跳过）。已替代旧的skill_view路径。具体路径见用户profile。
@@ -21,8 +14,12 @@ Chinese web search (2026.6.27): Google blocked. Priority: ① Bing(cn.bing.com) 
 §
 x
 §
-同步脚本已加固：push/pull前自动检查分支，非main自动暂存+切回。sync-push-wsl.sh和sync-pull-wsl.sh加入自同步机制（会被推送到GitHub，另一台电脑pull时自动更新）。所有老旧分支已清空（temp-skill-push/temp-repair/master/test-reject-checker），以后只走main。
-§
-英语词频数据源：用curl从 raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2016/en/en_50k.txt 下载，14K+常用英文词频计数。可本地grep查词频，零token成本。
+英语词频：GitHub raw(hermitdave/FrequencyWords)已429封禁(2026.7.6确认，国际联网也拿不到)。改用本地缓存或百度文库VIP+新东方txt下载替代。
 §
 2026.7.4 词汇默写本词根版v3最终: "#"列0.2cm/页码"2/365"/255+Membean根/Part1(28组×6轮+鼓励语)+Part2(50组×4轮无学习)/音标填空两行/鼓励语每组必出。skill已更新至vocab-memory-book scripts/build_root.py。
+§
+2026.7.7 cron 多环境要点：「财税情报推送」在阿里云 /root/.hermes/ 跑（非WSL本机），每周一/三/五 ~08:30，爬政策→推企微。7/6-7/7连续502 llm.chudian.site挂。交互教训：用户贴实时日志=在tail -f。已补入cron-tasks skill。
+§
+2026.7.24 文件袋定稿：正面全部内容（高级会计师创办→苏州盈信→16年→业务线→双电话→双二维码→底部'江苏省高级会计师·代理记账行业入选企业'），背面空白。服务列表：税务合规·公司注册·代理记账 / 会计外包·高企申报·财务咨询。电话132-2229-7318和180-1262-7126。二维码用草料cli.im生成。单面印刷。定稿存桌面'文件袋设计_定稿.docx'。
+§
+2026.7.25 配图纪律+换图流程入wechat-publish；措辞封顶原则入offline-collateral-design。对味确认。

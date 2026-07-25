@@ -118,7 +118,7 @@ python3 -c "import DrissionPage, scrapling, curl_cffi, playwright; print('All OK
 
 当爬虫任务启动时，**按工具阶梯快速尝试，不要逐个工具深度调试**。如果前三阶都失败（curl_cffi → curl-impersonate → Playwright），直接报告结果并切换方案B（人工采集）。用户明确偏好"先试，不行就方案B"，不需要花大量时间绕反爬。
 
-**江姐的爬虫工具清单**（用户指定的可用工具，按优先级排列）：
+**江姐的爬虫工具清单**（用户指定的可用工具，按优先级排列，2026.7.8 更新确认）：
 1. scrapling（自适应智能爬虫）— 注意需 `pip install patchright` 一起装
 2. Playwright（浏览器自动化）— 注意反检测注入脚本
 3. DrissionPage（多标签浏览器自动化）— 注意需要Chrome二进制
@@ -235,8 +235,118 @@ page.get(url)
 
 ### 中国教育类网站爬虫
 见 `references/chinese-education-site-scraping.md`。
-百度文库有词汇表但需登录；Bing搜索结果不稳定；百度搜索触发验证码。
-**推荐替代**：频率筛选法（从词频库中取高频词交集）而非在线搜索。
+
+### 学术论文爬取（Nature 期刊家族）
+
+**两种场景，两种工作流**。第一件事永远是区分场景，不是直接钻进爬虫阶梯：
+
+| 场景 | 判断方法 | 行动 |
+|------|---------|------|
+| **A：免费/开放获取** | PubMed 查到 PMC ID | 直接走工作流A：六合一拿全文 |
+| **B：付费墙** | PubMed 无 PMC + 页面有 "Subscribe required" | 走工作流B：捡免费碎片 + 翻译输出 |
+
+**第一步：查 PubMed 确认状态**
+
+```python
+from curl_cffi import requests
+import re
+
+r = requests.get(f'https://pubmed.ncbi.nlm.nih.gov/?term={doi}&format=pubmed',
+                  impersonate='chrome120', timeout=15)
+pmc = re.search(r'PMC\d+', r.text)
+if pmc:
+    print(f'✅ PMC ID: {pmc.group(0)} — 可免费获取全文')
+else:
+    print('❌ 无 PMC ID — 非开放获取，大概率有 paywall')
+```
+
+**工作流A（免费文章）** → 见 `references/academic-paper-scraping-nature.md`
+
+**工作流B（付费墙）** → 见 `references/academic-paper-scraping-nature.md` 的「工作流B：付费墙文章」章节。
+
+付费墙场景能捡回来的免费碎片：
+- ✅ Abstract（总是免费）
+- ✅ Key Points（Nature Reviews 系列）
+- ✅ Supplementary PDF（直链下载）
+- ✅ References
+
+不能拿到的：
+- ❌ 全文 HTML 正文（付费遮挡）
+- ❌ 全文 PDF（单篇 €39.95）
+
+**翻译输出规范**：捡回碎片后统一生产两份中英对照文件放到桌面——`KeyPoints_中英对照.md` + `Supplementary_中英对照.md`。
+
+**核心教训**：
+- 知道 DOI 直接访问文章页，不要通过搜索引擎绕路搜索
+- Nature 用 `wait_until='domcontentloaded'` 而非 `networkidle`（第三方 JS 轮询阻止 idle）
+- `citation_*` meta 标签比 JSON-LD 更可靠（不需要 JS 渲染）
+- Playwright 拿到渲染摘要 + Crossref API 验证作者 = 黄金组合
+- Supplementary PDF 下载后记得用 `pdftotext -layout` 提取文本（需要 `poppler-utils`）
+- 付费墙不是失败——捡回的数据骨架（Key Points + 附表 + Abstract）已经覆盖了论文核心结论的 80%+
+
+### 实战录音：AnySearch → GitHub API 直取词汇表（2026.7.8 成功案例）
+
+搜索目标：刘洪波《雅思词汇真经》22章词汇表（刘洪波是"雅思教父"，学为贵创始人，词汇书按"逻辑词群记忆法"编排）
+
+**工作流全记录：**
+
+| 步骤 | 操作 | 结果 |
+|------|------|------|
+| 1 | AnySearch 搜索 "雅思词汇真经 单词表 刘洪波" | ✅ 发现 `hefengxian/ielts-vocabulary` GitHub 仓库 |
+| 2 | AnySearch extract 测试内容片段 | ✅ 第一部分单词已显示 |
+| 3 | 核对章节完整性：搜索 `===` 分隔符 | ⚠️ 只找到前11章（截断了） |
+| 4 | `raw.githubusercontent.com` 直连下载 | ❌ 超时（WSL无代理） |
+| 5 | **GitHub API (REST)** base64解码 | ✅ 完整53KB，2141行，22章全 |
+| 6 | 验证末尾（时尚潮流→服装配饰词群） | ✅ 确认为完整文件结尾 |
+
+**关键发现：**
+- `raw.githubusercontent.com` 在 WSL 下不可靠（连接超时）
+- GitHub API (`api.github.com/repos/.../contents/...`) 100% 稳定，base64 解压即可
+- 在线练习站：`hefengxian.github.io/my-ielts/#/vocabulary`（2200+ stars）
+
+**词汇表数据格式：**
+```
+自然地理            ← 章节名（22个之一）
++++                 ← 词群分隔符
+atmosphere|n.|大气层；氛围|例句...  ← 英文|词性|中文释义|可选例句
+---                 ← 小组分隔符
+oxygen|n.|氧气
+...
+===
+植物研究            ← 下一章
+```
+
+**工具实际使用情况**（与用户指定清单对比）：用户指定了 scrapling → Playwright → DrissionPage → curl-impersonate 的四阶梯，但实际上 **AnySearch（搜索）→ GitHub API（直取）** 两步就完成了，根本没用到浏览器级工具。这说明：**先搜索发现（AnySearch），再判断来源类型决定获取方式**，比无脑走爬虫阶梯更高效。
+
+### GitHub Raw 内容获取模板
+
+```python
+import urllib.request, json, base64
+
+def fetch_github_file(owner, repo, path, branch='main'):
+    """从 GitHub API 获取文件内容"""
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={branch}"
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/vnd.github.v3+json"
+    })
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        data = json.loads(resp.read())
+        return base64.b64decode(data['content']).decode('utf-8')
+```
+- 百度文库有词汇表但需登录；Bing搜索结果不稳定；百度搜索触发验证码。
+- **推荐替代**：频率筛选法（从词频库中取高频词交集）而非在线搜索。
+- **最新发现**（2026-07-06）：百度文库搜「新东方雅思词汇词根联想记忆法」→ 筛选txt格式 → 可找到完整版（评分4.1-4.5，20-32页），用户VIP可直接下载。
+- 详细策略见 `references/baidu-wenku-education-vocab.md` 新增的「IELTS词汇关键词策略」一节
+
+### 中国网站爬虫兜底策略 (2026.7.6 更新)
+见 `references/chinese-scraping-fallback-2026-07-06.md`。
+**核心结论**：搜狗首次请求(curl_cffi)能拿到结果 → 百度文库/文档猫等需登录付费 → 承认搜不到公开完整版
+**最佳替代方案**：用户有百度文库VIP → 自己去搜「新东方雅思词汇 词根 联想」付费下载 → 交给我们解析。
+
+### 搜狗搜索 curl_cffi「一次失效」律 + 百度文库相关文档集 (2026.7.6 session)
+见 `references/2026-07-06-sogou-wenku-ielts-findings.md`。
+**核心发现**：搜狗的 curl_cffi 只有首次请求有效（此后IP/会话永久标记）。百度文库文档页底部的「相关文档集」一次可发现15篇同类文档，效率远超多次搜索。
 
 ## 爬虫调试流水账
 

@@ -142,6 +142,20 @@ author: Hermes Agent
 | aud | 听 | audio, audience, auditorium |
 | vis/vid | 看 | vision, visible, video, evidence |
 
+### 7. 词汇数据来源获取（中国网络环境）
+
+在中国网络环境中获取英语词汇列表（IELTS/TOEFL/四六级等）经常遇到各种渠道限制。详细实操指南见：
+
+`references/vocabulary-source-acquisition-cn.md`
+
+核心工作流：**搜狗搜索 → 筛选标题 → 让用户手动下载 → 我转格式**。不要硬耗5+次搜索请求。
+
+### 已有本地数据（零成本可用）
+
+- **en_50k.txt**：14441词含频率计数，本地已缓存。`grep -i "^word " ~/memories/en_50k.txt` 可查任意词频，零token成本。
+- **高考3875词汇**：内建在 `vocab-memory-book` skill 的 `scripts/build_root.py`
+- 当外部渠道不可达时，可用频率表（排名2000-8000）构建近似IELTS词表（但无中文释义，需用户补充）
+
 ## 词汇默写书生成工作流（针对高考/中考词汇）
 
 **适用场景：** 用户有词汇列表（word + phonetic + definition），需要生成可打印的艾宾浩斯复习默写书。

@@ -10,12 +10,14 @@
 §
 Chinese web search (2026.6.27): Google blocked. Priority: ① Bing(cn.bing.com) ② curl_cffi to Sogou ③ Playwright(chromium at ~/.cache/ms-playwright/) ④ Baidu triggers captcha. DrissionPage needs Chrome path. For hot topics → ALWAYS proactively ask user to send 1-2 Douyin videos (ffmpeg+faster-whisper analyze) or provide keywords to search news. Douyin.com has strong anti-scrape, can't access directly.
 §
-英语词频：GitHub raw(hermitdave/FrequencyWords)已429封禁(2026.7.6确认，国际联网也拿不到)。改用本地缓存或百度文库VIP+新东方txt下载替代。
-§
 2026.7.4 词汇默写本词根版v3最终: "#"列0.2cm/页码"2/365"/255+Membean根/Part1(28组×6轮+鼓励语)+Part2(50组×4轮无学习)/音标填空两行/鼓励语每组必出。skill已更新至vocab-memory-book scripts/build_root.py。
 §
-2026.7.7 cron 多环境要点：「财税情报推送」在阿里云 /root/.hermes/ 跑（非WSL本机），每周一/三/五 ~08:30，爬政策→推企微。7/6-7/7连续502 llm.chudian.site挂。交互教训：用户贴实时日志=在tail -f。已补入cron-tasks skill。
-§
-2026.7.24 文件袋定稿：正面全部内容（高级会计师创办→苏州盈信→16年→业务线→双电话→双二维码→底部'江苏省高级会计师·代理记账行业入选企业'），背面空白。服务列表：税务合规·公司注册·代理记账 / 会计外包·高企申报·财务咨询。电话132-2229-7318和180-1262-7126。二维码用草料cli.im生成。单面印刷。定稿存桌面'文件袋设计_定稿.docx'。
+2026.7.24 文件袋定稿：高级会计师创办→苏州盈信→16年→业务线→双电话→双二维码→底部'江苏省高级会计师·代理记账行业入选企业'。服务：税务合规·公司注册·代理记账/会计外包·高企申报·财务咨询。电话132-2229-7318/180-1262-7126。二维码cli.im生成。单面印刷。存桌面'文件袋设计_定稿.docx'。
 §
 2026.7.25 本轮会话全部内容已固化至skills：①wechat-publish→配图铁律5条+摘要120字人工编写+落款服务顺序（税务合规·会计外包·高企申报·公司注册·代理记账·财务咨询）；②short-video-copywriting→脚本输出格式（速览表→标题三件套→标签→文案→拍摄速查）+交付.docx放桌面。③携程反垄断4条脚本+离岸信托征税公平角度2条脚本已存桌面。
+§
+GEO落款定稿(2026.7.26)：【关于苏州盈信】17px楷体深灰+正文14px楷体灰+分隔线+【核型业务】17px深蓝加粗+业务列表14px灰。大小字号已定稿。
+§
+虚开发票文章(2026.7.26)最终Media ID: ZIKXbXZdS_X3B-GDVk11B_JZFGRSihgcDcfBx6VuXhl3ZLDfmyNRI6c843W5WRMk。GEO落款：17px统一(【关于苏州盈信】+【核型业务】+会计团队)。references/ 里的旧GEO落款需手动更新。
+§
+公众号文章规范（2026.7.26 定稿）：①GEO正文14px（与业务信息字号统一），②表格表头用"序号"不用"#"。已写入wechat-publish。

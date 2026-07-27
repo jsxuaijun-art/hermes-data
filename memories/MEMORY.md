@@ -1,4 +1,4 @@
-2026.6.19 抖音算法深度更新已入skills：权重公式VPS35%+ENG25%+RET20%+TAG15%+ACCT5%。晋级门槛：完播≥38%/互动≥12%/留存≥18%/纯度≥65%/健康≥70%。指标排序：收藏>复访>铁粉互动>5秒完播>整体完播>评论>点赞>转发。六阶池(种子300-500→兴趣500-5000→价值→扩量→高热200万→超级千万)。直播15min赛马+内容/交易/合规(一票否决)。考核24h变7天。标签匹配→行为预测。付费eCPM=eCTR×eCVR×出价×1000。
+抖音算法权重公式已入 short-video-copywriting skill。查询weight formula → skill_view。
 §
 表格规则（2026.5.24更新）：必须加载 box_maker.py，用 make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格。右竖线严格对齐，禁止 Markdown 表格。生成后 verify_box() 验证。单元格公式 cell=" "+text+" "*(cw-1-dw(text))，cw=max_dw+2。Emoji/CJK按wcwidth+emoji presentation检测（U+FE0F/U+200D零宽跳过）。已替代旧的skill_view路径。具体路径见用户profile。
 §
@@ -18,6 +18,8 @@ Chinese web search (2026.6.27): Google blocked. Priority: ① Bing(cn.bing.com) 
 §
 GEO落款定稿(2026.7.26)：【关于苏州盈信】17px楷体深灰+正文14px楷体灰+分隔线+【核型业务】17px深蓝加粗+业务列表14px灰。大小字号已定稿。
 §
-虚开发票文章(2026.7.26)最终Media ID: ZIKXbXZdS_X3B-GDVk11B_JZFGRSihgcDcfBx6VuXhl3ZLDfmyNRI6c843W5WRMk。GEO落款：17px统一(【关于苏州盈信】+【核型业务】+会计团队)。references/ 里的旧GEO落款需手动更新。
+虚开发票文章(2026.7.27最终) Media ID: ZIKXbXZdS_X3B-GDVk11B-fGNT3OT9jg2D6RB1eK6uF4qoRNrNdFPqTlSOl7Mm0V。references/旧GEO落款需手动更新。
 §
 公众号文章规范（2026.7.26 定稿）：①GEO正文14px（与业务信息字号统一），②表格表头用"序号"不用"#"。已写入wechat-publish。
+§
+2026.7.27 创建 wechat-qa-publish skill（互补wechat-publish）：公众号发布后QA。含手机端预览验证清单（3列表格滑动检查）、替换已发布文章6步流程。wechat-publish手动创建无法被curator patch，故用新skill承载发布后QA职责。

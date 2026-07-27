@@ -65,11 +65,14 @@ reading_time: 6分钟
 
 ### 一图看懂区别
 
-| | 增值税专票 | 增值税普票 |
-|:--|:-----------|:-----------|
-| 看什么 | 税款金额 | 票面金额 |
-| 最低门槛 | 税款≥<span style="color:#CC0000;">10万</span> 或 税款损失≥<span style="color:#CC0000;">5万</span> | 票面≥<span style="color:#CC0000;">40万</span> |
-| 最高刑罚 | 无期徒刑 | 7年有期徒刑 |
+<div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+<table>
+<tr><th></th><th>增值税专票</th><th>增值税普票</th></tr>
+<tr><td>看什么</td><td>税款金额</td><td>票面金额</td></tr>
+<tr><td>最低门槛</td><td>税款≥<span style="color:#CC0000;">10万</span> 或 税款损失≥<span style="color:#CC0000;">5万</span></td><td>票面≥<span style="color:#CC0000;">40万</span></td></tr>
+<tr><td>最高刑罚</td><td>无期徒刑</td><td>7年有期徒刑</td></tr>
+</table>
+</div>
 
 ![每一张发票背后都有法律责任](http://localhost:8080/images/section_invoice_fakepiao.jpg)
 
@@ -87,13 +90,16 @@ reading_time: 6分钟
 
 下面5个问题，每个回答"是"或"否"：
 
-| # | 问题 | 是/否 |
-|:-:|:-----|:-----:|
-| 1 | 公司有没有为没发生真实交易的客户开过发票？ | ☐ |
-| 2 | 有没有让别的公司帮自己开过发票（代开）？ | ☐ |
-| 3 | 有没有作为中间人帮别人介绍过开票？ | ☐ |
-| 4 | 有没有跟关联公司对开发票（A开给B，B开给A）来凑流水？ | ☐ |
-| 5 | 有没有让员工用发票换工资（以票抵薪）？ | ☐ |
+<div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+<table>
+<tr><th>#</th><th>问题</th><th>是/否</th></tr>
+<tr><td>1</td><td>公司有没有为没发生真实交易的客户开过发票？</td><td>☐</td></tr>
+<tr><td>2</td><td>有没有让别的公司帮自己开过发票（代开）？</td><td>☐</td></tr>
+<tr><td>3</td><td>有没有作为中间人帮别人介绍过开票？</td><td>☐</td></tr>
+<tr><td>4</td><td>有没有跟关联公司对开发票（A开给B，B开给A）来凑流水？</td><td>☐</td></tr>
+<tr><td>5</td><td>有没有让员工用发票换工资（以票抵薪）？</td><td>☐</td></tr>
+</table>
+</div>
 
 **<span style="color:#CC0000;">只要有一个"是"，你就已经处于虚开的风险区间。</span>**
 

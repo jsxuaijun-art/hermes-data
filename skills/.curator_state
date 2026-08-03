@@ -1,8 +1,9 @@
 {
-  "last_report_path": "/home/dmin/.hermes/logs/curator/20260630-100719",
-  "last_run_at": "2026-06-30T10:07:19.795490+00:00",
-  "last_run_duration_seconds": 1951.417274,
-  "last_run_summary": "auto: no changes; llm: Here's the final consolidation summary.\n\n---\n\n## Umbrella Consolidation Report\n\nThis pass consolidated **20 agent-created sub-skills** into 6 umbrella skills, reducing active skill count by **27 skill directories** (the 20 plus 7 no-longer-…",
+  "last_report_path": "/home/dmin/.hermes/logs/curator/20260802-062351",
+  "last_run_at": "2026-08-02T06:23:51.715616+00:00",
+  "last_run_duration_seconds": 24.572181,
+  "last_run_summary": "auto: 3 marked stale, 1 reactivated; llm: skipped (consolidation off)",
+  "last_run_summary_shown_at": null,
   "paused": false,
-  "run_count": 2
+  "run_count": 5
 }

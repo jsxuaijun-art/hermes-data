@@ -19,3 +19,5 @@ Windows用户名xuaijuhn1258但C:\Users目录名是Admin。桌面C:\Users\Admin\
 短视频脚本开头铁律（2026.7.26）：热点必须放第一句，个人经历放第二段。先扔炸弹再讲故事。40秒认知反差模板：0-3s砸热点→3-6s抛观点→6-12s自报资历→12-25s列证据→25-35s升华→35-40s CTA。已写入short-video-copywriting skill。
 §
 2026.7.26 文案方法论确认：最吸睛的语句必须放文案最前面（开头3秒），用热点事件或反常识数据吊胃口，再展开讲。这是短视频和公众号文案的核心纪律，已记入memory。
+§
+两邮箱(2026.8)：网易 jsxuaijun@163.com（中间xuaijun）+企微 xuaijun@yingxinkuai.com。网易已用 read_163.py POP3落地（IMAP被网易风控、himalaya无POP3）；企微授权码疑似需会员，用户倾向放弃不付费。用户务实：遇付费门槛/反复卡住宁可放弃换路。详见 china-email-setup。

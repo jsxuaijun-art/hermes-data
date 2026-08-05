@@ -39,6 +39,7 @@ llama-cpp:f71693147ed3eea813b25feaa83624c9
 llm-wiki:90ca1bb67358ac2623775a0aefb949ff
 manim-video:6c3de94d7b0593efb22edb3e80d98ac9
 maps:9f5d9a336be620a1e339b6af5bfc1abe
+minecraft-modpack-server:f3f331abd2506150e7b16a066d6adf0e
 nano-pdf:dd55aca10b8e2844a0cda3c68c757e83
 native-mcp:5564a9d31ce4165b532c575a315ddca4
 node-inspect-debugger:6473107cd22f8aae9d2151604dd40a06
@@ -50,6 +51,7 @@ opencode:7bc2f5e07afb18b0212777b0900af70a
 openhue:5c6f356b1e8941e20ec96c47d628425c
 p5js:a5cc0732f7dff7232f1b0ca148e66091
 plan:1af6b6b2d6a42305dd0033c6f0e74394
+pokemon-player:74dcee9131adf0cfb9dedf8e1b9a4cfc
 polymarket:103bcade7125a3c7b3318e7449ef922b
 popular-web-designs:1ad85f358fe449a8aa554796652ebd91
 powerpoint:f19c4f1b0d3e06fd38b28f02aafaac54
@@ -63,9 +65,11 @@ sketch:56b3e77b9ff82d38fe1c7b8c6067de5d
 songsee:7738e32bff3ca9ec32b37b32e0a8c9ca
 songwriting-and-ai-music:65b4a6757901021ca16d9c8ecab62f7c
 spike:a1034fab3d8669745ee75474dd9c3a6b
+spotify:bb6ffa5853192110b05066d60c328d1b
 systematic-debugging:d891b7208762466e77748240da54defa
 test-driven-development:32bc0784dc0720a9e536ba1ce559fedf
 touchdesigner-mcp:2ff3bd4c8e818c3d74e71882fd06d98e
+webhook-subscriptions:edce3200566edfa7259718b51b8f52f3
 weights-and-biases:1db3db2aa7a8d72a0694a673441ac24a
 writing-plans:c91061baf59682c9b10a317b5ff25617
 xurl:9ece82cfcdc4dff252ca27bfbee9d792

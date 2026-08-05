@@ -838,6 +838,50 @@ echo "WSL: $(wc -c < ~/.hermes/skills/compliant-accounting/SKILL.md)"
 echo "Git: $(wc -c < '/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md')"
 ```
 
+### 20. 🔴 GitHub push 拒绝 GH001: Large files detected（大文件入历史）
+
+**症状**: push 报 `remote: error: GH001: Large files detected` + `pre-receive hook declined`，且列出了超限文件：
+```
+remote: error: File skills/.curator_backups/2026-08-02T06-23-51Z/skills.tar.gz is 108.15 MB; this exceeds GitHub's file size limit of 100.00 MB
+remote: error: GH001: Large files detected. You may want to try Git Large File Storage
+```
+
+**根因**: 同步脚本 `rsync -a --delete "$HERMES_DIR/skills/" "$SYNC_DIR/skills/"` 把本地 `~/.hermes/skills/` 下的超大文件也复制进了同步目录，且 `.gitignore` 的白名单模式（`*` 全排除 + `!skills/**` 允许）**放行了 skills 下所有文件**，包括：
+- `skills/.curator_backups/*.tar.gz` — curator 自动备份（108MB，超限）
+- `skills/gstack/*/dist/*` — gstack 编译产物（90MB）
+
+**关键**: GitHub 检查的是**整个提交历史**，不是只有当前提交。所以即使现在 `git rm` 删掉，历史里的旧提交仍含大文件，push 照样被拒。
+
+**根治 — `git filter-repo` 改写历史**（保留内容，清掉大文件 blob）：
+
+```bash
+# 1. 安装
+pip install git-filter-repo --proxy '' -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 2. 改写历史，剥离 >50MB 的 blob（--force 因为不是 fresh clone）
+cd /mnt/c/Users/Admin/hermes-sync
+git filter-repo --strip-blobs-bigger-than 50M --force
+# 注意：filter-repo 会移除 origin remote，需重新加
+git remote add origin git@github.com:jsxuaijun-art/hermes-data.git
+
+# 3. 确认无大文件后 force push
+git push --force origin main
+```
+
+**预防（.gitignore 加黑名单，覆盖白名单）**:
+```gitignore
+# 放在 .gitignore 末尾（黑名单优先级高于前面 !skills/** 白名单）
+skills/.curator_backups/
+skills/**/.curator_backups/
+skills/**/dist/
+skills/**/node_modules/
+*.tar.gz
+```
+
+**注意**: 大文件在本地 `~/.hermes/skills/` 仍存在（rsync 每次都会复制到 sync 目录），但只要 `.gitignore` 排除了，git 不跟踪就不 push。`rsync` 不受 `.gitignore` 控制，sync 目录里留着没关系（不提交即可）。
+
+**避免**: 不要手动 `git rm` 就以为解决了——历史里还有，必须 filter-repo（或重建仓库）才能根治。
+
 ## 同步范围
 
 | 同步 | 不同步 |

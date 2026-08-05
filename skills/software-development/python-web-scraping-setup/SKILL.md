@@ -361,7 +361,9 @@ scrapling 0.4.9 的 `StealthyFetcher` 依赖 `patchright` 包。如果只 `pip i
 ```
 ModuleNotFoundError: No module named 'patchright'
 ```
-**修复**：`pip install patchright`（注：patchright 是 Playwright 的 fork，安装前需确认兼容性）
+**修复（2026-08-04 已实测打通）**：`pip install patchright msgspec`（patchright 1.61.2 + msgspec 0.21.1 已装，chromium build 1228 已用 npmmirror 镜像装好），StealthyFetcher 端到端抓取 example.com 成功（HTTP 200，referer 伪装 google）。
+⚠️ scrapling 0.4.9 Response API：用 `page.text` / `page.html_content` / `page.css()`，没有 `.title`/`.html` 属性。
+**安装注意**：patchright 是 Playwright 的 fork，浏览器需 `python -m patchright install chromium`，国内镜像 `PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright`。
 
 ### DrissionPage 找不到 Chrome 可执行文件
 ```

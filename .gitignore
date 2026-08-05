@@ -42,3 +42,10 @@ models_dev_cache.json
 interrupt_debug.log
 auth.json
 auth.lock
+
+# Exclude large/binary files (GitHub limit 100MB)
+skills/.curator_backups/
+skills/**/.curator_backups/
+skills/**/dist/
+skills/**/node_modules/
+*.tar.gz

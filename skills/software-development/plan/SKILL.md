@@ -336,9 +336,3 @@ Frequent commits
 ```
 
 **A good plan makes implementation obvious.**
-
----
-
-## Archived References
-
-The former standalone skill `writing-plans` (version 1.1.0) was consolidated into this umbrella skill in 2026-06. Its content was a subset of this skill and is preserved at `.archive/plan-references/writing-plans.md` for historical reference.

@@ -137,67 +137,14 @@ tags: [wecom, 企业微信, 内部群, 外部群, 客户服务, 数据安全, �
 
 ---
 
-## 十一、Webhook 文档推送方案（2026.7.1 新增）
-
-当需要向企微群推送文档（如Word/PDF/Excel）时，使用群机器人Webhook，无需依赖WebSocket机器人。
-
-### 推送流程
-
-```
-POST https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=KEY
-```
-
-- 支持消息类型：text、markdown、file、image、news
-- 文件上传：`POST https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key=KEY&type=file`
-  → 返回 media_id → 再用 `/send` 推送
-- 文件大小限制：20MB
-
-### 推荐组合推送（先摘要后文件）
-
-1. 先发 markdown 消息（摘要/目录）
-2. 再发文件（Word完整版文档）
-
-```python
-import requests
-
-KEY = "your-webhook-key"
-
-# 1. 上传文件
-resp = requests.post(
-    f"https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key={KEY}&type=file",
-    files={"media": ("文档名.docx", open("path.docx","rb"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
-)
-media_id = resp.json()["media_id"]
-
-# 2. 发markdown摘要
-requests.post(f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={KEY}", json={
-    "msgtype": "markdown",
-    "markdown": {"content": "# 标题\\n\\n摘要内容"}
-})
-
-# 3. 发文件
-requests.post(f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={KEY}", json={
-    "msgtype": "file",
-    "file": {"media_id": media_id}
-})
-```
-
-### 注意事项
-- Webhook地址格式：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-- Webhook地址在群设置→群机器人中获取（不是在企业管理后台）
-- 建议群机器人名称：\"文档推送助手\"
+> 📎 快速决策参考文件：
 > - `references/decision-quickref.md` — 完整方案列表、推荐顺序、常见陷阱
 > - `references/cloud-provider-for-wecom.md` — 阿里云/腾讯云选型对比与推荐配置
-> - `references/企微Webhook推送文件工作流.md` — 通过群Webhook推送文件到企微群（2026.7.1新增）
 > **每次引用此章节前建议先加载相关参考文件**，避免遗漏细节。
 
 ## 八、替代架构（外部群部署方案选型）
 
-> 行为规范**仍然适用本技能的全部规则（时间感知、数据安全、非财税请示流程等），差异仅在于**部署架构**。
-
-> 📎 **云端 vs WSL 双端部署拓扑指南：**
-> `references/cloud-vs-wsl-topology.md`
-> 覆盖企微WebSocket独占连接特性、云端7×24常驻推荐方案、切换流程、常见运维pitfall（gateway重启卡死、api_server拒绝启动等）。
+> ⚠️ 以下方案的**行为规范**仍然适用本技能的全部规则（时间感知、数据安全、非财税请示流程等），差异仅在于**部署架构**。
 
 ### 方案 A：自建应用 + 回调模式（需公网服务器）
 
@@ -237,22 +184,6 @@ requests.post(f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={KEY}", jso
 
 通过 Hook 企微客户端的第三方工具模拟机器人行为。
 **风险**：违反企微用户协议，有封号风险。代账公司涉及客户财务数据，不建议走这条路。
-
-### 方案E：云端7×24常驻 ⭐（推荐 — 零切换，最稳定）
-
-**适用场景**：已有公网云服务器（阿里云ECS等），需要 yingxin_inner 全时段在线、永不掉线。
-
-| 要素 | 说明 |
-|------|------|
-| 部署位置 | 云端服务器（阿里云 ECS 47.103.27.171） |
-| 本地WSL | 关闭 wecom 模块，仅作 CLI 开发/调试 |
-| 可用性 | ✅ 7×24 小时，无人值守 |
-| 切换成本 | 零（一次设置永久生效） |
-| 运维方式 | 通过 `sshpass` 远程管理，或写 crontab 自动恢复 |
-| 响应速度 | 稳定，不受本地电脑开关机影响 |
-
-**关键坑（2026.6.23 实战确认）：**
-如果本地 WSL **也保持** `wecom.enabled: true`（与云端使用同一套机器人凭据），两个 gateway 会持续竞争企微 WebSocket 独占连接。症状：云端日志周期性出现 `Connected → Disconnected` 循环，WSL 重启后又踢掉云端。参见"10.0.4 多端WebSocket连接冲突"。
 
 ---
 
@@ -308,125 +239,7 @@ requests.post(f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={KEY}", jso
 
 ## 十、内部全员群行为规范
 
-### 10.0 已知问题
-
-#### 10.0.1 标题生成失败（auxiliary title_generation 401）
-
-**问题现象**：用户在群聊/私聊中向机器人发消息时，终端日志/错误日志报：
-```
-Auxiliary title generation failed: HTTP 401: Authentication Fails, Your api key: ... is invalid
-```
-
-**但实际回复正常**，用户端无感知异常。这个错误只影响后台的对话标题命名，不影响消息接收和回复。
-
-**根因（2026.6.18 最终确认）：**
-主 Agent 使用中转代理 `llm.chudian.site/v1` 转发 DeepSeek 请求，API Key 只对该代理有效。
-但 `auxiliary.title_generation` 默认 `provider: auto`，自动检测到 `DEEPSEEK_API_KEY` 后**直连** `api.deepseek.com` → 该 Key 在原生 API 端不认 → 401。
-
-**不是视频消息专属！** 任何消息类型都可能触发此错误。
-
-**修复（2026.6.18 已应用）：**
-```yaml
-# ~/.hermes/config.yaml → auxiliary.title_generation
-title_generation:
-  provider: custom                 # 绕过 auto 检测链路
-  model: deepseek-v4-flash         # 与主 Agent 同模型
-  base_url: https://llm.chudian.site/v1  # 与主 Agent 同代理
-  api_key: '${DEEPSEEK_API_KEY}'   # 使用同一把 Key
-  timeout: 30
-  extra_body: {}
-```
-
-**关键发现：** `api_key: '${DEEPSEEK_API_KEY}'` 的 `${}` 环境变量展开在全配置层级都有效（`_expand_env_vars()` 递归处理所有字符串值）。
-
-**验证方法：**
-```bash
-grep "Auxiliary title_generation" ~/.hermes/logs/agent.log | tail -3
-# 应显示 provider=custom，base_url 指向代理地址
-```
-
-#### 10.0.2 不支持的消息类型
-
-**问题现象**：向企业微信 AI Bot 转发视频（或位置/红包/转账等非标准消息类型），Bot 回复：
-```
-抱歉，目前不支持理解此类型消息
-```
-
-**gateway 日志无任何入站记录**，说明消息被企业微信平台层直接拦截，未推送到 Hermes Gateway。
-
-**根因**（2026.6.18 实战确认）：
-- 企业微信 AI Bot 平台仅支持以下消息类型推送到 WebSocket 通道：
-  | 类型 | 支持 | 备注 |
-  |:--:|:--:|:--|
-  | 文字 | ✅ | 正常处理 |
-  | 图片 | ✅ | `_extract_media` 有 handler |
-  | 文件 | ✅ | `msgtype: file` / `appmsg` 都支持 |
-  | 语音 | ✅ | `_extract_text` 有 voice 分支 |
-  | **视频** | ❌ | **平台层直接拦截，消息体不到达** |
-  | 位置 | ❌ | 同上 |
-  | 红包/转账 | ❌ | 同上 |
-
-- wecom.py 代码中 `_extract_media()` 没有 `video` handler，但即使加上也无效——消息在到达前已被过滤。
-- 这条消息"抱歉，目前不支持理解此类型消息"**不是 Hermes 代码输出的**，是企业微信平台返回的默认错误提示。
-- 注意与企业微信**自建应用回调模式**的区别：回调模式支持的消息类型更多（包括视频），但无法加入外部群。
-
-**修复策略**：
-无。这是企业微信 AI Bot 平台的能力限制，不是代码 bug，无法绕过。
-
-**应对方案**：
-| 场景 | 做法 |
-|:--:|:--|
-| 客户发了视频 | 人工看视频，把关键信息转文字告知客户让其在群里/私聊中重发 |
-| 客户想用视频提需求 | 引导客户截图关键帧或直接打字描述 |
-| 机器人需要处理视频内容 | 当前架构不支持，考虑切换到自建应用回调模式（牺牲外部群能力） |
-
-### 10.0.3 响应发送超时（Send failed: Timeout）
-
-**问题现象**：gateway 日志显示：
-```
-[Wecom] Sending response (165 chars) to XuAiJun
-[Wecom] Send failed: Timeout sending message to WeCom — trying plain-text fallback
-```
-
-agent 生成了回复（"response ready"日志存在），但 WeCom API 在15秒内没有确认接收。触发 fallback 机制改用纯文本通道重发。
-
-**用户端表现**：
-- 用户可能看到回复但延迟很大
-- 用户可能看到 "抱歉，目前不支持理解此类型消息"（WeCom平台级默认错误，非Hermes输出）
-- 用户可能完全没看到回复（fallback也失败时）
-
-**根因分析**（2026.6.18 实战发现）：
-- 不是因为消息内容问题——同一轮对话中相邻消息有的成功有的失败
-- 不是因为agent处理超时——response已生成，耗时仅5.1秒
-- 是 **WeCom API 响应确认超时**——消息已发出但API没收到200确认
-- 常见于网络波动、WebSocket连接不稳定、企微平台侧负载
-
-**排查步骤**：
-
-```bash
-# 1. 确认是否只是发送超时（agent正常生成了回复）
-cat ~/.hermes/logs/gateway.log | grep -E "response ready|Send failed"
-# 如果有 response ready 但紧接着 Send failed → 确认是发送端问题
-
-# 2. 查看 WebSocket 连接状态
-cat ~/.hermes/logs/gateway.log | grep -i "wecom.*connect\|wecom.*disconnect"
-
-# 3. 查看 gateway 当前是否仍然在运行
-systemctl --user status hermes-gateway.service --no-pager
-```
-
-**修复策略**：
-
-| 场景 | 操作 | 优先级 |
-|:--:|:--|:--:|
-| 偶发超时（半小时内<2次） | 不做干预，fallback机制自动重试 | 低 |
-| 频繁超时（>5次/小时） | 重启gateway: `systemctl --user restart hermes-gateway.service` | 中 |
-| 持续失败+fallback也失败 | 检查服务器网络 → 检企微后台机器人Token过期 → 重启gateway | 高 |
-| 全量消息都超时 | 检查是否存在多个gateway实例冲突（`ps aux \| grep gateway`） | 紧急 |
-
-**关键发现**：gateway restart（`--replace`接管WebSocket连接，不需要手动杀旧进程。
-
-### 10.2 已知限制：串行处理延迟
+### 10.1 场景说明
 
 内部全员群是盈信公司内部工作群（全员群），群成员包括：
 - **江姐**（老板，高频率使用，会在群里@机器人提问）
@@ -457,39 +270,6 @@ systemctl --user status hermes-gateway.service --no-pager
 - 超过 30 秒无回应 → 会切换到 DM 质问
 - 这既是用户体验问题，也是需要向用户透明说明的架构限制
 
-#### 10.0.4 多端WebSocket连接冲突（独占通道踩坑）
-
-**触发条件**：两台机器（如 WSL + 阿里云）同时 `wecom.enabled: true`，且配置了**同一套**企微AI机器人凭据。
-
-**问题现象**：云端 gateway 日志出现「连上就断」的死循环：
-```
-[Wecom] Connected to wss://openws.work.weixin.qq.com
-[Wecom] Disconnected
-[Wecom] Connected...
-[Wecom] Disconnected
-```
-
-**根因（2026.6.23 实战确认）：**
-企微 AI 机器人 WebSocket 通道是**独占连接**，同一时间只允许一个 gateway 实例保持连接。后连接的实例会踢掉前一个，但企微平台侧也会**周期性地把竞争的一方踢回**，导致双方都连不上去。
-
-**后果：**
-- 本地 WSL 上线时 → 云端掉线 → 关机/休眠后云端需要等待重连窗口
-- 云端偶尔重连成功时 → WSL 端掉线（用户侧表现为机器人突然不回复）
-- 两端日志持续刷 `Disconnected`，纯属浪费 CPU 和日志空间
-
-**修复方案：**
-| 场景 | 操作 |
-|:--:|:--|
-| 确定只用一端 | 另一端 `config.yaml` 中设 `wecom.enabled: false`，重启 gateway |
-| 需要双机但交替接管 | 参考"八、替代架构"方案E的故障转移策略 |
-
-**验证是否已修复：**
-```bash
-# 在被关闭的一端检查
-grep "wecom" ~/.hermes/config.yaml | head -3
-# 应显示 enabled: false 或不包含 wecom 段
-```
-
 ### 10.3 应对策略
 
 | 策略 | 描述 | 优先级 |
@@ -514,16 +294,3 @@ grep "wecom" ~/.hermes/config.yaml | head -3
 - 对同事：专业、简洁、偏正式
 - 全员群内不提及具体客户数据，注意群聊可见性
 - 出现技术问题（连接断开、响应超时等）→ 主动说明原因，不装死
-
----
-
-## 十一、文档推送 — Webhook文件发送工作流
-
-当需要推送文档/报告到企微内部群时，使用群Webhook机器人（非AI机器人通道）：
-
-**流程：** Markdown摘要消息 → 上传文件 → 发送文件消息
-
-**参考文件：** `references/wecom-webhook-file-push.md`（含完整Python代码、文件类型支持表、限制说明）
-
-**注意：** Webhook仅支持推送到内部群，不支持外部客户群。
-

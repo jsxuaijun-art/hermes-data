@@ -83,11 +83,17 @@ After updating, always provide the user with a **structured audit of changes**:
 - "摊位费约210万/年" → changed to 2-10万/年 (plausible market rate; 210万 is almost certainly a typo)
 ```
 
+## English Learning & Translation Support
+
+This skill now includes the English learning and translation capabilities from the absorbed `english-learning` skill (archived). See `references/english-learning.md` for:
+
+- Chinese↔English translation with finance/tax terminology
+- Grammar explanations, sentence parsing, writing polish
+- Common finance/tax English term table
+
+When processing bilingual reference material (Chinese documents with English terms), use the translation and terminology tools in this reference file.
+
 ## Related Skills
 
-- `plan` (for structured deliverable creation)
-- `report-writing` (if you have one — for long-form deliverable structure)
-
-## Consolidated Sub-Skills
-
-The former standalone skill `coze-tax-agent-prompt` (a COZE platform System Prompt for tax agents and Hermes-compatible execution engine) was consolidated under this umbrella in 2026-06 as a reference integration case study. Its content is preserved at `.archive/reference-material-integration/coze-tax-agent-prompt/`.
+- writing-plans (for structured deliverable creation)
+- report-writing (if you have one — for long-form deliverable structure)

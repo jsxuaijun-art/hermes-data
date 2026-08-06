@@ -15,6 +15,7 @@ metadata:
 For DOCX: use `python-docx` (parses actual document structure, far better than OCR).
 For PPTX: see the `powerpoint` skill (uses `python-pptx` with full slide/notes support).
 This skill covers **PDFs and scanned documents**.
+For **multi-format → Markdown** (Word/Excel/PPT/PDF), `markitdown` (Microsoft) is a first-choice lightweight option — see below.
 
 ## Step 1: Remote URL Available?
 
@@ -28,6 +29,40 @@ web_extract(urls=["https://example.com/report.pdf"])
 This handles PDF-to-markdown conversion via Firecrawl with no local dependencies.
 
 Only use local extraction when: the file is local, web_extract fails, or you need batch processing.
+
+## Step 1.5: MarkItDown (Microsoft) — lightweight multi-format → Markdown
+
+`markitdown` (Microsoft OSS, `pip install markitdown[all]`) converts **Word (.docx), Excel, PowerPoint, PDF, HTML, audio/video** into Markdown. It is small (no PyTorch, unlike marker-pdf), fast, and handles Chinese text well. Verified in this environment against real tax/legal docs (docx AND pdf), including tables → markdown tables.
+
+**Install** (in the venv; `[all]` pulls PDF/Office/audio deps):
+```bash
+pip install "markitdown[all]" -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+**Usage**:
+```bash
+markitdown input.docx > output.md   # any supported format
+markitdown input.pdf  > output.md
+```
+Python:
+```python
+from markitdown import MarkItDown
+md = MarkItDown()
+text = md.convert("input.docx").text_content
+```
+
+**Pitfalls (observed)**
+- `.pdf` file with a filename indicating PDF but a broken structure throws `FileConversionException: No /Root object! - Is this really a PDF?`. Check the true format with `head -c 20 file.pdf | xxd` — a real PDF starts with `%PDF`. Some print-save/exported PDFs are structurally invalid despite the extension; try a different source or pymupdf on those.
+- Audio/video → text needs `ffmpeg` on PATH (pydub warns if missing). If only imageio-ffmpeg's binary is available, symlink it: `ln -sf <imageio-path>/ffmpeg ~/bin/ffmpeg`.
+- Image OCR is NOT included by default in the base install; markitdown keeps images as references. For scanned-image text extraction use marker-pdf or an OCR model instead.
+- MarkItDown goes "format → md" only. For the reverse (md → formatted .docx) use `pandoc` or the `word-documents` / `markdown-to-word-converter` skill.
+
+**Decision** between local extractors:
+| Tool | Best for | Size |
+|------|----------|------|
+| **markitdown** | multi-format (docx/xlsx/pptx/pdf→md), text + structure incl. Chinese | few MB |
+| **pymupdf** | PDF only: split/merge/search/plain-text, instant, no models | ~25MB |
+| **marker-pdf** | OCR of scanned PDFs, equations, complex layouts | ~5GB |
 
 ## Step 2: Choose Local Extractor
 
@@ -109,160 +144,6 @@ marker /path/to/folder --workers 4    # Batch
 
 ---
 
-## Chinese Scanned PDF (Tesseract + chi_sim)
-
-**When to use this path**: The document is scanned Chinese text, and marker-pdf's ~3-5GB is overkill or the system has insufficient disk space. Tesseract (~100MB with chi_sim) is the lightweight alternative.
-
-### Install
-
-```bash
-sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-chi-sim
-pip install pytesseract pymupdf
-# Verify
-tesseract --list-langs | grep chi_sim
-```
-
-### Extract All Pages (Inline Python)
-
-```python
-import pytesseract
-from PIL import Image
-import pymupdf
-import io
-
-doc = pymupdf.open("scanned_doc.pdf")
-for i in range(len(doc)):
-    pix = doc[i].get_pixmap(dpi=300)  # 300 DPI for accuracy
-    img = Image.open(io.BytesIO(pix.tobytes("png")))
-    text = pytesseract.image_to_string(img, lang="chi_sim")
-    print(f"--- Page {i+1} ---\n{text}\n")
-```
-
-**⚠️ Speed**: At 300 DPI, each page takes ~3-10s. At 200 DPI ~1-3s. For a 380-page scanned PDF, 300 DPI → ~20-60 min total.
-
-### Extract Specific Pages Only (TOC-first pattern)
-
-```python
-import pymupdf
-from PIL import Image
-import io
-
-doc = pymupdf.open("doc.pdf")
-print(f"Total pages: {len(doc)}")
-# OCR just TOC area (usually covers first 5-8 pages)
-for i in range(1, min(8, len(doc))):
-    pix = doc[i].get_pixmap(dpi=200)
-    img = Image.open(io.BytesIO(pix.tobytes("png")))
-    text = pytesseract.image_to_string(img, lang="chi_sim")
-    print(f"Page {i+1}: {text}")
-```
-
-### ⚡ Tesseract 4 Limitation: No Direct PDF Input
-
-**Tesseract 4.x (apt-installed) does NOT support reading PDF files directly.** You'll get:
-```
-Error in pixReadStream: Pdf reading is not supported
-```
-
-**Workaround**: Convert PDF pages to images first, then OCR the images.
-
-Two conversion paths:
-
-| Path | Best for | Install | Speed |
-|------|----------|---------|-------|
-| **PyMuPDF → PIL Image → pytesseract** | Small PDFs (<50 pages), inline Python | `pip install pymupdf pytesseract` | ~3-10s/page |
-| **pdftoppm → tesseract CLI** | Large batches (50-600+ pages), pip timeout | `sudo apt install poppler-utils` | ~1-3s/page |
-
-### Batch Pipeline (pdftoppm + tesseract CLI)
-
-Use when: pip install times out, PDF is large (100+ pages), or you need memory-efficient processing.
-
-```bash
-# 1. Install tools
-sudo apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-chi-sim
-```
-
-```python
-import subprocess, os, glob
-
-# Full batch script pattern:
-pdf_path = "scanned_book.pdf"
-out_dir = "/tmp/ocr_output"
-os.makedirs(out_dir, exist_ok=True)
-
-# Get page count
-info = subprocess.run(["pdfinfo", pdf_path], capture_output=True, text=True)
-pages = int([l for l in info.stdout.split('\n') if 'Pages' in l][0].split(':')[1])
-
-batch_size = 10
-for start in range(0, pages, batch_size):
-    end = min(start + batch_size, pages)
-    prefix = f"{out_dir}/pages_{start+1}_{end}"
-    
-    # Step A: Convert → images
-    subprocess.run(["pdftoppm", "-png", "-r", "300", "-f", str(start+1), "-l", str(end),
-                    pdf_path, prefix], timeout=120)
-    
-    # Step B: OCR each image
-    # ⚠️ DO NOT guess filename format with {page_num:06d} or {page_num:03d}!
-    # pdftoppm's padding varies by total page count (1-digit, 2-digit, or 3-digit).
-    # Use glob to find actual output files instead.
-    img_files = sorted(glob.glob(f"{prefix}-*.png"))
-    for img in img_files:
-        # Extract page number from filename like "prefix-005.png"
-        basename = os.path.basename(img)
-        page_str = basename.split("-")[-1].replace(".png", "")
-        pg = int(page_str.lstrip("0") or "0")
-        subprocess.run(["tesseract", img, f"{out_dir}/page_{pg}", "-l", "chi_sim+eng", "--psm", "6"],
-                       timeout=60)
-        os.remove(img)  # cleanup
-```
-
-**Why two-step matters**: pdftoppm is 2-3x faster than PyMuPDF image rendering for large batches, and the CLI path works when `pip install` times out (a common issue in restricted environments).
-
-**⚠️ CRITICAL BUG FIX (2026-05-24)**: The original code used `{pg:06d}.png` (6-digit zero-padded), but `pdftoppm` outputs filenames with **variable-digit padding** — matching the number of digits needed to represent the highest page number. For a 589-page PDF, it uses 3-digit padding (`-005.png`). For a 10-page PDF, it uses 2-digit padding (`-05.png`). Using a fixed format string will **always miss the files** and produce zero output. Always use `glob.glob()` to discover actual filenames.
-
-### ⭐ Efficiency Strategy: TOC-First → Web Search
-
-The most practical pattern for Chinese scanned textbooks (proven on a 380-page scanned Chinese PDF):
-
-```
-OCR just TOC (2-8 pages, ~30s)
-  → Get chapter structure + author info
-  → web_search for full book content/summary
-  → Extract core methodology into reference doc
-```
-
-**Why this works**: Academic textbooks have stable structures across editions. Once you OCR the TOC (2-6 pages, ~30 seconds), you get the full chapter list and framework. A web search then yields the book's core content, chapter summaries, and key frameworks — without OCR'ing 380 pages at 20+ minutes.
-
-**Proven workflow from this session**:
-- Scanned PDF: 张新民、钱爱民《财务报表分析》第2版, ~380 pages, no text layer
-- Step 1: OCR pages 1-6 (cover + TOC) → got 10 chapter titles + author info
-- Step 2: `web_search("张新民 钱爱民 《财务报表分析》 第2版 目录 核心内容")` → chapter summaries + framework
-- Step 3: `web_search("张新民 财务报表分析 核心方法论 资产质量 资本结构 利润质量 现金流质量")` → four-dimensional analysis framework
-- Step 4: Created `references/张新民财务报表分析_核心框架摘要.md` with structured methodology
-- Time saved: ~6-8 hours (full OCR) → ~15 minutes
-
-### Tesseract vs. marker-pdf for Chinese
-
-Tesseract + chi_sim:
-- Install: ~100MB, 30s (apt)
-- Chinese accuracy: Good (70-85%)
-- Speed: 3-10s/page (CPU)
-- Tables/layout: Poor (raw text block)
-- Best for: Chinese scanned text-only docs, TOC extraction
-
-marker-pdf:
-- Install: 3-5GB, 5-15 min (pip + model download)
-- Chinese accuracy: Excellent (90-95%+)
-- Speed: 1-14s/page (CPU)
-- Tables/layout: Excellent (table-aware)
-- Best for: Mixed layout, tables, equations
-
-**Decision**: Use tesseract for chapter structure + text content only. Use marker-pdf for complex layouts, tables, or production-quality extraction.
-
----
-
 ## Arxiv Papers
 
 ```
@@ -323,3 +204,92 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 - marker-pdf downloads ~2.5GB of models to `~/.cache/huggingface/` on first use
 - For Word docs: `pip install python-docx` (better than OCR — parses actual structure)
 - For PowerPoint: see the `powerpoint` skill (uses python-pptx)
+
+## PDF Generation with Chinese Text
+
+When creating PDFs with reportlab and Chinese content, font selection is critical.
+
+### Font Pitfall: DroidSansFallbackFull Lacks ASCII Number Glyphs
+
+The default Chinese font on Ubuntu WSL (`/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf`) contains CJK ideographs but **does NOT contain ASCII digits (0-9), commas, periods, or parentheses**. PDFs generated with this font will have invisible numbers — `pdftotext` and `pymupdf` extract shows `\0` (null bytes) where numbers should be.
+
+**Do NOT use** `DroidSansFallbackFull` for PDF generation with reportlab or fpdf2.
+
+### Recommended Fonts
+
+| Font | Install | Format | Notes |
+|------|---------|--------|-------|
+| **WenQuanYi Micro Hei** | `apt-get install fonts-wqy-microhei` | TrueType (.ttc) | Has CJK + ASCII digits. Extract subfont for reportlab. |
+| Noto Sans CJK SC | `apt-get install fonts-noto-cjk` | CFF outlines (.ttc) | Not supported by reportlab (CFF/PostScript). Use fpdf2 instead. |
+
+### WQY Micro Hei: Extract from .ttc for reportlab
+
+reportlab's TTFont does not support .ttc (TrueType Collection) files. Extract the first subfont:
+
+```bash
+python3 -c "
+from fontTools.ttLib import TTCollection
+ttc = TTCollection('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
+ttc.fonts[0].save('/usr/share/fonts/truetype/wqy/wqy-microhei-regular.ttf')
+"
+```
+
+Then register and use:
+```python
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+pdfmetrics.registerFont(TTFont('WQY', '/usr/share/fonts/truetype/wqy/wqy-microhei-regular.ttf'))
+```
+
+This font renders both Chinese text and formatted numbers (e.g. `1,234,567.89` and `(305,000.00)`) correctly, verified with `pdftotext` and `pymupdf` text extraction.
+
+### Alternative: fpdf2 with .ttc Directly
+
+fpdf2 supports .ttc subfont selection natively but also hits the same glyph issue with DroidSansFallbackFull. Install WQY Micro Hei and register by family name:
+
+```python
+from fpdf import FPDF
+pdf = FPDF()
+pdf.add_font('WQY', '', '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
+```
+
+### Verify Font Has Required Glyphs
+
+Before generating, check for missing glyphs:
+
+```bash
+python3 -c "
+from fontTools.ttLib import TTCollection, TTFont
+path = '/path/to/font.ttc'
+try:
+    f = TTCollection(path).fonts[0]
+except:
+    f = TTFont(path)
+cmap = f.getBestCmap()
+for ch in '0123456789,.()-':
+    print(f'{repr(ch)}: {\"OK\" if ord(ch) in cmap else \"MISSING\"}' )
+"
+
+## Non-Standard Documents: Music Scores
+
+**Standard OCR pipelines (Tesseract, pytesseract) cannot read Chinese numbered musical notation (jianpu/简谱).** See `references/music-score-ocr.md` for a complete breakdown of approaches tried and their results.
+
+TL;DR: If `vision_analyze` is available (model supports image input), use it. Otherwise, OCR can recover only title/tempo/performance instruction text from the margins — the actual notation numbers (1–7) are unrecoverable via Tesseract. Fall back to human-assisted transcription: ask the user to read the numbers.
+
+### After Transcription: Generate Audio
+
+Once the user provides the jianpu numbers (even approximately), use `scripts/jianpu2midi.py` to:
+
+- Generate MIDI audio (GM#22 Harmonica ≈ 口风琴)
+- Print right-hand fingering annotations
+- Print a structured practice guide (phased tempo, breath control tips, difficulty assessment)
+
+```bash
+# Example: user provides notes, you generate audio + guide
+python scripts/jianpu2midi.py --guide --fingering --bpm 80 \
+  "5 5 6 5 | 3 2 1 — | 5 5 6 5 | 3 2 1 — |"
+```
+
+See `references/jianpu-to-audio.md` for the full workflow, input format table, instrument numbering, and melodica fingering rules.
+
+This applies to any document with mixed notation + text (sheet music, lead sheets, tablature) — not just Chinese jianpu.

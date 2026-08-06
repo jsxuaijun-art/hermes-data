@@ -402,6 +402,7 @@ Used when Google Search Console, SSL cert, or other services require TXT record 
 | ASP syntax `%%>` from Markdown copy | Page blank / 500 | Replace `%%>` with `%>` in ASP code |
 | Cache after update | Changes not visible | Clear browser cache or use incognito mode |
 | FTP root ≠ HTTP root | Wrong file edited | Compare FTP root index.asp vs HTTP root content |
+| FTP timeout on shared hosting (files > 50KB) | Upload hangs or creates 0-byte files | Use CMS backend for image uploads; compress under 50KB; or ask user to upload via admin panel |
 | HTTPS curl fails on IIS | TLS alert internal error | Use `http://` instead |
 | Multiple JSON-LD blocks | Search engines ignore schema | Maintain exactly ONE `application/ld+json` per page |
 | Long text + SQL functions = 500 | `LEFT(s_content,200)` kills page | SELECT raw column name, avoid SQL text functions |

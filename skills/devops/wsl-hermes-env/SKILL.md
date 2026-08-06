@@ -724,3 +724,4 @@ memory 5条以上约 2,200 字符满。更新的策略：
 - `references/tool-network-diagnostics.md` — WSL环境工具（Codex/Claude Code）外网连通性诊断与修复（DNS封锁识别、多工具网络探测方法、代理中转404排查）
 - `references/auxiliary-fix-practice.md` — 辅助任务「Invalid API key」修复实战记录（PyYAML批量修改途径及security module拦截陷阱）
 - `references/hermes-v0.18-upgrade-attempt.md` — hermes v0.17 → v0.18 升级尝试失败记录（pip代理阻塞、bash --norc绕过法的局限性、国内PyPI直连速度瓶颈）
+- `references/video-audio-transcription.md` — 视频/音频转写流水线（mp4→抽音轨→whisper，中国网络实测）：venv+清华镜像、HF_ENDPOINT=hf-mirror、HF_HUB_DISABLE_XET=1、imageio-ffmpeg自带ffmpeg二进制、base模型CPU转写；用户文件通常在 D:\OneDrive\Desktop

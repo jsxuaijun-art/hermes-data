@@ -1,7 +1,7 @@
 ---
 name: hermes-agent
 description: "Configure, extend, or contribute to Hermes Agent."
-version: 2.0.0
+version: 2.1.0
 author: Hermes Agent + Teknium
 license: MIT
 metadata:
@@ -495,270 +495,6 @@ Voice commands: `/voice on` (voice-to-voice), `/voice tts` (always voice), `/voi
 
 ---
 
-## Upgrading
-
-### Pre-Upgrade Quick Diagnosis
-
-Before upgrading, run this 3-command diagnostic to pick the right upgrade path:
-
-```bash
-# 1. Check current version AND project path (tells you git vs non-git)
-hermes --version
-# Output includes: Project: /path/to/hermes-agent/
-
-# 2. Check if it's a git installation (ls .git = git install)
-ls -la /path/to/hermes-agent/.git 2>/dev/null && echo "GIT INSTALL" || echo "NON-GIT INSTALL"
-
-# 3. Find latest release tag (this API endpoint works when raw tarball URL doesn't)
-curl -sL --max-time 30 'https://api.github.com/repos/NousResearch/hermes-agent/releases/latest' \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('tag_name','unknown'))"
-# Alternative (fails more often in restricted networks):
-# curl -sI -o /dev/null -w '%{redirect_url}' 'https://github.com/NousResearch/hermes-agent/releases/latest'
-```
-
-**Diagnosis → Action:**
-
-| Diagnosis | Action |
-|-----------|--------|
-| Git install → version behind latest | `hermes update` |
-| Non-git install → version behind latest | Manual upgrade (see below) |
-| Can't reach GitHub API at all | Download tarball via browser on Windows host |
-
----
-
-### Built-in: `hermes update`
-
-The `hermes update` command auto-updates Hermes to the latest release. It requires a **git installation** — it works by pulling from the upstream repository.
-
-```bash
-hermes update               # Update to latest version
-hermes update --check       # Preflight check without updating
-```
-
-**Limitations:**
-- **Non-git installations (tarball/ZIP)** — `hermes update` fails with `"Not a git repository. Please reinstall"`. Do NOT retry — the error is definitive.
-  - **`hermes update --check`** also fails with the same error. Don't use it as a diagnostic tool on non-git installs; use the Pre-Upgrade Quick Diagnosis section instead.
-- **Windows NTFS filter drivers** — On Windows, the built-in update auto-detects file I/O issues and switches to a ZIP-download fallback.
-- **Windows NTFS filter drivers** — On Windows, the built-in update auto-detects file I/O issues and switches to a ZIP-download fallback.
-- **Slow/unreliable network** — The built-in update has no built-in resume logic. For flaky connections, use the manual procedure below.
-
-### Manual Upgrade (Tarball/Non-Git Installation)
-
-Use this when Hermes was deployed from a tarball (e.g., `setup-hermes.sh` or manual `curl` install) rather than `git clone`.
-
-#### Prerequisites: Python version
-
-**Hermes v0.14.0 requires Python ≥ 3.11.** Check before upgrading:
-
-```bash
-python3 --version
-# If 3.10.x, install 3.11:
-sudo apt-get install -y python3.11 python3.11-venv python3.11-dev
-```
-
-Create a **new** venv (do NOT reuse the old Python 3.10 one):
-
-```bash
-python3.11 -m venv ~/.venv-hermes-311
-source ~/.venv-hermes-311/bin/activate
-pip install --upgrade pip setuptools wheel
-```
-
-#### Step-by-step
-
-1. **Check current version:**
-   ```bash
-   cd /path/to/hermes-agent/
-   python -m hermes_cli.main --version
-   ```
-
-2. **Find the latest release tag:**
-   ```bash
-   # Query GitHub for the latest tag
-   curl -sI -o /dev/null -w '%{redirect_url}' \
-     "https://github.com/NousResearch/hermes-agent/releases/latest"
-   # Extract tag from output: e.g. .../tag/v2026.5.16
-   ```
-
-3. **Download the tarball:**
-   ```bash
-   mkdir -p /path/to/new-version-directory
-   cd /path/to/new-version-directory
-   ```
-
-   **Option A (fastest — WSL with Windows proxy):**
-   ```bash
-   WIN_IP=$(ip route | grep default | awk '{print $3}')
-   curl -L --max-time 600 --proxy "http://$WIN_IP:7890" \
-     "https://github.com/NousResearch/hermes-agent/archive/refs/tags/v<LATEST_TAG>.tar.gz" \
-     -o hermes-source.tar.gz
-   ```
-   If proxy not reachable, verify Clash's "Allow LAN" is ON and port matches (default 7890).
-
-   **Option B (manual — 100% reliable):**
-   Download via Windows browser to Desktop, then:
-   ```bash
-   cp /mnt/c/Users/<user>/Desktop/v<LATEST_TAG>.tar.gz hermes-source.tar.gz
-   ```
-
-   **Option C (resume loop — for slow/dropping connections):**
-   ```bash
-   for i in $(seq 1 20); do
-     echo "=== Attempt $i ==="
-     curl -L --max-time 1800 --retry 3 -C - \
-       "https://github.com/NousResearch/hermes-agent/archive/refs/tags/v<LATEST_TAG>.tar.gz" \
-       -o hermes-source.tar.gz 2>&1 | tail -3
-     size=$(stat -c%s hermes-source.tar.gz 2>/dev/null)
-     [ "$size" -gt 27000000 ] && echo "Done!" && break
-     sleep 5
-   done
-   ```
-
-4. **Extract — ⚠️ on Linux filesystem, NOT NTFS:**
-   ```bash
-   # Extract to /tmp (tmpfs, Linux native — fast and avoids NTFS permission issues)
-   cd /tmp
-   tar xzf /path/to/new-version-directory/hermes-source.tar.gz
-   cd hermes-agent-<tag>/
-
-   # Verify extraction is complete
-   ls tools/checkpoint_manager.py || echo "MISSING: incomplete extraction!"
-   # If missing directories, re-extract or supplement:
-   # tar xzf /path/to/hermes-source.tar.gz --strip-components=1 "hermes-agent-<tag>/tools/"
-   ```
-
-   ⚠️ **Do NOT extract directly to Windows NTFS mount** — the archive has 1000+ files and `tar` may timeout (72MB expanded). Warnings like `Cannot utime: Operation not permitted` are harmless.
-
-5. **Install from Linux filesystem:**
-   ```bash
-   # MUST be on /tmp or a Linux-native fs — pip install -e . FAILS on NTFS ([Errno 1])
-   pip install -e .
-   ```
-
-6. **Sync to Windows project directory** (if keeping source on Windows):
-   ```bash
-   mkdir -p /path/to/new-version-directory/hermes-agent-<tag>/tools/
-   cp -r /tmp/hermes-agent-<tag>/tools/* /path/to/new-version-directory/hermes-agent-<tag>/tools/
-   ```
-
-7. **Update start script** (if using `start-hermes.sh`):
-   ```bash
-   # Update venv path: ~/.venv-hermes → ~/.venv-hermes-311
-   # Update cd path to new version directory
-   ```
-
-8. **Verify:**
-   ```bash
-   python -m hermes_cli.main --version
-   # Should show v0.14.0+ and Python 3.11.x
-
-   # Test actual agent initialization:
-   python -m hermes_cli.main chat -q "说'测试通过'就结束" -Q
-   # Note: -q replaced -z in v0.14.0
-   ```
-
-#### Network Resilience (Slow/Unstable Connections)
-
-When downloading from GitHub is slow (~20-30KB/s) and unstable, prioritize proxy-based download over retry loops.
-
-##### ⚠️ Agent foreground timeout (600s wall)
-
-**Critical pitfall when running downloads INSIDE the agent** (via `terminal` tool):
-
-The agent's `terminal` tool has a **foreground timeout cap of 600 seconds**. A 28MB tarball at 20KB/s needs ~1,400s — 800s more than the limit. Any `--max-time` > 600 is irrelevant because the tool itself will terminate at 600s:
-
-```bash
-# ❌ This will timeout — foreground limit hits before max-time
-terminal(command="curl -L --max-time 1800 ... -o hermes-source.tar.gz", timeout=600)
-
-# ⚡ Result: curl exits at 600s with exit code 124, partial file (~11MB)
-```
-
-**Two ways to bypass:**
-
-| Method | How | When to use |
-|--------|-----|-------------|
-| **Background mode** | `terminal(command="...", background=true, notify_on_complete=true, timeout=1800)` | Agent is doing other work; best for this class of task |
-| **Standalone script** | Write retry-loop to `/tmp/download.sh`, run in background | Complex retry logic; script survives agent restart |
-
-**Background mode (preferred):** Set `background=true` + `notify_on_complete=true`. The process runs until completion regardless of foreground timeout. The agent receives a notification when done:
-
-```bash
-terminal(command="bash /tmp/download_hermes.sh", background=true, notify_on_complete=true, timeout=1800)
-```
-
-**Standalone retry-loop script (`wget --continue`):** Write to `/tmp/download_hermes.sh` and run it in background. The script at `scripts/wget-resume-loop.sh` in this skill is ready to use — copy it, edit the TAG variable, and run:
-
-```bash
-# Copy and run in background
-cp /path/to/skill/scripts/wget-resume-loop.sh /tmp/download_hermes.sh
-# Edit TAG inside the script to match the target version
-terminal(command="bash /tmp/download_hermes.sh", background=true, notify_on_complete=true, timeout=1800)
-```
-
-**Step 0: Check for Windows proxy (Clash/TUN).** This is the fastest path:
-
-```bash
-WIN_IP=$(ip route | grep default | awk '{print $3}')
-curl -sI --proxy "http://$WIN_IP:7890" "https://google.com"
-# If 200 → proxy works, use it directly (1.3MB/s, 20s)
-# If connection refused → enable "Allow LAN" in proxy software
-```
-
-**If proxy available**, use it and skip retry loops entirely:
-
-```bash
-# Single shot, no loop needed — proxy is stable at 1.3MB/s
-curl -L --max-time 600 --proxy "http://$WIN_IP:7890" \
-  "https://github.com/.../v<TAG>.tar.gz" -o hermes-source.tar.gz
-```
-
-**If proxy unavailable**, use a **loop with resume**:
-
-```bash
-cd /path/to/target-directory
-rm -f hermes-source.tar.gz
-
-for i in $(seq 1 20); do
-  echo "=== Attempt $i ==="
-  curl -L --max-time 600 --retry 3 --retry-delay 5 \
-    -C - \
-    "https://github.com/NousResearch/hermes-agent/archive/refs/tags/v<LATEST_TAG>.tar.gz" \
-    -o hermes-source.tar.gz 2>&1 | tail -5
-
-  if [ -f hermes-source.tar.gz ]; then
-    size=$(stat -c%s hermes-source.tar.gz)
-    echo "Size: $size bytes"
-    if [ "$size" -gt 27000000 ]; then
-      echo "Download complete!"
-      break
-    fi
-  fi
-  sleep 5
-done
-```
-
-**⚠️ Critical pitfalls with retry-loop scripts:**
-- **DO NOT put `rm -f` at the top of the loop** — it resets progress on every retry iteration. The `rm -f` goes before the `for` loop, NOT inside it.
-- **`-C -` (resume) vs fresh start**: If the file doesn't exist or is 0 bytes, `-C -` is equivalent to downloading from scratch. Only delete and restart if the partial file is corrupted.
-- **`max-time` must be longer than anticipated worst-case**: 600s minimum at slow speeds; a 28MB tarball at 20KB/s takes ~24 minutes (1440s). Use `--max-time 1800` for headroom.
-- **Verify file size before declaring success**: The last `curl` call may exit code 0 but with a partial file (e.g., HTTP error response body). Always check size > 27MB.
-
-**Key findings from testing (WSL2, China-based network):**
-- **Linux curl with HTTP/2** — most reliable option. Gets data at 20-30KB/s but drops ~40-50% through with `HTTP/2 stream CANCEL (err 8)` or `Error in the HTTP2 framing layer`. Resume with `-C -` recovers each time.
-- **Linux curl with `--http1.1`** — fails immediately: `OpenSSL SSL_read: error:0A000126:SSL routines::unexpected eof while reading`. GitHub forces HTTP/2 on some CDN nodes; HTTP/1.1 falls back to a different TLS path that fails.
-- **Windows curl.exe (`curl.exe` from WSL)** — highly unreliable: `Recv failure: Connection was reset` within 20s of connecting. Avoid.
-- **`--limit-rate 100k`** — paradoxically makes connections *less* stable because the TCP window doesn't grow fast enough; don't use.
-- **Chinese mirrors** (ghproxy.com, fastgit, gh.api.99988866.xyz) — all timed out in testing. No working mirror found.
-- **`wget --continue`** — a strong alternative to curl. Achieved higher throughput than curl (38KB/s vs 26KB/s) and reached 67% of the tarball before dropping. Use `--retry-connrefused --read-timeout=120` flags. wget uses HTTP/2 by default and handles connection resets better than curl in some WSL2 environments.
-
-**Worst-case contingency:** If download cannot complete after 10+ attempts, the fastest path is to download the tarball manually via a browser on the Windows host and copy to WSL at `/mnt/c/Users/<user>/Desktop/`.
-
-**Do NOT use `hermes update --check` on non-git installations** — it also checks for `.git` and will fail with `"Not a git repository. Please reinstall"`.
-
-> **📖 Detailed reference:** For full error transcripts, symptom tables, and WSL2-specific network diagnostics, see `references/non-git-upgrade-wsl-network.md` in this skill.
-
-
 ## Spawning Additional Hermes Instances
 
 Run additional Hermes processes as fully independent subprocesses — separate sessions, tools, and environments.
@@ -868,19 +604,28 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 2. `hermes skills config` — check platform enablement
 3. Load explicitly: `/skill name` or `hermes -s name`
 
+### Multi-Device Data Sync
+
+When running Hermes on multiple machines (home PC, office PC, laptops), use a private GitHub repo to sync `~/.hermes/` data. Key rules:
+
+- **Run git operations on Windows side** (respects your proxy), only file copy in WSL
+- **Use `git fetch + git reset --hard`** for pull scripts (avoids merge conflicts entirely)
+- **Push: fetch+reset first**, then re-apply WSL data, then commit+push
+- **Pure ASCII only** in .bat files — Chinese chars cause mojibake encoding issues
+
+See full guide with templates and pitfalls: `references/multi-device-sync.md`
+
 ### Gateway issues
 Check logs first:
 ```bash
-grep -i "failed to send\|error\|pair\|\shut" ~/.hermes/logs/gateway.log | tail -20
+grep -i "failed to send\|error" ~/.hermes/logs/gateway.log | tail -20
 ```
 
 Common gateway problems:
 - **Gateway dies on SSH logout**: Enable linger: `sudo loginctl enable-linger $USER`
 - **Gateway dies on WSL2 close**: WSL2 requires `systemd=true` in `/etc/wsl.conf` for systemd services to work. Without it, gateway falls back to `nohup` (dies when session closes).
 - **Gateway crash loop**: Reset the failed state: `systemctl --user reset-failed hermes-gateway`
-- **"I don't recognize you yet" in WeCom/DingTalk** — Pairing data was lost (common on remote servers that restart). See `references/gateway-pairing-troubleshooting.md` for the full diagnostic workflow including credential pool drift between CLI and gateway servers, credential exhaustion vs config mismatch, and re-pairing procedure.
-- **"Gateway shutting down — Your current task will be interrupted"** — The gateway process was replaced (e.g. via `--replace` flag, systemd restart, or reconnect cycle). Usually a one-time event; start a new conversation. If frequent, check `/root/.hermes/logs/gateway.log` for crash causes or credential exhaustion (see troubleshooting reference above).
-- **Platform-specific issues ...**
+
 ### Platform-specific issues
 - **Discord bot silent**: Must enable **Message Content Intent** in Bot → Privileged Gateway Intents.
 - **Slack bot only works in DMs**: Must subscribe to `message.channels` event. Without it, the bot ignores public channels.
@@ -893,44 +638,48 @@ hermes config set auxiliary.vision.provider <your_provider>
 hermes config set auxiliary.vision.model <model_name>
 ```
 
-#### Common pitfall: proxy/relay endpoint + auto-detection mismatch
+### Tirith not scanning (auto-install failed)
 
-**Symptom:** Main agent replies work fine, but auxiliary tasks (title_generation, vision, compression) fail with `401 Authentication Fails` even though the API key works when tested directly.
+Tirith auto-downloads from GitHub releases (`sheeki03/tirith`) in a background thread. On slow or throttled networks, the download times out (exit 28) and Hermes falls back to pattern matching. Logs show `download_failed` in `~/.hermes/.tirith-install-failed`.
 
-**Root cause:** The main agent uses a custom proxy/relay endpoint (e.g. `llm.chudian.site/v1`) that accepts a proxy-specific API key. The auxiliary `auto` provider detection finds `DEEPSEEK_API_KEY` (or similar) in the environment and tries to connect **directly** to the provider's native API — but the key only works through the proxy, not with direct API access.
+Fix: download and extract manually, clear the failure marker, and set an absolute path.
 
-**The config resolution chain:**
-```
-auxiliary.title_generation config → `_resolve_task_provider_model`:
-  1. if base_url is set (from config) → returns provider="custom"
-  2. if provider is set (not "auto") → returns that provider
-  3. if cfg_base_url from task config → returns "custom"
-  4. if cfg_provider from task config → returns that provider
-  5. → returns "auto" (auto-detection)
-```
+See `references/tirith-manual-install.md` for the full manual install procedure.
 
-With `provider: auto`, the auto chain finds `DEEPSEEK_API_KEY` and connects directly to `https://api.deepseek.com/v1` — which fails if the key only works through the proxy.
-
-**Fix:** Explicitly configure the auxiliary task with the same proxy endpoint + API key:
-
-```yaml
-# In config.yaml under auxiliary:
-title_generation:
-  provider: custom          # ← NOT "auto" — bypasses auto-detection
-  model: deepseek-v4-flash  # or whatever model the main agent uses
-  base_url: https://llm.chudian.site/v1  # ← same proxy as the main agent
-  api_key: '${DEEPSEEK_API_KEY}'          # ← env var expansion works here
-  timeout: 30
-  extra_body: {}
-```
-
-**Verification:**
 ```bash
-grep "Auxiliary title_generation" ~/.hermes/logs/agent.log | tail -3
-# Should show the resolved provider (e.g. "custom") and the proxy base URL
+# Quick fix after manual binary install:
+rm -f ~/.hermes/.tirith-install-failed
+hermes config set security.tirith_path /root/.hermes/bin/tirith
+# Then restart Hermes (/reset or exit+relaunch)
 ```
 
-**Key insight:** `api_key: '${DEEPSEEK_API_KEY}'` uses the config's `_expand_env_vars()` function which recursively expands `${VAR}` references in all config values — not just top-level ones. This works in any `auxiliary.<task>` section.
+### prompt_toolkit "no current event loop" RuntimeError
+
+**Symptom:** During Hermes CLI shutdown (exit, `/reset`, gateway restart), `agent.log` shows:
+
+```
+RuntimeError: There is no current event loop in thread 'MainThread'.
+```
+
+at `prompt_toolkit/application/application.py` line ~1028 in `_handle_exception`.
+
+**Cause:** A known prompt_toolkit upstream bug — `_handle_exception` calls `ensure_future(in_term())` in its exception handler without checking if the event loop is still running. When a "Task was destroyed but it is pending!" warning fires during shutdown (after the loop has closed), the handler tries to schedule more work on an already-dead loop.
+
+**Impact:** Harmless — does NOT affect functionality, CLI input, or command execution. Only a log noise issue.
+
+**Fix (monkey-patch):** In `venv/lib/python3.11/site-packages/prompt_toolkit/application/application.py`, replace the bare `ensure_future(in_term())` at line ~1028 with:
+
+```python
+try:
+    loop = asyncio.get_running_loop()
+except RuntimeError:
+    return  # No running event loop — nothing to schedule on
+if not loop.is_running():
+    return  # Loop is closed or shutting down
+ensure_future(in_term())
+```
+
+Note: This patch lives in `site-packages/` and will be overwritten on `pip install --upgrade prompt-toolkit`. The fix should eventually land upstream.
 
 ---
 

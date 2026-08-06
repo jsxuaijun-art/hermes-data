@@ -1,25 +1,23 @@
-爬虫环境全装齐(2026.8.4)：patchright1.61.2+chromium1228/scrapling0.4.9+StealthyFetcher隐身可用/playwright/curl_cffi/DrissionPage/Scrapy。代理坑172.23.96.1:7890拖死pip须`--proxy ''`+清华源。调度见scraping-dispatch skill。
+Windows batch files (.bat) with non-ASCII characters (Chinese, box-drawing symbols, Unicode symbols) break on Chinese Windows systems when saved as UTF-8. Both UTF-8 without BOM AND with BOM can fail — BOM bytes get read as literal text (锘緻echo). The only reliable fix is to rewrite with pure ASCII only: English text, `=/-` for separators, `[OK]/[FAIL]/[INFO]` for status indicators. Applies to Hermes同步-拉取.bat and Hermes同步-推送.bat on all 4 machines.
 §
-表格规则（2026.5.24更新）：必须加载 box_maker.py，用 make_grid_table() 生成带 ├┤横线和│竖线的 ASCII 网格。右竖线严格对齐，禁止 Markdown 表格。生成后 verify_box() 验证。单元格公式 cell=" "+text+" "*(cw-1-dw(text))，cw=max_dw+2。Emoji/CJK按wcwidth+emoji presentation检测（U+FE0F/U+200D零宽跳过）。已替代旧的skill_view路径。具体路径见用户profile。
+WSL distro 名：江敏笔记本=Ubuntu22.04（无短横线）；本机=Ubuntu。Windows 访问 WSL 文件用 \\wsl.localhost\Ubuntu\（公众号素材目录 \\wsl.localhost\Ubuntu\home\administrator\公众号素材\）。用户桌面文件在 /mnt/d/OneDrive/Desktop/（OneDrive重定向），找用户发来的docx直接看那里，别搜/mnt/c全盘（超时）。
 §
-2026.6.27 商事登记(注册/变更/注销)正式确认为核心业务线，与税务合规/代理记账/高级会计师背书并列。企微内部机器人名yingxin_inner，热点视频链接发给它。
+WSL(China)网页/政务检索: 首选搜狗sogou.com+360so.com(requests+bs4直抓,搜狗跳转链接反爬但数据列表可抓,360支持site:);cn.bing政务错乱、Baidu/DDG/Google不可达。查微信公众号用搜狗微信weixin.sogou.com/weixin?type=2(可抓标题摘要,正文被antispider拦)；视频号是封闭生态不进搜索引擎。详见skill chinese-government-site-retrieval。No proxy. pip清华。
 §
-高级会计师名单锚点（2026.5.23）：2018江苏819人中江姐是唯一以代账公司名义通过高级会计师评审者（非挂靠）。2025年1216人中仅3家代账公司。差异公式：纵向819唯一→横向大厂垫背→深度16年→广度苏州上海→验证多平台。对外用"八九百人里唯一一家代账公司"最有冲击力。已在skills存档。
+用户（徐爱军）常处理苏州爱心之家老年公寓（民办非企业）的财务报表格式转换：小企业会计准则→民间非营利组织。要点：实收资本+未分配利润→非限定性净资产（负数），应收款项=应收账款+预付账款+其他应收款，应付款项=应付账款+其他应付款。技能已保存为 chinese-accounting-format-conversion。
 §
-韩红走面儿方法论：锚点(认知税/面子通缩/情感庞氏)→三段(立论点→挖根因→定调收网)→上帝视角抽象真普适→融合财税找隐喻链。犀利=硬逻辑非情绪。江姐满意。
+用户要求提到 GEO 时必须加载 geo-optimization 技能 + 8平台独立指南(百家号/网易号/新浪财经头条/企鹅号/搜狐号/今日头条/知乎/公众号)。偏好中文、直接给能用的方案没说废话。
 §
-Chinese web search (2026.6.27): Google blocked. Priority: ① Bing(cn.bing.com) ② curl_cffi to Sogou ③ Playwright(chromium at ~/.cache/ms-playwright/) ④ Baidu triggers captcha. DrissionPage needs Chrome path. For hot topics → ALWAYS proactively ask user to send 1-2 Douyin videos (ffmpeg+faster-whisper analyze) or provide keywords to search news. Douyin.com has strong anti-scrape, can't access directly.
+知识库存储原则：存方法不存结果，存经验不存指令。实战经验(窗口实然口径)>法规>网上，先查各skill实战经验库(敏感标[敏感]先请示)。
 §
-2026.7.4 词汇默写本词根版v3最终: "#"列0.2cm/页码"2/365"/255+Membean根/Part1(28组×6轮+鼓励语)+Part2(50组×4轮无学习)/音标填空两行/鼓励语每组必出。skill已更新至vocab-memory-book scripts/build_root.py。
+公众号铁律（用户反复强调）：①严禁AI幻觉，不确定政策/数据/法规绝对不写，引用标注官方文号，宁可少说不说错；②配图铁律：禁止复用任何历史图片、禁止建图片库，每次创作直接用AI生成或查找与主题高度相关的新图，每段配图严格对应本段主题；③模板固定：公司介绍(盈信2009-12-11/江敏创办/TSC五级438.11/17年)→核心业务→二维码→CTA三动作+话题标签5-8个勿漏(详见尾部规范条)→作者"苏州盈信企业管理"。
 §
-2026.7.24 文件袋定稿：高级会计师创办→苏州盈信→16年→业务线→双电话→双二维码→底部'江苏省高级会计师·代理记账行业入选企业'。服务：税务合规·公司注册·代理记账/会计外包·高企申报·财务咨询。电话132-2229-7318/180-1262-7126。二维码cli.im生成。单面印刷。存桌面'文件袋设计_定稿.docx'。
+用户触发词约定：「朋友圈」→wechat-moments-marketing出文案+3张Unsplash图+拷桌面+企微API推XuAiJun勿问确认。「调用短视频skill」→自动同时调爬虫skill(python-web-scraping-setup)按主题搜信息，输出要超前超脱的上帝视角、提出不同观点并分析得头头是道。
 §
-GEO落款定稿(2026.7.26已入skill)：【关于苏州盈信】17px楷体深灰+正文14px楷体灰+【核型业务】17px深蓝粗+业务14px灰。
+文章改写要求：不仅要换措辞，更要打乱原文结构顺序、重新组织角度和逻辑链条。单纯"换说法"不够，必须做到结构层面不雷同。五大事项类内容可以重新排序、拆分重组、调整侧重点。
 §
-封面素材铁律(2026.8.5)：公众号封面+数字横幅一律用wechat-publish/scripts/generate_assets.py代码原创生成(不重复)，禁Unsplash(会重复+不能识图)。数字横幅白底蓝字任意数字自生成；中文须CJK字体(DejaVu变豆腐块)。
+Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git引擎(push obsidian-vault)。脚本hermes_only_snapshot.sh+obsidian_sync.sh。cron每日12:28归档、周一12:28复盘。更新后跑obsidian_sync.sh。详obsidian skill。
 §
-2026.7.27 创建 wechat-qa-publish skill（互补wechat-publish）：公众号发布后QA。含手机端预览验证清单（3列表格滑动检查）、替换已发布文章6步流程。wechat-publish手动创建无法被curator patch，故用新skill承载发布后QA职责。
+公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
 §
-Hermes 15级进化自检基线L7，按周升级中。
-§
-标题3选1(2026.8.5硬要求)：公众号/短视频创作必须提供3个标题候选供用户选择，用户偏好提问式/悬念式(如"税局是怎么发现的？")。已建02刘润红蓝撞色排版(15px·红#FF2941/蓝#0052FF·不首行缩进靠段距)存服务器themes/02-liurun-honglan.css。视频号链接网页禁播，取标题走playwright+get_feed_info API；要逐字稿须用户下载视频→ffmpeg→faster-whisper转写(base模型够用,错字结合专业纠正)。
+素材注入skill只能作「备选项/备选方法之一」(像公众号排版风格库多选一)，不得写成唯一必选、不得绑架工作流，无关主题按原流程走不用它。例：抖音高赞泛粉素材已按此定位注入short-video-copywriting第九节+wechat-publish内容素材库。

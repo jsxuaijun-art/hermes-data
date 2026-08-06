@@ -451,7 +451,7 @@ def card_learn(doc, w):
     set_shd(c,'F0F4F8');c.width=Cm(7.0)
     c=t.cell(0,1);c.text='';p=c.paragraphs[0];p.alignment=WD_ALIGN_PARAGRAPH.LEFT
     p.paragraph_format.space_before=Pt(3);p.paragraph_format.space_after=Pt(3)
-    r=p.add_run(f"{w['definition']}   ");r.font.size=Pt(9);r.font.color.rgb=RGBColor(0xBB,0xBB,0xBB);r.font.italic=True
+    r=p.add_run(f"{w['definition']}   ");r.font.size=Pt(9);r.font.color.rgb=RGBColor(0x2C,0x3E,0x50)
     r=p.add_run(f"({'＿'*12})");r.font.size=Pt(9);r.font.color.rgb=RGBColor(0xCC,0xCC,0xCC);c.width=Cm(7.5)
     c=t.cell(1,0);c.text='';p=c.paragraphs[0];p.alignment=WD_ALIGN_PARAGRAPH.LEFT
     p.paragraph_format.space_before=Pt(1);p.paragraph_format.space_after=Pt(1)

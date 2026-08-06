@@ -1,1001 +1,364 @@
 ---
 name: hermes-data-sync
-description: Cross-PC data sync for Hermes Agent (SOUL.md, memories, skills, config) via GitHub private repo. Covers WSL shell scripts, Windows .bat wrappers, dual-git engine retry for China network conditions, merge conflict resolution, and GitHub push protection.
+description: >-
+  Cross-PC data sync for Hermes Agent, Claude Code, and Codex Code via three
+  independent GitHub repos. Single .bat file drives all three pipelines.
+  Covers inline .bat scripts, rsync incremental copying, git fetch+reset
+  strategy, curator_backups 100MB+ push guardrails, and three-repo architecture.
 ---
 
-# Hermes Data Sync (跨电脑同步)
+# Hermes Data Sync (跨电脑同步 — v3 三项独立同步)
 
-**Last updated**: 2026-06-30 — 新增 Pitfall #16 分支安全守卫（真实案例+自动切回方案）; 扩展 Pitfall #6 新增 reset --soft 绕过 push protection 方案; 同步范围加入脚本自同步; 全面重新编号 Pitfalls #16-#19。
+**Last updated**: 2026-07-29
+**Current architecture**: v3 — 三项独立同步（Hermes / Claude Code / Codex Code），各 repo 独立 rsync→git push
 
 ## When to Use
 
 - User works on multiple PCs (home + office) with Hermes Agent
 - Need to sync SOUL.md, memories/, skills/, config.yaml between PCs
+- Need to sync Claude Code config (~/.claude/)
+- Need to sync Codex Code config (~/.codex/)
 - Setting up or troubleshooting the sync scripts
-- Resolving merge conflicts from divergent edits on two PCs
-- Repairing git history after leaked secrets or broken rebase states
-- **New machine: checking if sync is configured at all** — run the Sync Readiness Check first
-- **Unsynced machine: wanting to peek at remote repo contents** — use GitHub API fallback without cloning
+- Repairing git history after oversized files (curator_backups) blocked push
+- **Sync script hangs on `[N/6] Copy ... from WSL to Windows...`** — likely rsync of large skills/ directory
+- **`remote: fatal: pack exceeds the maximum allowed size`** — curator_backups issue
 
-## Architecture (v2 — current)
+## Architecture (v3 — three independent pipelines)
 
 ```
-Windows Desktop
-  └─ Hermes同步-推送.bat  (4 lines, pure ASCII)
-       │  "wsl -d Ubuntu-22.04 -- bash ~/.hermes/sync-push.sh"
-       │
-       ▼
-WSL ~/.hermes/sync-push.sh  (drives everything)
-       │
-       ├─ [1/4] cp  WSL→Windows (local, instant)
-       ├─ [2/4] cp  Claw→Windows (local, instant)
-       ├─ [3/4] git add+commit   (local, instant)
-       └─ [4/4] git push  ─┬─ Windows git.exe  (fast, uses Windows network stack)
-                            └─ WSL git          (fallback, slower)
-                                 (retries 5x each, alternating)
+Windows Desktop .bat (inline ~60 lines, pure ASCII)
+  │
+  ├─ [1/6] rsync Hermes  ~/.hermes/ → Windows HermesAgent/
+  ├─ [2/6] git push Hermes  (fetch+reset → add+commit → push)
+  ├─ [3/6] rsync Claude   ~/.claude/ → Windows ClaudeCode-Sync/
+  ├─ [4/6] git push Claude (fetch+reset → add+commit → push)
+  ├─ [5/6] rsync Codex    ~/.codex/ → Windows CodexCode-Sync/
+  └─ [6/6] git push Codex (fetch+reset → add+commit → push)
+       └─ Steps are independent — failure of one does NOT block the others
 ```
 
-**Key design decision**: ALL logic lives in WSL shell scripts (`sync-push.sh`, `sync-pull.sh`). The `.bat` files are thin wrappers (4 lines each, pure ASCII, any encoding works). Network operations use **Windows git.exe** (`/mnt/c/Program Files/Git/bin/git.exe`) with **WSL git as fallback** — because from China, Windows git.exe uses the Windows network stack (proxy/VPN) and is substantially faster to GitHub.
+**Key design decisions**:
 
-**Sync directory**: `C:\Users\Admin\hermes-sync\` (cloned from `jsxuaijun-art/hermes-data`)
-**Git remote**: `https://github.com/jsxuaijun-art/hermes-data.git`
-**WSL user**: `dmin` (NOT root). Home = `/home/dmin/`
-**Windows git.exe**: `/mnt/c/Program Files/Git/bin/git.exe`
+| Decision | Why |
+|----------|-----|
+| **Inline .bat** | ALL logic inside the .bat (`wsl -d Ubuntu -e bash -c "..."`). No separate shell scripts. Self-contained on desktop. |
+| **rsync -a instead of cp -rf** | `cp -rf` over /mnt/ (cross-filesystem) takes 3-10 min for 833MB skills/. rsync does it in 30s-2min, then ~1s incremental. |
+| **git fetch+reset instead of pull --rebase** | `fetch + reset --hard` is simpler, avoids merge conflicts entirely. GitHub is single source of truth. |
+| **No 2>/dev/null swallowing** | All stderr shown so errors are visible in console. |
+| **Separate repos** | Each pipeline has its own git repo — Hermes/hermes-data, Claude/ClaudeCode-Sync, Codex/CodexCode-Sync. |
+| **No Windows git.exe** | All git in WSL (simpler inline .bat, no dual-engine complexity). |
 
-> ⚠️ CRITICAL: The correct WSL home path MUST be used in all scripts. Using `/root/.hermes/` silently writes to the wrong location.
+### Sync directories & repos
 
-## 推送脚本 (`Hermes同步-推送.bat` + `sync-push.sh`)
+| Pipeline | Windows directory | GitHub repo | WSL source |
+|----------|-------------------|-------------|------------|
+| Hermes | `C:\Users\Administrator\Desktop\HermesAgent` | `jsxuaijun-art/hermes-data` | `~/.hermes/` |
+| Claude | `C:\Users\Administrator\Desktop\ClaudeCode-Sync` | `jsxuaijun-art/ClaudeCode-Sync` | `~/.claude/` |
+| Codex | `C:\Users\Administrator\Desktop\CodexCode-Sync` | `jsxuaijun-art/CodexCode-Sync` | `~/.codex/` |
 
-### .bat 文件 (桌面, 4行纯 ASCII)
+**WSL distro**: `Ubuntu` (no dash — NOT `Ubuntu-22.04`)
+**WSL user**: `administrator` (home = `/home/administrator/`)
+**Windows user**: `Administrator`
 
-```batch
-@echo off
-wsl -d Ubuntu-22.04 -e bash /home/dmin/.hermes/sync-push.sh 2>nul
-echo.
-echo Hermes push completed.
-pause
-```
+## Push script (`Hermes同步-推送.bat`) — 6 steps
 
-Minimal — 4 lines, pure ASCII, no `chcp 65001`, no `--` separator. Uses `-e` flag and **`2>nul`** to suppress WSL's UTF-8 Chinese proxy warning from reaching cmd.exe (which would get garbled and treated as commands).
+This is the **actual current script** as stored on `C:\Users\Administrator\Desktop\`:
 
-### WSL 脚本 (`~/.hermes/sync-push.sh`)
-
-Path: `/home/dmin/.hermes/sync-push.sh`
-
-```bash
-#!/bin/bash
-# Hermes Sync - Push to GitHub (hybrid dual-engine)
-
-SYNC_DIR="/mnt/c/Users/Admin/hermes-sync"
-SYNC_DIR_WIN="C:/Users/Admin/hermes-sync"
-GIT_WIN="/mnt/c/Program Files/Git/bin/git.exe"
-
-cd "$SYNC_DIR" || exit 1
-
-echo "[1/4] Copy Hermes data from WSL to Windows..."
-cp -f /home/dmin/.hermes/SOUL.md /home/dmin/.hermes/SOUL_Pro.md /home/dmin/.hermes/SOUL_Edu.md . 2>/dev/null
-cp -rf /home/dmin/.hermes/memories/* memories/ 2>/dev/null
-mkdir -p skills && cp -rf /home/dmin/.hermes/skills/* skills/ 2>/dev/null
-cp -f /home/dmin/.hermes/config.yaml . 2>/dev/null
-
-echo "[2/4] Copy Claw data from WSL to Windows..."
-cp -f /home/dmin/.claw.yaml /home/dmin/.claw/config.yaml . 2>/dev/null
-cp -rf /home/dmin/.claw/memories/* claw_memories/ 2>/dev/null
-
-echo "[3/4] Git add + commit..."
-git add -A
-git commit -m "sync $(date '+%Y-%m-%d_%H:%M')" 2>/dev/null || echo "(nothing to commit)"
-
-echo "[4/4] Git push (2 engines, up to 10 retries)..."
-
-push_win() {
-  for i in 1 2 3 4 5; do
-    echo ">> [Windows git.exe] Attempt $i/5..."
-    "$GIT_WIN" -C "$SYNC_DIR_WIN" fetch origin 2>/dev/null
-    "$GIT_WIN" -C "$SYNC_DIR_WIN" rebase origin/main 2>/dev/null || \
-      "$GIT_WIN" -C "$SYNC_DIR_WIN" merge origin/main --no-edit 2>/dev/null || true
-    if "$GIT_WIN" -C "$SYNC_DIR_WIN" push origin main 2>/dev/null; then
-      echo ">> Push succeeded! (Windows git.exe)"
-      return 0
-    fi
-    sleep $((i * 2))
-  done
-  return 1
-}
-
-push_wsl() {
-  for i in 1 2 3 4 5; do
-    echo ">> [WSL git] Attempt $i/5..."
-    git -c http.proxy= fetch origin 2>/dev/null
-    git -c http.proxy= rebase origin/main 2>/dev/null || \
-      git -c http.proxy= merge origin/main --no-edit 2>/dev/null || true
-    if git -c http.proxy= push origin main 2>/dev/null; then
-      echo ">> Push succeeded! (WSL git)"
-      return 0
-    fi
-    sleep $((i * 2))
-  done
-  return 1
-}
-
-push_win || push_wsl || {
-  echo ">> Push failed after all retries (network issue)."
-  echo ">> Local data saved. Retry manually:"
-  echo ">>   cd C:\\Users\\Admin\\hermes-sync"
-  echo ">>   git fetch && git rebase origin/main && git push"
-}
-
-echo ""
-echo "============================================"
-echo "  Sync complete (local data always saved)"
-echo "============================================"
-```
-
-### ⚠️ Hermes CLI 启动脚本 (`hermes.bat`) — 特殊处理
-
-`hermes.bat`（位于 `D:\360MoveData\Users\Admin\Desktop\Hermes Agent\hermes.bat`）是**交互式终端**，不是纯触发器。它有与同步脚本不同的处理规则：
-
-| 特征 | 同步脚本 | Hermes CLI 启动 |
-|------|---------|----------------|
-| 用途 | 纯触发器 | 交互式 CLI 会话 |
-| `chcp 65001` | ❌ 不需要 | ✅ 保留（确保 UTF-8 终端） |
-| `2>nul` | ✅ 必须 | ✅ **必须**（吞 WSL 代理警告） |
-| `--` vs `-e` | `-e` 更稳 | `--` 保留（兼容长命令） |
-| 命令格式 | `-e bash 脚本路径` | `-- bash -c "内联命令"` |
-
-**模板（已修复，2026-05-11）：**
 ```batch
 @echo off
 chcp 65001 >nul
-wsl -d Ubuntu-22.04 -- bash -c "cd /mnt/c/Users/Admin/WorkBuddy/20260424224200/hermes-agent-official && ./venv/bin/python -m hermes_cli.main chat" 2>nul
+
+wsl -d Ubuntu -e bash -c "
+  echo '[1/6] Copy Hermes data from WSL to Windows...'
+  rsync -a --delete ~/.hermes/ /mnt/c/Users/Administrator/Desktop/HermesAgent/ 2>/dev/null
+
+  echo '[2/6] Sync to GitHub latest (fetch+reset)...'
+  cd /mnt/c/Users/Administrator/Desktop/HermesAgent
+  git add -A
+  git diff --cached --quiet || git commit -m \"sync \$(date '+%Y-%m-%d_%H:%M')\"
+  git fetch origin main
+  git reset --hard origin/main
+  git push origin main
+
+  echo '[3/6] Copy Claude Code data from WSL to Windows...'
+  rsync -a --delete ~/.claude/ /mnt/c/Users/Administrator/Desktop/ClaudeCode-Sync/ 2>/dev/null
+
+  echo '[4/6] Claude Code sync to GitHub...'
+  cd /mnt/c/Users/Administrator/Desktop/ClaudeCode-Sync
+  git add -A
+  git diff --cached --quiet || git commit -m \"sync \$(date '+%Y-%m-%d_%H:%M')\"
+  git fetch origin main && git reset --hard origin/main
+  git push origin main
+
+  echo '[5/6] Copy Codex Code data from WSL to Windows...'
+  rsync -a --delete ~/.codex/ /mnt/c/Users/Administrator/Desktop/CodexCode-Sync/ 2>/dev/null
+
+  echo '[6/6] Codex Code sync to GitHub...'
+  cd /mnt/c/Users/Administrator/Desktop/CodexCode-Sync
+  git add -A
+  git diff --cached --quiet || git commit -m \"sync \$(date '+%Y-%m-%d_%H:%M')\"
+  git fetch origin main && git reset --hard origin/main
+  git push origin main
+" 2>nul
+echo.
+echo All done.
+pause
 ```
 
-> ⚠️ 2026-05-11 之前此文件缺失 `2>nul`，是乱码幽灵命令的另一触发源。已在线修复。详见 `references/heritage/batch-scripts-v1.md`。
+### How each step works
 
----
+1. **rsync -a --delete**: Incremental sync from WSL to Windows. Only changed files are transferred. `--delete` removes files on Windows that were deleted in WSL. Source path with trailing `/` means "copy directory contents", without trailing slash means "copy directory itself".
+2. **git add -A**: Stage all changes.
+3. **git diff --cached --quiet**: Check if there are staged changes. If none (exit 0), skip commit. Prevents empty commit error.
+4. **git commit**: Only runs if there were changes.
+5. **git fetch origin main**: Download remote state without merging.
+6. **git reset --hard origin/main**: Discard any local divergence, reset to remote exactly.
+7. **git push origin main**: Push to GitHub.
 
-## 拉取脚本 (`Hermes同步-拉取.bat` + `sync-pull.sh`)
+> Note: `git fetch + reset --hard` discards local uncommitted changes that weren't pushed. This is intentional — the repos are pure sync mirrors, not development branches. If a skill was modified on this PC but not yet pushed, running pull first will lose those changes. Always push before pulling on another machine.
 
-### .bat 文件 (桌面)
+## Pull script (`Hermes同步-拉取.bat`) — 4 steps
 
 ```batch
 @echo off
-wsl -d Ubuntu-22.04 -e bash /home/dmin/.hermes/sync-pull.sh 2>nul
+chcp 65001 >nul
+
+wsl -d Ubuntu -e bash -c "
+  echo '[1/4] Get Hermes data from GitHub latest...'
+  cd /mnt/c/Users/Administrator/Desktop/HermesAgent
+  git fetch origin main && git reset --hard origin/main
+
+  echo '[2/4] Copy Hermes data to WSL...'
+  rsync -a --delete /mnt/c/Users/Administrator/Desktop/HermesAgent/ ~/.hermes/
+
+  echo '[3/4] Copy Claude Code data to WSL...'
+  cd /mnt/c/Users/Administrator/Desktop/ClaudeCode-Sync
+  git fetch origin main && git reset --hard origin/main
+  rsync -a --delete /mnt/c/Users/Administrator/Desktop/ClaudeCode-Sync/ ~/.claude/
+
+  echo '[4/4] Copy Codex Code data to WSL...'
+  cd /mnt/c/Users/Administrator/Desktop/CodexCode-Sync
+  git fetch origin main && git reset --hard origin/main
+  rsync -a --delete /mnt/c/Users/Administrator/Desktop/CodexCode-Sync/ ~/.codex/
+" 2>nul
 echo.
-echo Hermes pull completed.
+echo All done.
 pause
 ```
 
-### WSL 脚本 (`~/.hermes/sync-pull.sh`)
+## Sync scope
 
+| Sync (WSL > GitHub > other PC) | NOT synced (per-PC only) |
+|---------------------------------|--------------------------|
+| `SOUL.md`, `SOUL_Pro.md`, `SOUL_Edu.md` | `.env` (API keys, different per PC) |
+| `config.yaml` | `sessions.db` (too large, transient) |
+| `memories/*.md` | `state.db` (session index) |
+| `skills/*` | `logs/`, `checkpoints/`, `caches/` |
+| `skills/.gitignore` | `history.jsonl` (Codex runtime) |
+| `~/.claude/` (config files) | `*.sqlite` (Codex DB files) |
+| `~/.codex/` (config files only) | `shell_snapshots/`, `state_*/`, `tmp/` |
+
+### Codex sync exclusions
+
+Only config files from `~/.codex/` are synced — exclude runtime data:
+
+**Include**: `config.toml`, `model_catalog.json`, `installation_id`, `version.json`, `rules/`, `skills/`
+**Exclude**: `history.jsonl`, `sessions/`, `*.sqlite`, `*.db`, `logs_*/`, `state_*/`, `tmp/`, `shell_snapshots/`
+
+CodexCode-Sync `.gitignore`:
+```gitignore
+*.sqlite
+*.db
+*.jsonl
+logs_*/
+state_*/
+tmp/
+shell_snapshots/
+__pycache__/
+*.pyc
+```
+
+## Hermes CLI launch script (`hermes.bat`)
+
+This is separate from sync scripts but lives on the same desktop:
+
+```batch
+@echo off
+chcp 65001 >nul
+wsl -d Ubuntu -- bash -c "cd ~/hermes-agent && ./venv/bin/python -m hermes_cli.main chat" 2>nul
+```
+
+Key differences from sync .bat:
+| Feature | Sync .bat | Hermes CLI launch |
+|---------|-----------|-------------------|
+| `chcp 65001` | Optional | REQUIRED (interactive UTF-8) |
+| `2>nul` | Required | Required |
+| `-e` vs `--` | `-e bash` (cleaner) | `-- bash -c "..."` (long inline) |
+| Path | Windows desktop git repo | Project venv path |
+
+## Pitfalls
+
+### P1 curator_backups exceeds GitHub 100MB limit
+
+**Symptom**: `git push` fails with `remote: fatal: pack exceeds the maximum allowed size (100.00 MiB)` or `file X is 224.22 MB; this exceeds GitHub's file size limit of 100 MB`
+
+**Root cause**: Hermes curator creates `.tar.gz` backups in `~/.hermes/skills/.curator_backups/`. A single backup can be 108MB. Five in history = 540MB. GitHub hard limit is 100MB/file.
+
+**Fix**:
 ```bash
-#!/bin/bash
-# Hermes Sync - Pull from GitHub (dual-git engine with retry)
-
-SYNC_DIR="/mnt/c/Users/Admin/hermes-sync"
-SYNC_DIR_WIN="C:/Users/Admin/hermes-sync"
-GIT_WIN="/mnt/c/Program Files/Git/bin/git.exe"
-
-cd "$SYNC_DIR" || exit 1
-
-echo "[1/4] Git pull from GitHub..."
-
-pull_retry() {
-  for i in 1 2 3; do
-    echo ">> [Windows git.exe] Attempt $i/3..."
-    if "$GIT_WIN" -C "$SYNC_DIR_WIN" pull origin main --rebase 2>/dev/null; then
-      echo ">> Pull successful!"
-      return 0
-    fi
-    sleep $((i * 3))
-  done
-  return 1
-}
-
-pull_retry || {
-  for i in 1 2 3; do
-    echo ">> [WSL git] Attempt $i/3..."
-    if git -c http.proxy= pull origin main --rebase 2>/dev/null; then
-      echo ">> Pull successful!"
-      break
-    fi
-    sleep $((i * 3))
-  done
-  echo ">> Pull had issues, continuing with local data..."
-}
-
-echo "[2/4] Copy to WSL Hermes..."
-cp -f SOUL.md SOUL_Pro.md SOUL_Edu.md /home/dmin/.hermes/ 2>/dev/null
-mkdir -p /home/dmin/.hermes/memories && cp -rf memories/* /home/dmin/.hermes/memories/ 2>/dev/null
-mkdir -p /home/dmin/.hermes/skills && cp -rf skills/* /home/dmin/.hermes/skills/ 2>/dev/null
-cp -f config.yaml /home/dmin/.hermes/ 2>/dev/null
-
-echo "[3/4] Copy to WSL Claw..."
-mkdir -p /home/dmin/.claw && cp -f .claw.yaml config.yaml /home/dmin/.claw/ 2>/dev/null
-mkdir -p /home/dmin/.claw/memories && cp -rf claw_memories/* /home/dmin/.claw/memories/ 2>/dev/null
-
-echo ""
-echo "============================================"
-echo "  Done! GitHub data synced to local Hermes + Claw"
-echo "============================================"
-```
-
-## Voice Command Shortcuts (在 Hermes Agent 对话中)
-
-用户可以直接对 Hermes Agent 说快捷指令：
-
-### 推送github
-```bash
-cd /mnt/c/Users/Admin/hermes-sync && \
-cp /home/dmin/.hermes/config.yaml SOUL.md SOUL_Pro.md SOUL_Edu.md . && \
-cp /home/dmin/.hermes/memories/* memories/ && \
-git add -A && git commit -m "sync $(date +%Y-%m-%d)" && \
-/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" push origin main
-```
-
-### 拉取github
-```bash
-cd /mnt/c/Users/Admin/hermes-sync && \
-git fetch origin main && git reset --hard origin/main && \
-cp SOUL.md SOUL_Pro.md SOUL_Edu.md /home/dmin/.hermes/ && \
-cp memories/* /home/dmin/.hermes/memories/ && \
-cp config.yaml /home/dmin/.hermes/
-```
-
-## 🔍 Sync Readiness Check（快速诊断：本机是否已配置同步？）
-
-在新电脑上运行 Hermes Agent 时，先执行以下检查确认同步是否已设置：
-
-### 步骤 1：检查同步目录是否存在
-
-```bash
-# 同步目录路径
-ls /mnt/c/Users/Admin/hermes-sync/
-
-# 不存在时 → 需要首次克隆
-# 存在时 → 检查是否是完整的 git 仓库
-ls /mnt/c/Users/Admin/hermes-sync/.git/
-```
-
-### 步骤 2：确认 WSL 用户身份
-
-```bash
-# 当前 WSL 用户名
-whoami
-# → 输出如 dmin / administrator / jiangmin
-
-# 解释：同步脚本里硬编码了 /home/<username>/.hermes/
-# 如果 whoami 输出和脚本里的用户名不一致，cp 命令静默失败
-```
-
-### 步骤 3：检查 Git 远程是否可达
-
-```bash
-# 从 WSL 内测试
-curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/jsxuaijun-art/hermes-data"
-# 200 = 可达, 000 = 网络不通
-
-# 或直接从 WSL 检查
-cd /mnt/c/Users/Admin/hermes-sync && git remote -v
-```
-
-### 步骤 4：检查桌面同步快捷方式
-
-```bash
-ls /mnt/c/Users/Admin/Desktop/Hermes同步-*.bat
-# 应看到：Hermes同步-推送.bat + Hermes同步-拉取.bat
-```
-
-### GitHub API 快速查看（无需本地 clone）
-
-当同步目录未设置时，仍可通过 GitHub API 查看远程仓库内容：
-
-```bash
-# 查看仓库根目录
-curl -s "https://api.github.com/repos/jsxuaijun-art/hermes-data/contents?ref=main"
-
-# 查看最近提交
-curl -s "https://api.github.com/repos/jsxuaijun-art/hermes-data/commits?per_page=5"
-
-# 读取特定文件内容（base64 解码）
-curl -s "https://api.github.com/repos/jsxuaijun-art/hermes-data/contents/path/to/file?ref=main" \
-  | python3 -c "import json,sys,base64; d=json.load(sys.stdin); print(base64.b64decode(d['content']).decode())"
-```
-
-> 注意：这是**只读查看**，无法推送。适合检查远程是否有你需要的数据，再决定是否需要完整克隆。
-
-### 快速诊断总表
-
-| 检查项 | 通过条件 | 失败时的应对 |
-|--------|---------|------------|
-| 同步目录存在 | `/mnt/c/Users/Admin/hermes-sync/` 存在且包含 `.git/` | 首次克隆：`git clone https://github.com/jsxuaijun-art/hermes-data.git /mnt/c/Users/Admin/hermes-sync` |
-| WSL 用户名匹配 | `whoami` 输出与脚本中的 `/home/xxx/` 一致 | 不一致时 cp 操作静默失败 → 修改脚本中的 WSL 路径或用 GitHub API 手动下载文件 |
-| Git 远程可达 | `curl` 返回 200 | 网络问题 → 检查代理/VPN |
-| 桌面快捷方式 | `.bat` 文件存在 | 缺失可临时用 WSL 内命令手动推/拉（见 Voice Command Shortcuts 章节） |
-
-## ⚠️ Pitfalls
-
-### 0. ⚠️ 架构演进史（理解为什么这么设计）
-
-| 版本 | 架构 | 问题 | 结局 |
-|------|------|------|------|
-| v0 | Windows cmd 做 git + WSL 拷文件 | cmd 中文编码 + `cd /d` 盘符问题 → 乱码报错 | 废弃 |
-| v1 | 全部 git 在 WSL 内执行（`wsl -- bash -c` 包裹整段） | 从中国连 GitHub 超慢（Proxy 不镜像到 WSL2 NAT），大 push 总是超时 | 废弃 |
-| v2.0 | WSL shell 脚本驱动 + Windows git.exe 做网络操作 | .bat 中 WSL UTF-8 stderr（代理警告）回流到 cmd → 乱码幽灵命令 | 废弃 |
-| **v2.1 (当前)** | **WSL shell 脚本 + Windows git.exe + `2>nul` 吞 stderr** | 稳定运行 ✅ | 当前 |
-
-### 1. 🔴 CRITICAL: WSL GitHub 网络慢（从中国访问）
-
-**症状**: `git push` 超时（90s-300s）/ `GnuTLS recv error` / `Failed to connect to github.com port 443`
-
-**原因**: 从中国直接 HTTPS 连 GitHub 丢包率高、延迟大。WSL2 NAT 模式下代理不镜像，WSL 原生 git 直连 GitHub 不稳定。
-
-**根本解决方案**: 用 **Windows git.exe** 做网络操作。它走 Windows 网络栈，能用上用户 Windows 上的代理/VPN/路由优化：
-```bash
-# 快
-/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" push origin main
-
-# 慢（从中国）
-git push origin main
-```
-Windows git.exe 通常在 3-30 秒内完成推送，WSL git 可能 5 分钟超时。
-
-**如果双引擎都失败**: 网络临时断连，脚本依然保存了本地数据（拷贝步骤已完成），稍后再跑即可。
-
-### 2. 🔴 .bat 文件写入规则（WSL → Windows 桌面）
-
-`.bat` 文件必须满足以下条件：
-- **CRLF 换行符** (`\r\n`)，不能用 LF（`\n`）
-- **纯 ASCII**（不要中文、线框字符 `═╔╗╚╝┌┐└┘├┤┼` 等）
-- **编码**: ASCII 最安全，UTF-8 with BOM 可能在某些系统出问题
-
-**写入方法**: 用 Python 二进制写，不要用 `write_file`（WSL 的 write_file `open()` 默认不写 CRLF）：
-```python
-lines = [
-    '@echo off',
-    'wsl -d Ubuntu-22.04 -e bash /home/dmin/.hermes/sync-push.sh 2>nul',
-    'echo.',
-    'echo Hermes push completed.',
-    'pause',
-]
-content = '\r\n'.join(lines) + '\r\n'
-with open('/mnt/c/Users/Admin/Desktop/Hermes同步-推送.bat', 'wb') as f:
-    f.write(content.encode('ascii'))
-```
-
-**验证**: `xxd /path/to/bat | head -5` → 每行结尾应为 `0d 0a`
-```bash
-# 正确
-00000000: 4065 6368 6f20 6f66 660d 0a63 6863 7020  @echo off..chcp
-# 错误（缺 0d）
-00000000: 4065 6368 6f20 6f66 660a 6368 6370 3020  @echo off.chcp
-```
-
-### 3. 编码乱码症状快速诊断
-
-| 错误症状 | 最可能根因 | 修复 |
-|---------|-----------|------|
-| `'?GitHub'` / `'愨晲鈺...'` / `'鏁版嵁...'` | LF 换行符或 UTF-8 BOM | 检查 CRLF → 用 Python 重写 |
-| `'L' 不是内部或外部命令` | 中文/线框字符被 GBK 解析为命令 | 去所有非 ASCII 字符 |
-| `系统找不到指定的路径` | `cd /d` 盘符不切或路径不存在 | 用 WSL 脚本代替 cmd cd |
-| `Hermes done` 等 WSL 输出被当命令执行 | WSL bash 输出回流到 cmd 解析 | .bat 只做触发器，WSL 脚本做全部工作 |
-
-### 4. git push rejected (non-fast-forward) — 正常分叉
-
-**场景**: 另一台电脑推送了正常提交，你本地的历史落后了（没有 force-push，历史完整）。
-
-- **Fix**: 脚本通过 `fetch → rebase/merge → push` 自动处理
-- 手动修复: `git pull --rebase origin main && git push`
-
-### 4b. 🔴 git push rejected — 远程被 force-push（历史重写分叉）
-
-**场景**: 某台电脑对远程仓库执行了 force-push（`git push --force` 或 `git reset --hard + git push --force`），远程的提交历史被重写。本地仓库的提交基于旧的历史，rebase 会失败或产生大量虚假冲突。
-
-**症状**:
-```
- ! [rejected] main -> main (fetch first)
-```
-或
-```
- ! [rejected] main -> main (non-fast-forward)
-```
-但执行 `git pull --rebase` 后产生大量冲突，或 rebase 后的文件内容丢失了本地新增的改动。
-
-**根因**: Force-push 重写了远程历史，本地 commit 的 parent 在远程已不存在，rebase 无法找到共同祖先。
-
-**正确修复 — `git reset --soft origin/main` 模式**:
-
-```bash
-# 1. 获取远程最新状态（不要 merge/rebase）
-git fetch origin main
-
-# 2. soft reset — 把本地分支头指针移到远程最新，保留所有本地改动在暂存区
-git reset --soft origin/main
-
-# 3. 把所有文件加回来（包括远程 force-push 删掉但本地有的文件）
-git add -A
-
-# 4. 创建新提交，包含本地全部改动
-git commit -m "merge: 同步本地全部变更"
-
-# 5. 推送（现在变成快进推了）
-git push origin main
-```
-
-**原理**:
-| 步骤 | 发生了什么 |
-|------|-----------|
-| `git fetch` | 下载远程最新历史，不合并 |
-| `git reset --soft origin/main` | 本地分支头指向远程最新，工作区和暂存区不变 |
-| `git add -A` | 把本地磁盘上所有文件（包括远程没有的）加入暂存区 |
-| `git commit` | 创建新提交，parent 是远程最新提交 |
-| `git push` | 现在是快进推送，不会被拒绝 |
-
-**跟正常分叉修复的对比**:
-
-| 特征 | 正常分叉 (pitfall #4) | 历史重写分叉 (pitfall #4b) |
-|------|----------------------|--------------------------|
-| 远程历史 | 完整，有共同祖先 | 被 force-push 重写 |
-| 修复命令 | `git pull --rebase` | `git fetch + reset --soft + add -A + commit` |
-| 本地改动 | 作为 commits 保留 | 作为 staged 重新提交 |
-| 风险 | 低 | 低（soft reset 不丢文件） |
-
-**特别注意**: `git reset --soft` 不会修改工作区和暂存区中的文件内容——你的所有本地修改（新建的 skill、修改的 memory 等）都安全地保留在磁盘上。如果 `git add -A` 后发现有不需要的文件，可以 `git reset HEAD <file>` 取消暂存。
-
-### 5. Merge conflicts in shared config files
-
-- Common conflict files: `README.md`, `memories/MEMORY.md`, `memories/USER.md`, skill files
-- These files get edited on both PCs independently
-- **Resolution**: Merge both sides — keep all info. MEMORY.md and USER.md are additive, not mutually exclusive.
-- For skill files with same content but different line endings (CRLF vs LF): take either side
-- Script attempts auto-merge via `rebase origin/main || merge origin/main --no-edit`
-
-### 6. 🔴 GitHub Push Protection (secret scanning)
-
-- If a GitHub Token or API key leaks into a commit, push is blocked
-- Symptom: `remote: error: GH013: Repository rule violations found`
-- The error includes a URL to unblock: `https://github.com/<owner>/<repo>/security/secret-scanning/unblock-secret/<id>`
-- **Fix options** (ordered by safety):
-
-  **A) Allow the specific secret via GitHub's unblock URL** — safest if token already revoked. Open the URL from the error message, click "Allow secret."
-
-  **B) `git reset --soft <last-pushed-commit>` + recommit cleanly** — when the secret is in an old ancestor commit that was pulled in via a merge from a stale branch, and you don't want to force-push:
-
-  ```bash
-  # 1. Find the last commit that was successfully pushed
-  git log origin/main --oneline -1
-
-  # 2. Soft reset — keep all changed files in staging, move HEAD back
-  git reset --soft <last-pushed-hash>
-
-  # 3. Re-commit all changes as a single clean commit (no old history)
-  git commit -m "squash: all changes since last push"
-
-  # 4. Push normally (fast-forward, no force needed)
-  git push origin main
-  ```
-
-  This avoids rewriting history entirely — you just don't push the tainted commit. All file changes are preserved.
-
-  **C) `git rebase -i --rebase-merges` to edit out the secret** — when you must keep the exact commit history (e.g., the tainted commit is recent and contains important authorship/context). Then `git push --force`.
-
-  **D) `git filter-branch` or `git filter-repo`** — last resort, rewrites all history from the tainted commit onward. Requires force push and coordination with all other machines.
-
-- **Prevention**: Never store tokens in synced files like claw_memories/ or MEMORY.md. Add a `.gitattributes` with `*.md text=auto` to normalize line endings and reduce false positives.
-
-### 7. `git rebase --rebase-merges` required for history with merge commits
-
-- Plain `git rebase -i <base>` FLATTENS merge commits, dropping the merge structure
-- Correct: `git rebase -i --rebase-merges <base>` — preserves merge topology
-- **Error sign**: Rebase appears to skip commits or produces a linear history missing merged content
-
-### 8. Cleanup leftover `.git/rebase-merge` / `.git/rebase-apply`
-
-- Interrupted rebase leaves these directories; next rebase fails
-- **Fix**: `rm -rf /mnt/c/Users/Admin/hermes-sync/.git/rebase-merge`
-
-### 9. WSL proxy warning
-
-- `wsl: 检测到 localhost 代理配置，但未镜像到 WSL` — harmless, ignore
-- Only matters if you need proxy in WSL; our scripts work around it via Windows git.exe
-
-### 10. SOUL 版本漂移 (WSL vs Git 不一致)
-
-- WSL 的 SOUL.md 可能与 Git 仓库版本不同
-- **Symptom**: 推送上去了，但实际 WSL 跑的不是你要的 SOUL
-- **Fix**: 同步后运行验证（对比 Git 仓库和 WSL 的文件）
-
-### 11. 🔴 WSL 路径/用户名写错 (最隐蔽的 Bug, 含跨机用户名差异)
-
-**症状 A — 写错 root 路径**：同步提示 ✓ 完成，但 Hermes 启动时的 SOUL 是英文默认版
-- **根因**: 脚本中 WSL 路径写错成 `/root/.hermes/` 时，cp 命令静默失败（因为实际 Hermes 数据在 `/home/<user>/.hermes/`）
-- **Fix**: 确保脚本中路径为 `/home/<actual_user>/`，用 `whoami` 确认当前 WSL 用户名
-
-**症状 B — 跨机器用户名不匹配**：脚本提示 ✓ 完成，但 Hermes 数据没变
-- **场景**: 
-  - 笔记本电脑：WSL 用户名 `dmin`，脚本硬编码 `/home/dmin/.hermes/`
-  - 办公室电脑：WSL 用户名 `administrator`，Hermes 在 `/home/administrator/.hermes/`
-  - 如果你从笔记本克隆了脚本到办公室，脚本仍然指向 `/home/dmin/` → cp 静默复制到空路径
-- **诊断**: 
-  ```bash
-  echo "脚本指向: /home/dmin/.hermes/"
-  echo "实际位置: /home/$(whoami)/.hermes/"
-  whoami  # 确认当前用户名
-  ```
-- **Fix**: 
-  1. 修改 `sync-push.sh` 和 `sync-pull.sh` 中的 WSL 路径为当前机器正确的 `/home/<user>/`
-  2. 或改用 `~` 相对路径（前提是 bash login shell 正确解析 `~`）：`cp -f ~/.hermes/SOUL.md .`
-  3. 修改 `.bat` 文件中调用的脚本路径也同步更新
-- **防止复发**: 在新机器首次设置同步时，先跑 Readiness Check 确认用户名一致
-
-### 12. `.bat` 测试必须在 Windows 资源管理器双击
-
-| 测试方式 | 是否可靠 | 原因 |
-|---------|---------|------|
-| **Windows 资源管理器双击** | ✅ 唯一可靠 | 真正的 cmd.exe 环境 |
-| WSL 内 `cmd.exe /c script.bat` | ❌ 不可靠 | UNC 路径问题，行为不同 |
-| 看代码推理 | ❌ 不可靠 | 编码/换行符问题只在执行时暴露 |
-
-### 13. 🔴 WSL UTF-8 中文输出回流到 cmd.exe 产生乱码幽灵命令（含 hermes.bat 变体）
-
-### 14. 🔴 `git pull` 遇到本地脏文件直接拒绝（Pull script 核心 Bug）
-
-**症状**: 拉取脚本报 `Your local changes to the following files would be overwritten by merge` + 列出被改动的文件 → `Aborting`
-
-**根因**: `git pull`（甚至 `--rebase` 模式）在有未提交的本地改动时拒绝工作。如果上次推送因网络问题失败，本地仓库就留下了脏文件，下次拉取必卡死。
-
-**修复方案**: 用 `git fetch origin main && git reset --hard origin/main` 替代 `git pull origin main`：
-
-```bash
-# ✗ 脆弱 — 本地有脏文件就死
-git pull origin main --rebase
-
-# ✓ 健壮 — 无条件同步到 GitHub 最新状态
+cd /mnt/c/Users/Administrator/Desktop/HermesAgent
+
+# 1. Remove from tracking
+git rm -r --cached skills/.curator_backups/ 2>/dev/null
+git rm -r --cached "*.tar.gz" 2>/dev/null
+
+# 2. Update .gitignore
+echo "skills/.curator_backups/" >> .gitignore
+echo "*.tar.gz" >> .gitignore
+git add .gitignore && git commit -m "remove curator_backups"
+
+# 3. Normal push refused? Filter-branch:
+git filter-branch --index-filter \
+  'git rm -r --cached --ignore-unmatch skills/.curator_backups/
+   git rm -r --cached --ignore-unmatch "*.tar.gz"
+   git rm -r --cached --ignore-unmatch "*.tar"' \
+  --prune-empty -- --all
+
+git push origin main --force
+
+# 4. Other PCs:
 git fetch origin main && git reset --hard origin/main
 ```
 
-**原理**: `fetch` 只下载不合并，`reset --hard` 丢弃本地所有改动把工作区设为远程最新。这个仓库的设计原则是"GitHub 是唯一真相源"，本地仓库只是镜像中转站，`reset --hard` 完全符合语义。
-
-**如果确实需要保留本地改动**（比如正在开发自定义 skill）：先 stash → pull → 恢复 stash：
-
-```bash
-git stash push -m "save before pull $(date)"
-git pull origin main
-git stash pop
-```
-
-**适用所有 pull 脚本**: 包括 `sync-pull.sh`、桌面 `.bat` 拉取脚本、快捷指令中的 pull 命令。
-
-### 15. 🟡 架构变体：多电脑间 `.bat` 格式可能不同
-
-同一用户在不同电脑上可能有不同风格的拉取/推送脚本：
-
-| 架构 | 特征 | 示例电脑 | 优劣 |
-|------|------|---------|------|
-| **标准（v2.1）** | `.bat` 4行纯 ASCII 触发器 → 调用 `~/.hermes/sync-pull.sh` | 江敏笔记本（Ubuntu-22.04, jiangmin） | 逻辑收在 shell 脚本，易维护 |
-| **内联（v1 演进）** | `.bat` 内含完整 `wsl -d ... -- bash -c "..."` 命令 | 办公室电脑（Ubuntu, Administrator） | 自包含，但逻辑分散在多行 |
-
-**症状**: 双击 .bat 后出现这些乱码被当作命令执行：
-```
-'姝?-' 不是内部或外部命令
-'晲鈺愨晲鈺...echo.' 不是内部或外部命令
-'鏁版嵁...' 不是内部或外部命令
-'h' 'law' 'py-Item' 'cho' '22.04' '/4]' '鉁?Hermes'
-```
-
-**根因链**:
-1. `wsl` 命令启动时检测到 Windows 代理 → 向 stderr 输出中文警告 `"wsl: 检测到 localhost 代理配置，但未镜像到 WSL..."`
-2. 这个 UTF-8 中文文本（经 cmd.exe 回显）被 GBK 解码 → 变成看不懂的字符
-3. cmd.exe 把它们当作**命令**→ 每个片段执行 → 弹出一串报错
-
-**修复**: `.bat` 里用 `2>nul` 吞掉 WSL 的 stderr：
-```bat
-@echo off
-wsl -d Ubuntu-22.04 -e bash /home/dmin/.hermes/sync-push.sh 2>nul
-echo Done.
-pause
-```
-
-**关键规则**:
-- `2>nul` 只吞 stderr（警告信息），stdout（`echo` 语句输出）正常显示
-- 不要用 `chcp 65001`——它解决不了问题，反而可能让情况更糟
-- 用 `-e` 代替 `--` 分隔符：更干净，减少 cmd 与 WSL 的交互
-- .bat 保持纯 ASCII，不要中文、emoji、线框字符
-
-**2026-05-11 发现：hermes.bat 变体**
-- `hermes.bat`（CLI 启动脚本）之前也缺失 `2>nul`，是乱码幽灵命令的第二个触发源
-- 它的特殊性：保留 `chcp 65001`（交互式终端需要UTF-8）和 `-- bash -c`（内联长命令），但必须额外加 `2>nul`
-- 已在线修复此文件（详见 `references/heritage/batch-scripts-v1.md`）
-
-### 16. 🔴 同步脚本只操作 main 分支 — 推到其他分支的文件永远过不来
-
-**症状**: 一台电脑有某个 skill 文件（如 `wechat-publish`），每天跑同步脚本推送到 GitHub；另一台电脑每天跑拉取脚本，但文件就是没出现。
-
-**根因**: 两台电脑的同步脚本（`sync-push-wsl.sh`、`sync-pull-wsl.sh`）硬编码了 `git push origin main` 和 `git pull origin main`。如果有人——哪怕是误操作——在非 main 分支上提交并推送了，同步脚本根本不会碰那些文件。
-
-**真实案例（2026.6.30）**：另一台电脑的 `wechat-publish` skill（含 SKILL.md + 主题库）被提交到了 `temp-skill-push` 分支而非 `main`，两台电脑的 daily sync 来回跑了半个月，文件从未抵达。
-
-**修复方案 — 分支安全守卫（已部署）：**
-
-在两个同步脚本开头加入分支自动检测+切换逻辑：
-
-```bash
-# 在 git add / git pull / git push 之前执行
-cd "$SYNC_DIR"
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [ "$CURRENT_BRANCH" != "main" ]; then
-    echo "⚠️  当前分支: $CURRENT_BRANCH（非 main）"
-    echo ">>> 自动暂存改动并切回 main ..."
-    git stash push -m "auto-stash before branch switch $(date)" 2>/dev/null || true
-    git checkout main 2>/dev/null || { echo "❌ 切回 main 失败"; exit 1; }
-    echo "✅ 已切回 main 分支"
-fi
-```
-
-关键特性：
-- **自动暂存**：非 main 分支上的未提交改动不会丢失（`git stash push`）
-- **静默兼容**：已经在 main 上时无额外输出，不影响正常流程
-- **失败即终止**：切不回 main 时脚本退出，不产生静默错误
-
-**预防措施**：
-- 同步脚本本身也要加入同步范围（`sync-push-wsl.sh` 复制自己到 sync 目录）
-- 另一台电脑 pull 后会自动更新到加固版脚本
-- 定期清理远程分支：`git branch -r | grep -v main | xargs -r git push origin --delete`
-- 桌面 .bat 快捷方式也锁定为只调用 `~/.hermes/sync-push-wsl.sh`（不接收分支参数）
-
-**验证脚本是否已加固**：
-```bash
-grep -c 'CURRENT_BRANCH' ~/.hermes/sync-push-wsl.sh
-# 返回 1+ → 已加固；返回 0 → 需要更新
-```
-
-### 17. 🔴 本环境缺少 GitHub PAT，无法通过 API 修改仓库设置（2026.6.15 新增）
-
-**场景**：需要修改 GitHub 仓库的设置（如改为私密、添加 Collaborator、Webhook 配置等），但本地只有 SSH key 没有 Personal Access Token（PAT）。
-
-**症状**：
-```bash
-# SSH key 认证成功（可 git push/pull）
-ssh -T git@github.com
-# → Hi jsxuaijun-art! You've successfully authenticated
-
-# 但 GitHub API 调用失败（401）
-curl -X PATCH -H "Authorization: Bearer xxx" \
-  https://api.github.com/repos/jsxuaijun-art/hermes-data \
-  -d '{"private": true}'
-# → {"message": "Bad credentials"}
-```
-
-**根本原因**：SSH key 只能做 git 操作（clone/fetch/push/pull），不能调 GitHub REST API。API 需要：
-- `Authorization: Bearer <PAT>`（Personal Access Token）
-- 或 `Authorization: token <PAT>`（旧格式）
-- 或 OAuth token
-
-**修复方案**：
-
-```bash
-# 1. 生成 PAT（GitHub 网页操作）
-#    Settings → Developer settings → Personal access tokens → Fine-grained tokens
-#    → Generate new token
-#    Repository access: Only select repositories → hermes-data
-#    Permissions: Administration (Read and write)  ← 改私密/visible 需要这个
-#    → Generate token
-
-# 2. 存到 ~/.hermes/.env
-echo 'GITHUB_TOKEN=github_pat_xxxxxxxxxxxx' >> ~/.hermes/.env
-chmod 600 ~/.hermes/.env
-
-# 3. 验证
-source ~/.hermes/.env
-curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-  https://api.github.com/repos/jsxuaijun-art/hermes-data | \
-  python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('name','?'), 'private:', d.get('private'))"
-```
-
-**如果 GH Token 已在别处（如 Windows 环境变量）**：可从 PowerShell 导出到 WSL：
-```bash
-# 从 Windows 注册表取 GitHub token（如果存过）
-powershell.exe -Command "cmdkey /list | findstr github" 2>/dev/null
-```
-
-**当前状态（2026.6.15）**：
-- ✅ SSH key 可用 → git push/pull ✅
-- ❌ `.env` 无 GITHUB_TOKEN → API 操作 ❌
-- ❌ 无法改仓库 visibility / 加成员 / 设 webhook / 读 API 元数据
-要改私密 → 手动在网页操作（Settings → General → Danger Zone → Change visibility）
-
-### 18. 🔴 Windows 保留字文件名（nul/con 等）导致 Windows Git 拉取失败
-
-**症状**: 在 Windows 上（GitHub Desktop 或 git.exe）执行 `git pull` 时报错：
-```
-error: invalid path nul.updateing e969d4e..0c5f90c
-```
-或
-```
-error: invalid path nul/somefile.md
-fatal: unable to checkout working tree
-```
-
-**根本原因**: Windows 文件系统保留了一批**设备名**作为系统关键字，文件和目录不能叫这些名字（任何扩展名都不行）：
-
-| 保留字 | 说明 | 常见误触场景 |
-|--------|------|------------|
-| `nul` | 空设备（类似 `/dev/null`） | 同步脚本创建临时 `.updating` 锁文件 |
-| `con` | 控制台 | 文件名含 "con" 单独成段 |
-| `prn` | 打印机 | 罕见 |
-| `aux` | 辅助设备 | 罕见 |
-| `com1`-`com9` | 串口 | 程序生成命名时撞上 |
-| `lpt1`-`lpt9` | 并口 | 同上 |
-
-**典型触发场景**: 阿里云服务器上的自动同步脚本在推送过程中创建了一个临时文件（如 `nul.updateing` 表示正在更新中的状态锁），这个文件被 git add 并 push 到了远程仓库。Windows 客户端拉取时遇到 `nul` 保留字，Git 直接拒绝 checkout。
-
-**排查命令**（在 WSL/Linux 端执行，因为这些系统不阻止 `nul` 文件名）：
-
-```bash
-# 找当前仓库中所有含保留字的文件
-cd /mnt/c/Users/Admin/hermes-sync
-git ls-files | grep -inE '\b(nul|con|prn|aux|com[1-9]|lpt[1-9])\b'
-
-# 从远程仓库中搜索
-git ls-tree -r origin/main --name-only | grep -inE '\b(nul|con|prn|aux|com[1-9]|lpt[1-9])\b'
-
-# 查看reflog中是否有可疑提交
-git reflog --all | grep -i nul
-```
-
-**修复方案**:
-
-```bash
-# 方案A（推荐）：在 WSL/Linux 端删除问题文件后重新 push
-cd /mnt/c/Users/Admin/hermes-sync
-# 找到问题文件后删除
-git rm --cached "path/to/nul.file"
-# 或整个目录
-git rm -r --cached "path/containing/nul/"
-# 提交并推送
-git commit -m "fix: remove Windows reserved name file (nul)"
-git push origin main
-
-# 方案B（如果无法确定具体文件名）：直接从远程重写历史移除
-# 先拉取最新
-git fetch origin main
-git rebase -i HEAD~5  # 找到引入nul文件的提交，改为 edit 或 drop
-# 或直接用 filter-branch（谨慎使用）
-git filter-branch --tree-filter 'rm -rf *nul* *con* *prn*' HEAD
-
-# 方案C（紧急修复 — 不管文件直接强制同步到最新）
-git fetch origin main
-git reset --hard origin/main  # 这会丢失本地未推送的改动！
-```
-
-**验证修复**: 修复后在 Windows 端（GitHub Desktop 或 git.exe）重新拉取，不再报错：
-
-```bash
-/mnt/c/Program\ Files/Git/bin/git.exe -C "C:/Users/Admin/hermes-sync" pull origin main
-```
-
-**预防措施**:
-- 阿里云同步脚本中增加 `.gitignore` 规则：`*.updateing`、`*.lock`、`nul*`
-- 或同步前检查文件名：`find . -name '*nul*' -o -name '*con*'` 提前预警
-- 推送脚本增加一个 pre-commit hook 检查保留字文件名
-
-**跟 Pitfall #14 的关系**:
-| 特征 | 保留字冲突 (pitfall #18) | 脏文件冲突 (pitfall #14) |
-|------|--------------------------|--------------------------|
-| 报错关键信息 | `invalid path nul` | `would be overwritten by merge` |
-| 根因 | Windows FS 限制 | 本地未提交改动 |
-| 修复方向 | WSL 端删除文件 + push | `reset --hard` 或 stash |
-| 涉及平台 | Windows 拉取时触发 | 任何平台 |
-
-### 19. 🔴 Rebase 自动合并选择旧版文件（最隐蔽的数据丢失）
-
-**场景**: Windows 仓库执行 `git pull --rebase` 时产生冲突，auto-merge 自动解决了冲突但**使用了远程旧版**，覆盖了 Hermes Agent 在 WSL `~/.hermes/skills/` 中修改过的文件。
-
-**典型发生在**: 先通过 Hermes CLI 修改了 skill 文件（WSL 侧），然后在 Windows 仓库手动 push 时触发 rebase。
-
-**症状**:
-- Rebase 报告 "Auto-merging ..." 并成功继续，但文件内容变成了旧版
-- 检查 git diff 发现应该有的改动（TSC五级、年份更新等）不见了
-- 这些改动在 WSL `~/.hermes/skills/` 中还在，但 Windows 仓库里已经被旧版覆盖
-
-**根本原因**: git auto-merge 在处理 `add/add` 冲突（双方都新增了同一文件）时，会选择它认为更合理的版本——但这不一定是你真正想保留的 WSL 版本。
-
-**恢复方案**: 从 WSL 的 `~/.hermes/skills/` 复制正确的修改版本到 Windows 仓库，然后继续 rebase：
-
-```bash
-# 1. 确认哪些文件被覆盖了
-# 查看 WSL 修改过的文件（保留的备份）
-ls -la ~/.hermes/skills/compliant-accounting/SKILL.md  # 示例
-
-# 2. 从 WSL 复制正确版本到 Windows 仓库
-cp -f ~/.hermes/skills/compliant-accounting/SKILL.md \
-  "/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md"
-
-# 重复所有被覆盖的文件...
-
-# 3. 标记已解决并继续 rebase
-git add -A
-GIT_EDITOR=true git rebase --continue
-```
-
-**预防措施**:
-- 推送到 Windows 仓库前，先在 WSL 侧执行 `git pull --rebase` 把远程变更合并进来
-- 或优先使用同步脚本（`Hermes同步-推送.bat`）而非手动 Windows 仓库操作
-- 当 Hermes CLI 创建/修改了 skill 后，**立即执行一次推送**，减少跨平台时间差
-- 若必须手动在 Windows 仓库操作，rebese 后验证关键 skill 文件的版本是否正确
-
-**验证命令**:
-```bash
-# 检查 Windows 仓库中的文件是否包含你期待的内容
-grep -c "TSC五级\|25年\|科班" "/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md"
-# 如果返回 0，说明文件被旧版覆盖了
-```
-
-**对比 WSL vs Windows 仓库版本**:
-```bash
-# 检查文件大小差异
-echo "WSL: $(wc -c < ~/.hermes/skills/compliant-accounting/SKILL.md)"
-echo "Git: $(wc -c < '/mnt/c/Users/Administrator/Desktop/HermesAgent/skills/compliant-accounting/SKILL.md')"
-```
-
-### 20. 🔴 GitHub push 拒绝 GH001: Large files detected（大文件入历史）
-
-**症状**: push 报 `remote: error: GH001: Large files detected` + `pre-receive hook declined`，且列出了超限文件：
-```
-remote: error: File skills/.curator_backups/2026-08-02T06-23-51Z/skills.tar.gz is 108.15 MB; this exceeds GitHub's file size limit of 100.00 MB
-remote: error: GH001: Large files detected. You may want to try Git Large File Storage
-```
-
-**根因**: 同步脚本 `rsync -a --delete "$HERMES_DIR/skills/" "$SYNC_DIR/skills/"` 把本地 `~/.hermes/skills/` 下的超大文件也复制进了同步目录，且 `.gitignore` 的白名单模式（`*` 全排除 + `!skills/**` 允许）**放行了 skills 下所有文件**，包括：
-- `skills/.curator_backups/*.tar.gz` — curator 自动备份（108MB，超限）
-- `skills/gstack/*/dist/*` — gstack 编译产物（90MB）
-
-**关键**: GitHub 检查的是**整个提交历史**，不是只有当前提交。所以即使现在 `git rm` 删掉，历史里的旧提交仍含大文件，push 照样被拒。
-
-**根治 — `git filter-repo` 改写历史**（保留内容，清掉大文件 blob）：
-
-```bash
-# 1. 安装
-pip install git-filter-repo --proxy '' -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 2. 改写历史，剥离 >50MB 的 blob（--force 因为不是 fresh clone）
-cd /mnt/c/Users/Admin/hermes-sync
-git filter-repo --strip-blobs-bigger-than 50M --force
-# 注意：filter-repo 会移除 origin remote，需重新加
-git remote add origin git@github.com:jsxuaijun-art/hermes-data.git
-
-# 3. 确认无大文件后 force push
-git push --force origin main
-```
-
-**预防（.gitignore 加黑名单，覆盖白名单）**:
+> **⚠️ 2026-08-01 实战更新：优先用 clean rebuild 而非 filter-branch**
+> `git filter-branch` 在 dash 下有坑（`read -d` 语法错）、且会留 1GB 残留 pack 让 `.git` 无法真正瘦身，push 仍可能超时/被拒。**历史浅时直接 clean rebuild 更彻底**（`.git` 能缩到 <10MB，推送秒成功）：
+> ```bash
+> cd /mnt/c/Users/Administrator/Desktop/HermesAgent
+> mv .git /tmp/git-backup-$(date +%H%M)   # 备份旧 .git（保险）
+> git init -b main; git config user.name "jsxuaijun-art"
+> git remote add origin git@github.com:jsxuaijun-art/hermes-data.git
+> git add -A    # 受完整 .gitignore 约束，curator_backups/dist 自动排除
+> git commit -m "clean rebuild: exclude large files"
+> git push --force origin main:main
+> ```
+> 验证：排除后 worktree 仅 20-30MB/1250+ 文件，`.git` <10MB，本地=远端 HEAD 一致。删 Windows 工作区残留 `.curator_backups/` 和 `gstack/*/dist/` 副本（源在 `~/.hermes/skills/`，删副本不丢数据）。实测 hermes-data 从 `.git` 989MB→8.9MB，push 秒成功，commit `5e6675b`。
+
+**Prevention**: All three repos must include in `.gitignore`:
 ```gitignore
-# 放在 .gitignore 末尾（黑名单优先级高于前面 !skills/** 白名单）
 skills/.curator_backups/
-skills/**/.curator_backups/
-skills/**/dist/
-skills/**/node_modules/
+**/.curator_backups/
 *.tar.gz
+*.tar
+**/dist/          # gstack 等编译产物二进制(~90MB each)
+*.dist
 ```
 
-**注意**: 大文件在本地 `~/.hermes/skills/` 仍存在（rsync 每次都会复制到 sync 目录），但只要 `.gitignore` 排除了，git 不跟踪就不 push。`rsync` 不受 `.gitignore` 控制，sync 目录里留着没关系（不提交即可）。
-
-**避免**: 不要手动 `git rm` 就以为解决了——历史里还有，必须 filter-repo（或重建仓库）才能根治。
-
-## 同步范围
-
-| 同步 | 不同步 |
-|------|--------|
-| SOUL.md, SOUL_Pro.md, SOUL_Edu.md | .env（API Key，每台电脑独立） |
-| config.yaml | sessions.db（太大） |
-| memories/* | state.db |
-| skills/* | logs/, checkpoints/ |
-| sync-push-wsl.sh, sync-pull-wsl.sh（2026.6.30 起自同步） | .hermes_history, auth.json |
-| claw_memories/ (WSL Claw) | .hermes_history, auth.json |
-
-## 🔧 V1 Heritage: Setup Guide & FAQ
-
-> The following was adapted from `hermes-agent-sync` (v1, archived). It covers first-time setup, SSH key provisioning, and common Q&A not addressed in the core reference above.
-
-### FAQ: What happens when I reinstall my OS?
-
-**All Hermes data is safe in the GitHub repo — not local.** After reinstalling:
-
-1. Install WSL + Hermes Agent (5 min)
-2. `git clone git@github.com:jsxuaijun-art/hermes-data.git` (1 min)
-3. Copy SOUL.md + memories + skills + config.yaml to `~/.hermes/` (1 min)
-
-Hermes is back to the state you trained it to — company info, cases, preferences, skills — all intact.
-
-**Actually lost:**
-- `sessions/` (chat history) — not synced
-- `.env` (API Keys) — not synced; re-fetch from DeepSeek/OpenAI dashboard
-
-### SSH Key Setup
-
-```powershell
-# Check if Windows side has an SSH key
-ls C:\Users\<WindowsUser>\.ssh\
-
-# Generate if missing
-ssh-keygen -t ed25519 -C "your-github-email"
-
-# Copy public key to GitHub: https://github.com/settings/keys
-
-# Copy to WSL (critical — WSL has its own ~/.ssh/)
-wsl -d <DistroName> -- bash -c "
-  mkdir -p ~/.ssh
-  cp /mnt/c/Users/<WindowsUser>/.ssh/id_ed25519 ~/.ssh/
-  cp /mnt/c/Users/<WindowsUser>/.ssh/id_ed25519.pub ~/.ssh/
-  cp /mnt/c/Users/<WindowsUser>/.ssh/known_hosts ~/.ssh/ 2>/dev/null
-  chmod 600 ~/.ssh/id_ed25519
-  echo 'SSH key copied to WSL'
-"
-
-# Verify
-wsl -d <DistroName> -- ssh -T git@github.com
-```
-
-> ⚠️ Windows may have an SSH key but WSL does not. Must copy explicitly.
-
-### Initial Directions (First Fill)
-
-**Case A: WSL is fresh, sync dir has data → Fill WSL from sync dir**
+**Check for big files**:
 ```bash
-wsl -d <DistroName> -- bash -c "
-  cp -f /mnt/c/Users/<WindowsUser>/Desktop/HermesAgent/SOUL*.md ~/.hermes/
-  cp -f /mnt/c/Users/<WindowsUser>/Desktop/HermesAgent/config.yaml ~/.hermes/
-  mkdir -p ~/.hermes/memories && cp -f /mnt/c/Users/<WindowsUser>/Desktop/HermesAgent/memories/*.md ~/.hermes/memories/
-  mkdir -p ~/.hermes/skills && cp -rf /mnt/c/Users/<WindowsUser>/Desktop/HermesAgent/skills/* ~/.hermes/skills/
-"
+git ls-files | xargs -I{} sh -c 'wc -c "$1" 2>/dev/null' _ {} | sort -rn | head -10
 ```
 
-**Case B: WSL has latest data, sync dir is stale → Push WSL → sync dir**
+### P2 rsync over /mnt/ looks like a hang
+
+**Symptom**: `[1/6] Copy Hermes data from WSL to Windows...` then nothing for 30s-2min.
+
+**Root cause**: rsync first full scan of 90+ skills (833MB) over cross-filesystem `/mnt/`. First run is 30s-2min; subsequent runs ~1s (incremental).
+
+**Verify**: `ps aux | grep rsync` in another WSL terminal.
+
+### P3 Three pipelines share one WSL session
+
+Each step is independent. Failure in step 1/2 (Hermes) does not stop step 3/4 (Claude) or step 5/6 (Codex).
+
+### P4 git fetch+reset discards local changes
+
+**WARNING**: If this PC has local skill edits not yet pushed, `fetch + reset --hard` wipes them. Always push before pulling on another PC.
+
+### P5 .bat encoding (CRLF + pure ASCII)
+
+- Pure ASCII only (no Chinese, box-drawing chars)
+- CRLF (`\r\n`) line endings — LF silently fails
+- `chcp 65001 >nul` + `2>nul` required
+
+**Python write method**:
+```python
+lines = ['@echo off', 'chcp 65001 >nul', 'wsl -d Ubuntu ... 2>nul']
+content = '\r\n'.join(lines) + '\r\n'
+with open(path, 'wb') as f:
+    f.write(content.encode('ascii'))
+```
+
+**Verify**: `xxd path | head -5` — look for `0d 0a` at each line end.
+
+### P6 WSL distro name differs across machines
+
+| This PC (current) | Jiangmin's PC |
+|-------------------|--------------|
+| `wsl -d Ubuntu` | `wsl -d Ubuntu-22.04` |
+| `/home/administrator/` | `/home/jiangmin/` |
+| `C:\Users\Administrator\Desktop` | `C:\Users\jiangmin\Desktop` |
+
+When copying .bat to another PC, ALL THREE paths must be updated.
+
+### P7 git push appears successful but nothing changed
+
+**Order matters** — script stages changes BEFORE fetch+reset:
 ```bash
-wsl -d <DistroName> -- bash -c "
-  cp -f ~/.hermes/SOUL*.md /mnt/c/Users/<WindowsUser>/Desktop/HermesAgent/
-  cp -f ~/.hermes/config.yaml /mnt/c/Users/<WindowsUser>/Desktop/HermesAgent/
-  cp -f ~/.hermes/memories/MEMORY.md ~/.hermes/memories/USER.md /mnt/c/Users/<WindowsUser>/Desktop/HermesAgent/memories/
-"
+git add -A                          # 1. Stage
+git diff --cached --quiet ||        # 2. Check
+  git commit -m "sync ..."           # 3. Commit
+git fetch origin main               # 4. Download remote
+git reset --hard origin/main         # 5. Reset (keeps committed)
+git push origin main                 # 6. Push
+```
+If no files changed, `git diff --cached --quiet` exits 0, skip commit, reset to remote, push says up-to-date. This is correct behavior.
+
+### P8 pycache modify/delete conflicts (historical fix)
+
+**FIXED** via `.gitignore` (`__pycache__/`) + `git rm --cached`. Should not recur.
+
+If it does:
+```bash
+git ls-files | grep __pycache__ | while read f; do git rm --cached "$f"; done
+git add -A && git commit -m "remove pycache" && git push origin main
+# Other PCs: fetch+reset (do NOT use pull --rebase)
 ```
 
-### .gitignore Order (Frequent Pitfall)
+### P9 .bat must be tested by double-click in Windows Explorer
 
-Exclusion rules (`*`) must come BEFORE whitelist rules (`!xxx`):
+- Double-click in Explorer = reliable (real cmd.exe)
+- `cmd.exe /c script.bat` from WSL = unreliable (UNC path issues)
+- Code review only = unreliable (encoding bugs only show at runtime)
 
-```gitignore
-# ✓ Correct
-*.db
-!sessions.db     # whitelist AFTER the pattern it's overriding
+### P10 rsync single skill dir fails when parent category dir missing
 
-# ✗ Wrong
-!sessions.db     # this is a no-op here — *.db below overrides it
-*.db
+**Symptom**: `rsync: [Receiver] mkdir ".../skills/content-creation/enterprise-visit-biz-handoff" failed: No such file or directory` (exit 11)
+
+**Root cause**: When adding a brand-new skill under a category that doesn't exist yet in the Windows mirror repo, the parent dir (`skills/content-creation/`) is absent — rsync won't create intermediate destination dirs.
+
+**Fix**: `mkdir -p` parents first, then rsync:
+```bash
+cd /mnt/c/Users/Administrator/Desktop/HermesAgent
+mkdir -p skills/content-creation skills/productivity
+rsync -a /home/administrator/.hermes/skills/content-creation/<skill>/ skills/content-creation/<skill>/
 ```
+Full `rsync -a ~/.hermes/ ...` (step 1 of the .bat) never hits this — it creates all dirs. Only targeted per-skill syncs do.
 
-### Variable Reference
+## Architecture evolution
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `<DistroName>` | WSL distro name | `Ubuntu-22.04` |
-| `<WindowsUser>` | Windows username | `Admin` or `Administrator` |
-| `<Owner>` | GitHub owner | `jsxuaijun-art` |
-| `<Repo>` | Sync repo | `hermes-data` |
+| Version | Architecture | Status |
+|---------|-------------|--------|
+| v0 | Windows cmd git + WSL cp | retired |
+| v1 | All git in WSL | retired |
+| v2.0-2.1 | WSL scripts + Windows git.exe | retired |
+| **v3** | **Inline .bat triple-pipeline + rsync + fetch+reset** | current |
 
-## Heritage Reference Files
+## Quick diagnosis
 
-The following were preserved from the v1 (`hermes-agent-sync`) skill, now archived. They contain session-specific examples and diagnostic records that may be useful for troubleshooting:
-
-- `references/heritage/batch-scripts-v1.md` — Full V1→V2.1 batch script template evolution with encoding pitfalls
-- `references/heritage/office-pc-diagnostic.md` — Office PC environment check (Ubuntu 24.04, Administrator user)
-- `references/heritage/office-pc-batch-examples.md` — Office PC batch file examples with error handling (old V1 format, for reference)
-- `references/heritage/multi-machine-merge.md` — Multi-PC git merge mechanics and conflict resolution walkthrough
-
-## Reference Files
-
-- `references/sync-scripts.md` — 脚本完整内容和历史演进
-- `references/crlf-bat-write.md` — .bat 文件写入规范
-- `references/cross-pc-paths.md` — 多电脑路径差异
-- `references/sync-verification.md` — 同步后验证命令
-- `references/git-history-repair.md` — 历史修复（泄漏密钥、rebase 损坏）
-- `references/github-api-fallback.md` — 无需本地 clone 的 GitHub API 远程访问方法（适合新机器诊断/单文件读取）
+| Symptom | Likely cause | Action |
+|---------|-------------|--------|
+| `[1/6]` then nothing 30s-2min | rsync first sync (833MB) | Wait or `ps aux | grep rsync` |
+| `[2/6]` then hangs 30s+ | git push timeout (China) | Check VPN; wait or let next step run |
+| Garbled "not an internal command" | WSL warning without `2>nul` | Add `2>nul` |
+| Script finishes, data unchanged | fetch+reset discarded local changes | Check git status before running |
+| `remote: fatal: pack exceeds max size` | curator_backups 100MB+ | Run P1 cleanup |

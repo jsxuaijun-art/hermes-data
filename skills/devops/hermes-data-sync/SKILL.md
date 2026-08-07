@@ -224,6 +224,43 @@ Only config files from `~/.codex/` are synced — exclude runtime data:
 **Include**: `config.toml`, `model_catalog.json`, `installation_id`, `version.json`, `rules/`, `skills/`
 **Exclude**: `history.jsonl`, `sessions/`, `*.sqlite`, `*.db`, `logs_*/`, `state_*/`, `tmp/`, `shell_snapshots/`
 
+## ★★ 跨机通用版同步脚本 (cross-PC .bat) 交付说明（2026-08-07 定稿）
+
+> 目的：同一份 `Hermes同步-推送.bat` / `Hermes同步-拉取.bat` 拷到任何电脑都能直接用，**自动探测本机同步夹**，免去每次改路径（解决 P6 的 Administrator/Admin、HermesAgent/hermes-sync 差异）。
+
+### 交付物清单
+
+| 文件 | 说明 |
+|---|---|
+| `Hermes同步-推送.bat` | 跨机通用版。自动探测同步夹 + Hermes skills rsync 已去 `--delete` + Hermes 块接入 sync_guard 防误删闸。Claude/Codex 块保持原样 |
+| `Hermes同步-拉取.bat` | 跨机通用版。自动探测同步夹 + Hermes skills rsync 已去 `--delete` |
+| `skills/devops/hermes-data-sync/scripts/hermes_sync_path.sh` | 路径自动探测（候选：桌面HermesAgent→Admin/hermes-sync→用户hermes-sync→全域扫描 remote 含 hermes-data 的 git 夹）。**已被两个.bat 调用，随 skill 同步到各机，勿删** |
+| `skills/devops/hermes-data-sync/scripts/sync_guard.sh` | 防误删闸（commit 前拦截删除未白名单文件）。已推送 GitHub `c2fd56f` |
+
+### 拷贝到其他电脑的步骤
+
+1. 把 `Hermes同步-推送.bat` + `Hermes同步-拉取.bat` 拷到目标机桌面，覆盖旧版。
+2. 确保目标机 `~/.hermes/skills/devops/hermes-data-sync/scripts/` 下已有 `sync_guard.sh` + `hermes_sync_path.sh`（**先拉取一次拿到最新 skill**，或确认拉到最新后再换新 .bat，避免旧拉取把 skill 删了）。
+3. 双击 `Hermes同步-推送.bat` 实测：应打印 `[path] Sync dir = C:\...同步夹`，走完 6 步，不报 `[ERROR] Could not detect`。
+
+### 必须实测的点（agent 无法替代，跨机 .bat 的 cmd 转义只能靠双击确认）
+
+- `[path] Detecting Hermes sync dir...` → 是否打印出正确的 `Sync dir = C:\...`。
+- 若报 `[ERROR] Could not detect Hermes sync dir` 或乱码：是 `for /f tokens=1,* delims==` 解析 WSL 输出的转义问题，需按目标机的 cmd 环境微调。
+- WSL 发行版名：脚本用 `wsl -d Ubuntu`，若目标机发行版名不同（如 `Ubuntu-22.04`），需改 .bat 里的 `-d Ubuntu`。
+
+### 探测脚本的输出格式（.bat for /f 依赖它）
+
+`hermes_sync_path.sh` 打印一行：`HERMES_SYNC_DIR=/mnt/c/Users/Admin/hermes-sync`
+.bat 用 `for /f "tokens=1,* delims=="` 解析取 `=` 右边的值。**修改探测脚本时必须保持这行格式不变**。
+
+### 已知边界/坑
+
+- 探测脚本**优先选 .git 健康且 remote 是 hermes-data 的夹**；若某台桌面 HermesAgent 的 .git 损坏，会正确 fallback 到 hermes-sync —— 这是特性不是 bug。
+- `sync_guard.sh` / `hermes_sync_path.sh` 放的是 `skills/devops/hermes-data-sync/scripts/`（在 `.gitignore` 的 `!skills/**` 白名单内），**不要**放 `~/.hermes/scripts/`（根级 scripts 不在白名单，无法跨机同步）。
+
+
+
 CodexCode-Sync `.gitignore`:
 ```gitignore
 *.sqlite

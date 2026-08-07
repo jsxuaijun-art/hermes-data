@@ -1,9 +1,0 @@
-{
-  "last_report_path": "/home/administrator/.hermes/logs/curator/20260805-064428",
-  "last_run_at": "2026-08-05T06:44:28.648544+00:00",
-  "last_run_duration_seconds": 26.498271,
-  "last_run_summary": "auto: no changes; llm: I've inspected both skills. Let me analyze whether either is a consolidation candidate.\n\n**Assessment:**\n\nThe candidate pool contains only **2 agent-created skills**, and they are in completely different domains:\n\n1. **`assessment-paper-gen…",
-  "last_run_summary_shown_at": null,
-  "paused": false,
-  "run_count": 13
-}

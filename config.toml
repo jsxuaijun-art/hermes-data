@@ -1,0 +1,27 @@
+model = "deepseek-v4-flash"
+model_provider = "deepseek_proxy"
+model_catalog_json = "/home/administrator/.codex/model_catalog.json"
+
+[model_providers.deepseek_proxy]
+name = "DeepSeek V4 Flash (via codex-bridge)"
+base_url = "http://localhost:4000/v1"
+env_key = "CODEX_PROXY_KEY"
+
+[projects."/home/administrator"]
+trust_level = "trusted"
+
+[projects."/home/administrator/codex-bridge"]
+trust_level = "trusted"
+
+[projects."/home/administrator/hermes-agent"]
+trust_level = "trusted"
+
+[projects."/mnt/d/OneDrive/Desktop/YLD"]
+trust_level = "trusted"
+
+[projects."/tmp/codex-test"]
+trust_level = "trusted"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+

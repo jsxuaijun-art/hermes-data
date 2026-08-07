@@ -35,6 +35,9 @@ Use this when the user asks about legal issues, court cases, or needs legal docu
 | Search engines with site: | Bing/Sogou with `site:wenshu.court.gov.cn 关键词` | ⚠️ Low - deep pages not indexed |
 | Legal news/analysis sites | 中国法院网, 北大法宝(pkulaw), lawtime.cn, 律霸网 | ⚠️ Case analysis, not original judgments |
 | Law firm articles | Many law firms publish case analysis blogs | ✅ Good for principles |
+| anysearch `search`/`extract` | Best general channel for legal case + domain research | ✅ High — see below |
+
+**⚠️ Prefer the `anysearch` skill for case research.** When `browser_navigate` to search engines hits anti-bot walls (sogou antispider, 360 访问异常, zhihu 403), the `anysearch` CLI (`python3 <anysearch skill_dir>/scripts/anysearch_cli.py search "..." --max_results N` / `extract <url>`) is the most reliable general search + full-page extraction channel. It handles web + vertical domains and returns clean Markdown. It also reliably extracts Chinese law-firm/audit-firm/财税机构 articles that the browser gets blocked on (bangni100.com, guantao.com, hankunlaw PDF via extract, etc.). Use it FIRST for legal case retrieval.
 
 **Effective search keywords for software/IT disputes:**
 - 终身使用权, 终身授权, 永久许可
@@ -43,7 +46,18 @@ Use this when the user asks about legal issues, court cases, or needs legal docu
 - 格式条款 无效 软件
 - 合同目的 不能实现 软件
 
-#### Fallback Chain: When Primary Case Search Fails
+#### 搜狗微信搜索 (公众号案例，法税领域尤其有效)
+
+法税领域大量实操案例仅发表在公众号上，不进裁判文书网。搜狗微信搜索的结果列表**可抓取**（含标题+摘要+公众号名），但点进 `/link?url=...` 中转的正文会被 antispider 拦截。工作流：抓**摘要**（`li[id^=sogou_vr]` 下 `.txt-info`），摘要本身就带案例要点（金额、追缴情形）；如需全文，用 anysearch `extract` 抓同源文章在百家号/知乎等的镜像，或用浏览器重试。关键点：结果列表抓取正常，仅正文中转跳转被封。请求头需带 `Referer: https://weixin.sogou.com/`，query 用空格分词。
+
+#### 案例可信度分级原则（法税案例尤其重要）
+
+法税"被追缴个税"类案件多为税务稽查/行政处理决定，**极少进公开裁判文书网**。检索到的案例要分级标注并向客户如实说明：
+- **① 监管通报案例**（稽查局/税务系统官方披露）——可信度最高
+- **② 律所/财税机构披露的实操案例**（有金额、地名、情节，但**无公开案号**）——可用作话术，但不得编造案号
+- **③ 政策逻辑上必然追缴的情形**（未备案/评估虚高/减资不消税/递延条件丧失）——作风险框架
+- 有公开案号的**已判决**判例（如非货币出资个税对赌案沪03行终133号）往往围绕对赌/退税争议，与非货币出资被追缴**不完全同类**——引用时须说明差异，不可混为一谈。
+- **绝不编造案号**：明确区分"机构披露但无案号" vs "可引用的已判决判例"。
 
 Even with specific court name + defendant name, you may not find direct precedents on wenshu. Do NOT give up — use this fallback chain instead:
 
@@ -153,5 +167,6 @@ Present the document as:
 ## Reference Files
 
 - `references/software-license-case-patterns.md` — 软件/IT合同纠纷类案裁判要点
+- `references/ip-contribution-income-tax-recovery.md` — 知识产权/无形资产出资 股东个税追缴：政策依据、四种追缴情形、分级案例、合规对冲（法税实缴咨询话术）
 - `references/wenshu-court-anti-scrape-notes.md` — 裁判文书网爬取限制及替代方案
 - `references/session-2026-05-13-MindMaster.md` — 实战案例：MindMaster终身使用权纠纷（含对方EULA关键条款、搜索策略、论证框架）

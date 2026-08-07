@@ -14,6 +14,24 @@ author: Hermes Agent (for 江敏/盈信税务)
 | 素材类型 | 特征 | 获取方式 |
 |:---------|:-----|:---------|
 | 公众号文章链接 | `mp.weixin.qq.com/s/...` | curl 带微信 User-Agent 获取HTML |
+
+**公众号文章正文获取（2026.8.6 验证，含漫画长图）：**
+- **curl 抓全文**：桌面 UA 会返回「未知错误」小页，browser 会触发「环境异常」验证码。**用手机微信 UA + `-e "https://mp.weixin.qq.com/"` Referer** 可拿到完整 3MB HTML（含 `#js_content`）：
+  ```bash
+  UA="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 MicroMessenger/8.0.49 NetType/WIFI Language/zh_CN"
+  curl -sL -A "$UA" -e "https://mp.weixin.qq.com/" "https://mp.weixin.qq.com/s/XXXX" -o /tmp/wx.html
+  # 元数据：re.search r"var msg_title / nick_name / ct"; 正文：<div id="js_content">
+  ```
+- **「漫解税收」类文章正文=漫画长图**（如 928×16383 超长图），html 里只有「来源」文字，内容全在图里。这些图 `data-src` 在源码里常被 JS 截断，需从 `<img>` 完整 `src` 属性提取（带 `/640?wx_fmt=jpeg&from=appmsg` 完整后缀）。
+- **读漫画文字 → RapidOCR**（主模型无 vision 时最可靠通道，比 delegate_task 子代理更快、不超时）：
+  ```bash
+  # 安装（venv 免 sudo；或 --break-system-packages）
+  PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple python3 -m pip install --break-system-packages -q rapidocr_onnxruntime onnxruntime
+  # 长图先 PIL 切成 ~1600px 段，再逐段 OCR
+  python3 -c "from rapidocr_onnxruntime import RapidOCR; ocr=RapidOCR(); res,_=ocr('seg.png'); print([t for _,t,_ in res])"
+  ```
+  ⚠️ OCR 中文识别有少量错字（如「产业园A座301」识成「产业田A遮301」），转录后需按语义校正，**政策条文以 OCR 文本为底、务必核对官方原文再引用**。
+- **下漫画图**：`curl -A "$UA" -e "https://mp.weixin.qq.com/" -o x.jpg "<完整src URL>"`（必须带 Referer，否则空文件）。
 | 腾讯视频号链接 | `weixin.qq.com/sph/...` 或 `channels.weixin.qq.com/...` | 浏览器工具 navigate → 关闭弹窗 → snapshot读标题/发布者/时间/话题标签（视频号是JS渲染，curl拿不到内容） |
 | 抖音视频链接 | `v.douyin.com/短链` 或 `douyin.com/video/<id>` | 见下方「抖音获取步骤」——短链先解析出 video id，再用带完整参数的分享 URL 开浏览器，最后用页面内 fetch 调 aweme detail API 拿 desc/作者/数据 |
 | YouTube链接 | `youtube.com/watch?v=...` 或 `youtu.be/...` | 用 `youtube-content` skill 提取字幕或标题 |
@@ -355,6 +373,20 @@ publish -f /tmp/article.md \
 **服务器**：阿里云 ECS 47.103.27.171，wenyan-server 端口 3000
 
 **排版主题**：`/etc/wenyan/yingxin-theme.css`（已生效，见下节）
+
+### 内容呈现形式风格库（v1.0 — 视觉风格备选，2026.8.6 建立）
+
+> **定位：这是「排版风格CSS」之外的另一个维度——正文内容的视觉呈现形式。** 排版CSS（01安信伯君等）控制的是文字段落样式；「内容呈现形式」决定的是正文里配图/视觉元素做成什么风格。两种可自由组合。这些形式都是**备选方案**，不是唯一必选，发文时根据题材/读者自由选用，不做漫画/多图题材时用不上，正常按模式A/B/C走。
+
+| # | 风格名称 | 呈现形式 | 实现方式 | 状态 |
+|:-:|:---------|:---------|:---------|:-----|
+| 01 | 漫画风格（扁平插画+对话气泡） | 竖版分镜图：卡通人物+对话气泡+信息卡，文字印在画面上 | 见 `creative/wechat-comic-cells` skill：HTML+SVG+CSS → 服务器weasyprint渲染PNG → RapidOCR验证 → 插入文章 | ✅ 可用（草稿箱《农村宅基地能注册公司吗》） |
+| 02 | MBE卡通风格（粗描边+圆润插画） | 粗黑描边圆润卡通人物 + 信息卡 + 图标，奶油黄底，更Q更活泼 | 同一套 weasyprint 渲染技术，角色/配色/描边换MBE版（见 `creative/wechat-comic-cells`，MBE参数：border 4-6px #3E2723、圆角24px、阴影4px 5px 0、明亮糖果色块） | ✅ 可用（草稿箱《注册资本写多少合适？》） |
+| 03 | 极简信息卡风格（办事指南/白底黑框红点缀） | 白底 + 粗黑框 + 红色点缀的编号要点卡/对比卡/三句话卡，简洁专业清清爽爽 | 同一套 weasyprint 技术，配色白底#FFF+黑框#222+红点缀#C62828，无卡通人物，适合政策解读/注意事项 | ✅ 可用（草稿箱《姑苏区"房卡房"能注册公司吗》） |
+| 04 | 数据信息图风格（深蓝+亮色数据可视化） | 深蓝底 + 大数字卡片 + 纯CSS条形图/对比图，数据冲击力强，适合"算账"类内容 | HTML/CSS实现数据可视化（⚠️不用SVG的text元素，weasyprint不支持SVG text，用div色块+HTML文字）。底色#0D1B2A、金色#F4D03F、红#E74C3C | ✅ 可用（草稿箱《请得起一个正规会计一年要花多少》） |
+| 05 | 微信对话风格（绿白聊天气泡） | 模拟微信聊天界面：顶部对话头 + 绿色(我方)/白色(对方)气泡 + 时间戳，代入感极强，适合"老板咨询实录"类 | HTML/CSS聊天界面最简实现：右侧绿#95EC69、左侧白#FFF、圆角18px、max-width 70%、时间戳居中灰条 | ✅ 可用（草稿箱《老板在微信问我要不要升一般纳税人》） |
+
+**新增风格流程：** 用户说"换其他风格""做个xxx风格"时 → 用HTML+SVG渲染作品验证成型 → 发布实验稿进草稿箱给用户对比 → 用户认可后登记到本表（编号递增）+ 在对应skill固化 → 待用户选定后所有新文章默认套用。
 
 ## 排版主题
 

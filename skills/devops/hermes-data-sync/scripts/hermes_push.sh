@@ -44,9 +44,9 @@ if [ -f .git/MERGE_MSG ] || [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ]
 fi
 git stash pop 2>/dev/null
 
-# --- 3) stage + sync_guard 防误删闸 ---
+# --- 3) stage + sync_guard 防误删闸 (传本机 hermes root 启用一致性检测) ---
 git add -A
-if ! bash "$GUARD_SCRIPT" "$HERMES_SYNC_DIR"; then
+if ! bash "$GUARD_SCRIPT" "$HERMES_SYNC_DIR" "$HOME"; then
   echo "[sync_guard] DELETION DETECTED - PUSH ABORTED. If intentional: export SYNC_GUARD_BYPASS=1 and rerun."
   exit 1
 fi

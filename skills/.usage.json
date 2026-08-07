@@ -1238,13 +1238,13 @@
     "archived_at": null,
     "created_at": "2026-05-11T05:42:53.237289+00:00",
     "last_patched_at": "2026-08-07T06:58:07.782925+00:00",
-    "last_used_at": "2026-08-07T08:31:25.783547+00:00",
-    "last_viewed_at": "2026-08-07T08:31:25.771361+00:00",
+    "last_used_at": "2026-08-07T08:47:53.723622+00:00",
+    "last_viewed_at": "2026-08-07T08:47:53.705811+00:00",
     "patch_count": 33,
     "pinned": false,
     "state": "active",
-    "use_count": 43,
-    "view_count": 43
+    "use_count": 44,
+    "view_count": 44
   },
   "hermes-s6-container-supervision": {
     "archived_at": null,
@@ -2827,13 +2827,13 @@
     "created_at": "2026-06-26T05:16:05.427451+00:00",
     "created_by": null,
     "last_patched_at": "2026-06-26T05:17:14.472141+00:00",
-    "last_used_at": "2026-08-07T08:32:14.285214+00:00",
-    "last_viewed_at": "2026-08-07T08:32:14.275024+00:00",
+    "last_used_at": "2026-08-07T08:48:30.029528+00:00",
+    "last_viewed_at": "2026-08-07T08:48:30.019326+00:00",
     "patch_count": 1,
     "pinned": false,
     "state": "active",
-    "use_count": 6,
-    "view_count": 6
+    "use_count": 7,
+    "view_count": 7
   },
   "xiaohongshu-marketing": {
     "archived_at": null,

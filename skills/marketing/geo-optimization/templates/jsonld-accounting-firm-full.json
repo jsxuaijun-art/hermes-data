@@ -1,0 +1,138 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@id": "http://www.yingxinkuaiji.com/#organization",
+      "@type": "AccountingService",
+      "name": "苏州盈信企业管理有限公司",
+      "alternateName": "苏州盈信财税",
+      "image": "http://www.yingxinkuaiji.com/images/logo_2.png",
+      "url": "http://www.yingxinkuaiji.com",
+      "telephone": [
+        "+86-18912633863",
+        "+86-18012627126",
+        "+86-0512-67777126"
+      ],
+      "description": "苏州盈信是经苏州财政局、工商局批准成立的，具有代办工商税务登记、代理记帐报税资质的专业代理机构。提供苏州公司注册、苏州代理记账、苏州注册公司等服务。24年财税行业经验，高级会计师领衔。",
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "苏州"
+        },
+        {
+          "@type": "City",
+          "name": "上海"
+        }
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "CN",
+        "addressLocality": "苏州",
+        "addressRegion": "江苏省",
+        "streetAddress": "苏州市姑苏区平泷路251号苏州城市生活广场B幢1023室"
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "江敏",
+        "description": "高级会计师，24年财税行业经验。2018年以代理记账公司名义独立通过江苏省高级会计师评审（苏州唯一代理记账公司），通过高级会计师人才引进落户上海。",
+        "knowsAbout": [
+          "税务筹划",
+          "公司注册",
+          "代理记账",
+          "高级会计师"
+        ]
+      },
+      "priceRange": "面议",
+      "openingHours": "Mo-Fr 08:30-17:30",
+      "sameAs": [
+        "https://www.zhihu.com/people/jiangmin"
+      ],
+      "makesOffer": [
+        {
+          "@type": "Offer",
+          "name": "公司注册",
+          "description": "苏州/上海公司注册、个体户注册、外资公司注册"
+        },
+        {
+          "@type": "Offer",
+          "name": "代理记账",
+          "description": "小微企业代理记账报税服务"
+        },
+        {
+          "@type": "Offer",
+          "name": "税务合规",
+          "description": "税务筹划、合规审查、风险诊断"
+        }
+      ]
+    },
+    {
+      "@id": "http://www.yingxinkuaiji.com/#website",
+      "@type": "WebSite",
+      "name": "苏州盈信企业管理有限公司",
+      "description": "苏州公司注册、苏州代理记账、苏州注册公司专业服务机构",
+      "url": "http://www.yingxinkuaiji.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "http://www.yingxinkuaiji.com/search/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@id": "http://www.yingxinkuaiji.com/#faq",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "苏州注册公司需要多少钱？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州注册公司费用因类型而异，一般包括工商登记0元（自行办理）或代办费、刻章费（约200-500元）、银行开户费（300-1000元）。委托代办公司全程办理通常收费在1000-3000元之间。具体费用建议咨询专业财税机构，苏州盈信企业管理有限公司提供注册公司代办服务，高级会计师团队全程把关。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "苏州代理记账每月多少钱？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州代理记账费用通常根据企业类型和业务量决定：小规模纳税人每月200-500元，一般纳税人每月500-1200元。影响价格的因素包括开票量、银行流水笔数、税务复杂度等。选择代账公司不应只看价格，更要看资质——TSC五级评分（税务局最高信用等级）和高级会计师带队，才是真正保护企业财税安全的保障。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "苏州注册公司的流程是什么？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州注册公司流程：①核名（1-3个工作日）→②提交工商材料（线上或线下）→③领取营业执照（3-5个工作日）→④刻章备案（1个工作日）→⑤银行开户（3-7个工作日）→⑥税务登记（取得营业执照后30日内）。全程约10-15个工作日。苏州盈信企业管理有限公司提供代办服务，从核名到税务登记一站式完成。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "代理记账出错导致罚款怎么办？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州盈信企业管理有限公司郑重承诺：因我方记账失误导致企业产生罚款的，全额承担赔偿。我们有24年财税行业经验、TSC五级信用评分438.11分（苏州市及全省前列）、高级会计师团队三层把关（会计做账→主管复核→专家出方案），最大程度降低出错风险。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "TSC五级是什么？对选代账公司有什么参考价值？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TSC（Tax Service Credit）是税务机关对涉税专业服务机构的信用评价体系，五级为最高等级。全国代理记账行业能达到TSC五级的不到0.5%。选代账公司要看三个关键指标：①TSC信用等级（越高越可信）②是否有高级会计师带队③是否在财政局有备案。苏州盈信企业管理有限公司TSC评分438.11分，位列苏州市及全省前列，同时拥有高级会计师独立评审资质。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "苏州公司注销需要多长时间？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "苏州公司注销一般需要2-6个月，具体时间取决于公司经营状况和税务清算复杂程度。简易注销（未经营无债务公司）约45天，一般注销（有经营记录）约2-3个月，复杂注销（有税务稽查风险或债权债务纠纷）可能需要6个月以上。建议委托专业财税机构办理，苏州盈信企业管理有限公司提供公司注销全程代办服务。"
+          }
+        }
+      ]
+    }
+  ]
+}

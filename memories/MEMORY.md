@@ -1,4 +1,4 @@
-Windows .bat含非ASCII(中文/制表符)在中文Windows上UTF-8会坏(含BOM也坏:BOM读成锘致)。仅纯ASCII可修：英文+`=/-`分隔+`[OK]`等状态。适用于Hermes同步-拉取/推送.bat全部4台机。详见skill wsl-hermes-env。
+.bat含非ASCII在中文Win上UTF-8会坏，仅纯ASCII可修。改同步.bat用write_file+英文文本，校验grep -cP非ASCII。防误删闸sync_guard.sh+P11排查见skill hermes-data-sync；该skill及wsl-hermes-env后台curator视为protected,维护需hermes curator adopt。
 §
 本机=Ubuntu,用户=administrator。桌面在/mnt/d/OneDrive/Desktop/(docx去那找)。Clash代理只绑127.0.0.1:7890:Github下载用curl.exe --proxy该地址,pip前unset代理。Windows hermes用uv装(venv无pip),WSL调.exe需Start-Process。
 §

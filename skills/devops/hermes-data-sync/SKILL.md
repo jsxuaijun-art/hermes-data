@@ -224,40 +224,42 @@ Only config files from `~/.codex/` are synced — exclude runtime data:
 **Include**: `config.toml`, `model_catalog.json`, `installation_id`, `version.json`, `rules/`, `skills/`
 **Exclude**: `history.jsonl`, `sessions/`, `*.sqlite`, `*.db`, `logs_*/`, `state_*/`, `tmp/`, `shell_snapshots/`
 
-## ★★ 跨机通用版同步脚本 (cross-PC .bat) 交付说明（2026-08-07 定稿）
+## ★★ 跨机通用版同步脚本 (cross-PC) 交付说明（2026-08-07 定稿 · v2 架构修正）
 
 > 目的：同一份 `Hermes同步-推送.bat` / `Hermes同步-拉取.bat` 拷到任何电脑都能直接用，**自动探测本机同步夹**，免去每次改路径（解决 P6 的 Administrator/Admin、HermesAgent/hermes-sync 差异）。
+>
+> **⚠️ v2 架构（2026-08-07 实测后才定型）**：`.bat` 只做一件事 = 调用 `hermes_push.sh` / `hermes_pull.sh`。**不要把联动路径变量内联进 .bat**——`wsl -d Ubuntu -- bash -c "... $HERMES_SYNC_DIR ..."` 在 cmd 里转义层数太多会变成字面 `$HERMES_SYNC_DIR`，bash 不展开 → `mkdir /memories` 权限错、cd 失败。**所有逻辑在 .sh 里，`.bat` 极简调脚本**。
 
 ### 交付物清单
 
 | 文件 | 说明 |
 |---|---|
-| `Hermes同步-推送.bat` | 跨机通用版。自动探测同步夹 + Hermes skills rsync 已去 `--delete` + Hermes 块接入 sync_guard 防误删闸。Claude/Codex 块保持原样 |
-| `Hermes同步-拉取.bat` | 跨机通用版。自动探测同步夹 + Hermes skills rsync 已去 `--delete` |
-| `skills/devops/hermes-data-sync/scripts/hermes_sync_path.sh` | 路径自动探测（候选：桌面HermesAgent→Admin/hermes-sync→用户hermes-sync→全域扫描 remote 含 hermes-data 的 git 夹）。**已被两个.bat 调用，随 skill 同步到各机，勿删** |
-| `skills/devops/hermes-data-sync/scripts/sync_guard.sh` | 防误删闸（commit 前拦截删除未白名单文件）。已推送 GitHub `c2fd56f` |
+| `Hermes同步-推送.bat` | 极简版：`wsl -d Ubuntu -- bash ~/.hermes/skills/devops/hermes-data-sync/scripts/hermes_push.sh`。Claude/Codex 块内联保留（固定路径无跨层变量，安全） |
+| `Hermes同步-拉取.bat` | 极简版：`wsl -d Ubuntu -- bash .../hermes_pull.sh` |
+| `scripts/hermes_push.sh` | **主推送逻辑**：探测→rsync(skills去--delete)→git pull/rebase→sync_guard→commit→push。已推送 GitHub `2f697c0` |
+| `scripts/hermes_pull.sh` | **主拉取逻辑**：探测→git fetch+reset→rsync(去--delete)→verify。已推送 `2f697c0` |
+| `scripts/hermes_sync_path.sh` | 路径自动探测（候选：桌面HermesAgent→Admin/hermes-sync→用户hermes-sync→全域扫描 含hermes-data 的git夹）。被上面.sh 调用 |
+| `scripts/sync_guard.sh` | 防误删闸（commit 前拦截删除未白名单文件）。commit `c2fd56f` |
 
 ### 拷贝到其他电脑的步骤
 
 1. 把 `Hermes同步-推送.bat` + `Hermes同步-拉取.bat` 拷到目标机桌面，覆盖旧版。
-2. 确保目标机 `~/.hermes/skills/devops/hermes-data-sync/scripts/` 下已有 `sync_guard.sh` + `hermes_sync_path.sh`（**先拉取一次拿到最新 skill**，或确认拉到最新后再换新 .bat，避免旧拉取把 skill 删了）。
-3. 双击 `Hermes同步-推送.bat` 实测：应打印 `[path] Sync dir = C:\...同步夹`，走完 6 步，不报 `[ERROR] Could not detect`。
+2. 确保目标机 `~/.hermes/skills/devops/hermes-data-sync/scripts/` 已有 4 个脚本（push/pull/path/guard）——**先跑一次新 `拉取.bat` 拉到最新 skill**（或手动 git pull 同步夹 + rsync），让脚本到位后再依赖它们。
+3. 双击 `Hermes同步-推送.bat` 实测：应打印 `[path] Sync dir = ...`，走完 `[DONE]`，不报 `[ERROR]`。
 
-### 必须实测的点（agent 无法替代，跨机 .bat 的 cmd 转义只能靠双击确认）
+### 必须实测的点（agent 无法替代）
 
-- `[path] Detecting Hermes sync dir...` → 是否打印出正确的 `Sync dir = C:\...`。
-- 若报 `[ERROR] Could not detect Hermes sync dir` 或乱码：是 `for /f tokens=1,* delims==` 解析 WSL 输出的转义问题，需按目标机的 cmd 环境微调。
-- WSL 发行版名：脚本用 `wsl -d Ubuntu`，若目标机发行版名不同（如 `Ubuntu-22.04`），需改 .bat 里的 `-d Ubuntu`。
-
-### 探测脚本的输出格式（.bat for /f 依赖它）
-
-`hermes_sync_path.sh` 打印一行：`HERMES_SYNC_DIR=/mnt/c/Users/Admin/hermes-sync`
-.bat 用 `for /f "tokens=1,* delims=="` 解析取 `=` 右边的值。**修改探测脚本时必须保持这行格式不变**。
+- 双击后**不再闪退**：v1 内联版本因变量转义失败会 `mkdir /memories` 权限错而闪停；v2 .sh 版已避免。
+- WSL 发行版名：`.bat`/`.sh` 用 `wsl -d Ubuntu`；若目标机发行版名不同（`Ubuntu-22.04`），改 `wsl -d Ubuntu-22.04`（在 .bat 里 + hermes_sync_path.sh 无此依赖）。
+- 探测脚本输出格式 `HERMES_SYNC_DIR=/mnt/c/...` 必须保持（push/pull.sh 用 eval 解析）。
 
 ### 已知边界/坑
 
-- 探测脚本**优先选 .git 健康且 remote 是 hermes-data 的夹**；若某台桌面 HermesAgent 的 .git 损坏，会正确 fallback 到 hermes-sync —— 这是特性不是 bug。
-- `sync_guard.sh` / `hermes_sync_path.sh` 放的是 `skills/devops/hermes-data-sync/scripts/`（在 `.gitignore` 的 `!skills/**` 白名单内），**不要**放 `~/.hermes/scripts/`（根级 scripts 不在白名单，无法跨机同步）。
+- 探测脚本**优先 .git 健康且 remote 是 hermes-data 的夹**；某台桌面 HermesAgent 的 .git 损坏时正确 fallback 到 hermes-sync —— 特性非 bug。
+- `.sh` 放 `skills/devops/hermes-data-sync/scripts/`（在 `.gitignore` 的 `!skills/**` 白名单内），**不要**放 `~/.hermes/scripts/`（根级不再白名单，无法跨机同步）。
+- v1 的教训（2026-08-07）：**`.bat` 内联 `$HERMES_SYNC_DIR` 转义必炸**——演进到 .sh 版本是唯一稳定解，勿回退到内联。
+
+
 
 
 

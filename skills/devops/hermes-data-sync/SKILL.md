@@ -421,3 +421,13 @@ Full `rsync -a ~/.hermes/ ...` (step 1 of the .bat) never hits this — it creat
 | Garbled "not an internal command" | WSL warning without `2>nul` | Add `2>nul` |
 | Script finishes, data unchanged | fetch+reset discarded local changes | Check git status before running |
 | `remote: fatal: pack exceeds max size` | curator_backups 100MB+ | Run P1 cleanup |
+| **git fetch/clone hangs (>150s) though `ssh -T git@github.com` is fast** | git 的 SSH 子进程握手不稳（China） | **前置 `GIT_SSH_COMMAND="ssh -o ConnectTimeout=15"` 再跑 git**（本机 2026-08-07 实测从卡死→秒通）。SSH 单独连 github.com:443(见~/.ssh/config) 秒通，但 git 默认调 ssh 卡住 |
+| **git push rejected "fetch first"** | 别机已推,本地 origin/main 过时 | `git fetch` 后 `git rebase origin/main`（**勿用 reset --hard，会丢本地新提交**）；用 `git log --oneline -3` 先看差异 |
+| **rebase 报 "deleted by us: SKILL.md"** | 远端某 sync 提**删除了文件**,你的提交改它→change/delete 冲突 | 这是**多机同步把文件从 git 删掉的严重信号**：`git show <我的提交>:<路径> > /tmp/x` 取回 → `cp`回工作区 → `add` → `GIT_EDITOR=true git rebase --continue` |
+| **skill 在某台机"消失",但 git 历史有它** | 被某个 `sync` 提交 `--diff-filter=D` 删了(如 company-deregistration 被 f20de05 误删) | `git log --oneline --diff-filter=D -- <路径>` 定位删除提交 → 从源机 `~/.hermes/skills/…` rsync 回 → `add/commit/push` 补回主仓库 |
+| **rebase --continue 报 editor 错误** | 非交互终端无编辑器 | 前置 `GIT_EDITOR=true`（复用原信息） |
+
+> ⚠️ **2026-08-07 实战最深教训（本机 office/Administrator/b91136e 确认）：**
+> ① `company-deregistration`(注销skill) **曾被 `f20de05 sync` 从 GitHub 误删**——它是"某一环节工作区缺它→sync 提交顺势把它删进 git"。已在本机补回并 push(`b91136e`)。**结论：凡是"某台机器本地没有的 skill/文件"，若用了 `rsync --delete` 或 `git add -A` 的同步提交，会被当成"删除"从仓库抹掉。** 多机同步务必保证每台工作区都有全量 skill，否则 --delete/add -A 会静默删文件。
+> ② 我(脚本)曾误用 `rsync --delete ~/.hermes/ → HermesAgent同步夹/`，结果把该同步夹的 `.git` 和 skills/ 工作树**连根删了**(~/.hermes 里没有 .git 和同步结构)。**教训:绝不能对同步夹跑"把 ~/.hermes 全量 --delete 镜像过去"的命令**,同步夹有 .git+README 等 ~/.hermes 没有的文件会被删。正确是把 `hermes-sync`(git 健康)当源,精确 rsync 单个 skill 目录(不含 --delete)。
+> ③ git 内网慢的可靠解法 = `GIT_SSH_COMMAND="ssh -o ConnectTimeout=15"`。

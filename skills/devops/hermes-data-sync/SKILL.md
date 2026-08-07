@@ -241,12 +241,12 @@ Only config files from `~/.codex/` are synced — exclude runtime data:
 |---|---|
 | `Hermes同步-推送.bat` | 极简：调 `hermes_push.sh` + `claude_codex_sync.sh` |
 | `Hermes同步-拉取.bat` | 极简：调 `hermes_pull.sh` + `claude_codex_pull.sh` |
-| `scripts/hermes_push.sh` | 主推送：探测→rsync(skills去--delete)→pull/rebase→sync_guard v2→commit→push |
+| `scripts/hermes_push.sh` | 主推送：探测→rsync(skills去--delete)→pull/rebase→sync_guard v3→commit→push |
 | `scripts/hermes_pull.sh` | 主拉取：探测→fetch+reset→rsync(去--delete)→verify |
 | `scripts/claude_codex_sync.sh` | Claude+Codex 推送（抽出，解决 v2 闪退） |
 | `scripts/claude_codex_pull.sh` | Claude+Codex 拉取 |
 | `scripts/hermes_sync_path.sh` | 路径自动探测（桌面HermesAgent→Admin/hermes-sync→用户hermes-sync→全域扫描） |
-| `scripts/sync_guard.sh` | **v2** 防误删闸：①删除拦截 ②一致性检测（本机有但 git 未跟踪的 skill 会🟡提醒，防漏推/误删） |
+| `scripts/sync_guard.sh` | **v3** 防误删闸（三道防线）：①删除拦截 ②一致性提醒 ③**缺失阻断**——本机 `~/.hermes/skills` 缺某个远端已有的 skill 时**强制中止推送**（防"推送机技能不全→add -A删远端skill"，QD两次误删根因）。推送机必须技能全 |
 
 ### 拷贝到其他电脑的步骤（已验证）
 

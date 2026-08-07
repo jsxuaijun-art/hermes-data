@@ -1,0 +1,35 @@
+{
+  "id": "01",
+  "name": "安信伯君（红底色）",
+  "version": "1.1",
+  "source": "安信伯君管理咨询",
+  "source_url": "https://mp.weixin.qq.com/s/qExdTCBVOrDtyalCpyVo9w",
+  "style_summary": "简洁商务风，小标题纯加粗无装饰，关键段落用红色（rgb(217,33,66)）加粗强调。一级标题（上半篇/下半篇）改用24px蓝色#1a73e8加大醒目",
+  "typography": {
+    "font_family": "\"PingFang SC\", system-ui, -apple-system, BlinkMacSystemFont, \"Helvetica Neue\", \"Hiragino Sans GB\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", Arial, sans-serif",
+    "body_font_size": "17px",
+    "body_color": "rgba(0, 0, 0, 0.9)",
+    "body_line_height": 1.75,
+    "letter_spacing": "0.544px",
+    "text_align": "justify",
+    "background_color": "#FFFFFF"
+  },
+  "headings": {
+    "style": "一级标题蓝色加大24px；二级纯加粗",
+    "h1_font_size": "24px",
+    "h1_color": "#1a73e8",
+    "other_headings": "纯加粗，无色块无边条"
+  },
+  "emphasis": {
+    "style": "红色加粗",
+    "color": "rgb(217, 33, 66)",
+    "font_weight": "bold",
+    "usage": "关键政策名称、CTA引导段落、重要数据"
+  },
+  "quotes": {
+    "style": "蓝边框灰背景",
+    "border_color": "#4A90D9",
+    "background": "#F5F7FA"
+  },
+  "overall_vibe": "简约、商务、重点突出、无冗余装饰"
+}

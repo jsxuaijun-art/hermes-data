@@ -1,8 +1,8 @@
-Windows batch files (.bat) with non-ASCII characters (Chinese, box-drawing symbols, Unicode symbols) break on Chinese Windows systems when saved as UTF-8. Both UTF-8 without BOM AND with BOM can fail — BOM bytes get read as literal text (锘緻echo). The only reliable fix is to rewrite with pure ASCII only: English text, `=/-` for separators, `[OK]/[FAIL]/[INFO]` for status indicators. Applies to Hermes同步-拉取.bat and Hermes同步-推送.bat on all 4 machines.
+Windows .bat含非ASCII(中文/制表符)在中文Windows上UTF-8会坏(含BOM也坏:BOM读成锘致)。仅纯ASCII可修：英文+`=/-`分隔+`[OK]`等状态。适用于Hermes同步-拉取/推送.bat全部4台机。详见skill wsl-hermes-env。
 §
-WSL distro 名：江敏笔记本=Ubuntu22.04（无短横线）；本机=Ubuntu。Windows 访问 WSL 文件用 \\wsl.localhost\Ubuntu\（公众号素材目录 \\wsl.localhost\Ubuntu\home\administrator\公众号素材\）。用户桌面文件在 /mnt/d/OneDrive/Desktop/（OneDrive重定向），找用户发来的docx直接看那里，别搜/mnt/c全盘（超时）。
+本机=Ubuntu,用户=administrator。桌面在/mnt/d/OneDrive/Desktop/(docx去那找)。Clash代理只绑127.0.0.1:7890:Github下载用curl.exe --proxy该地址,pip前unset代理。Windows hermes用uv装(venv无pip),WSL调.exe需Start-Process。
 §
-WSL(China)网页/政务检索: 首选搜狗sogou.com+360so.com(requests+bs4直抓,搜狗跳转链接反爬但数据列表可抓,360支持site:);cn.bing政务错乱、Baidu/DDG/Google不可达。查微信公众号用搜狗微信weixin.sogou.com/weixin?type=2(可抓标题摘要,正文被antispider拦)；视频号是封闭生态不进搜索引擎。详见skill chinese-government-site-retrieval。No proxy. pip清华。
+WSL(China)网页/政务检索: 首选搜狗sogou.com+360so.com(requests+bs4直抓,搜狗跳转链接反爬但数据列表可抓,360支持site:);cn.bing政务错乱、Baidu/DDG/Google不可达。查微信公众号用搜狗微信weixin.sogou.com/weixin?type=2(可抓标题摘要,正文被antispider拦)；视频号是封闭生态不进搜索引擎。详见skill chinese-government-site-retrieval。pip清华。Windows Clash代理只绑127.0.0.1:7890(Allow LAN关),GitHub下载用curl.exe走--proxy http://127.0.0.1:7890;pip前unset代理。
 §
 用户（徐爱军）常处理苏州爱心之家老年公寓（民办非企业）的财务报表格式转换：小企业会计准则→民间非营利组织。要点：实收资本+未分配利润→非限定性净资产（负数），应收款项=应收账款+预付账款+其他应收款，应付款项=应付账款+其他应付款。技能已保存为 chinese-accounting-format-conversion。
 §
@@ -21,3 +21,5 @@ Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git
 公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
 §
 素材注入skill只能作「备选项/备选方法之一」(像公众号排版风格库多选一)，不得写成唯一必选、不得绑架工作流，无关主题按原流程走不用它。例：抖音高赞泛粉素材已按此定位注入short-video-copywriting第九节+wechat-publish内容素材库。
+§
+人工HTML/SVG分镜5风格(漫画01/MBE02/极简03/数据图04/微信对话05)均存备选、用户全不满意——要真正AI生图的专业绘画质感。明天用户给参考风格链接。**下一最高优先任务：创造可用生图能力**=换可生图大模型或装生图skill(局部coze/image_gen/ComfyUI/文心/通义万相)，当前chudian视觉key脱敏不可用。生图建成后用其重做用户认可风格。参考wechat-comic-cells skill。

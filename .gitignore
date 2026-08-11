@@ -49,3 +49,6 @@ skills/**/.curator_backups/
 skills/**/dist/
 skills/**/node_modules/
 *.tar.gz
+
+__pycache__/
+*.pyc

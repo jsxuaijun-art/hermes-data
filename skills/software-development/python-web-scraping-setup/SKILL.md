@@ -5,6 +5,39 @@ description: Cross-platform web scraping environment setup — DrissionPage, scr
 
 # Python 爬虫环境设置
 
+## 工具选择原则 ★（2026-08-18 徐总定稿：谁能出结果用谁）
+
+**原则：哪个爬虫能达到效果就用哪个，不区分国内国外，先出结果优先。**
+遇到抓取任务：先判断 Firecrawl 能不能搞定、本地工具稳不稳，哪个更快到结果就用哪个，不硬分地域。
+（提示性参考，不是硬性分栏——海外+文档+结构化→Firecrawl 顺手；政务+公众号+封闭平台+数据私有+免费无限→本地顺手）
+
+**⚠️ 用国外资源前，提醒徐总开启代理（Clash）**
+- Firecrawl 云 API（api.firecrawl.dev / mcp.firecrawl.dev）WSL 实测**直连可达**，一般不用代理
+- 但访问 firecrawl.dev 官网/Dashboard、GitHub、npm registry、海外网站正文等**国外资源**时，
+  先提醒「请开启代理(Clash 全局)」再继续——WSL 里 git/curl/浏览器走代理有坑，需手动开
+
+| 场景 | 首选 | 备注 |
+|------|------|------|
+| 海外站 / JS渲染重 / 反爬强的境外页 | **Firecrawl**（MCP） | mcp_firecrawl_scrape 等 |
+| 网页/PDF/DOCX/XLSX → Markdown 或结构化JSON | **Firecrawl parse/scrape** | 一键转干净文本给LLM |
+| 要全文搜索结果 / 全站crawl / 定时监控 | **Firecrawl search/crawl/monitor** | 一条API搞定 |
+| 国内政务/政策公文 | **本地 requests+bs4** | 搜狗/360 直抓，见 chinese-government-site-retrieval |
+| 微信公众号正文 | **本地半强流程** | 搜狗微信，见 chinese-wechat-content-retrieval |
+| 小红书/抖音/视频号（封闭平台） | 两者都难 | 按该平台的既有note/方案 |
+| 数据要私有 / 免费无限量 / 重度批量 | **本地** Playwright/scrapling/curl_cffi | 不耗 credits |
+
+> 以上为**参考倾向**，真正原则（徐总 2026-08-18 定稿）：**谁能达到效果就用谁，不区分国内外，先出结果优先**。用国外资源前提醒徐总开代理。
+
+## Firecrawl（云 API · MCP 直连，2026-08-18 接入）
+
+- **性质**：云抓取管道 API，号称覆盖 96% 网页，托管反爬/JS渲染/代理轮换，输出 LLM-ready Markdown/JSON
+- **本机已配**：`~/.hermes/.env` 的 `FIRECRAWL_API_KEY`（0600 权限，不同步）+ `config.yaml` 的 `mcp_servers.firecrawl`（HTTP 端点 `https://mcp.firecrawl.dev/v2/mcp` + Bearer 头）
+- **⚠️ mcp 库锁定 1.28.1**（pyproject 项目的 `mcp==1.28.1`，勿升 2.x——`streamable_http_client` 的 yield 值数不同会导致 Hermes MCP 崩）
+- **免费档 1000 credits/月**：scrape/crawl/map/parse=1/page，search=2/10条，interact=2/浏览器分钟；失败请求不收费；重度再上 Hobby($16/月 5000页)
+- **MCP 工具（26 个，重启 Hermes 后生效）**：`firecrawl_scrape/search/crawl/map/parse/interact/agent` + `monitor_*` + `research_*`（论文/代码检索）
+- **触发词**：用户说「用 Firecrawl / 云抓 / 抓海外页 / 转文档 / 结构化抽取 / 搜全文」→ 走 MCP 工具
+- **局限**：海外代理池为主，国内政务/封闭平台（公众号/小红书/抖音/视频号）不保证能过，别指望用它替代本地政务流程
+
 ## 安装策略（A方案 — 当前）
 
 所有工具统一安装到 **Hermes 主 Python 环境**，不建独立 venv：

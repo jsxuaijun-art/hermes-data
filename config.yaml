@@ -673,3 +673,11 @@ platforms:
 # fallback_model:
 #   provider: openrouter
 #   model: anthropic/claude-sonnet-4
+
+# Firecrawl MCP (发布于 2026-08-18)
+# Firecrawl MCP (2026-08-18) - 远程 HTTP MCP server（官方端点，无需npm包）
+mcp_servers:
+  firecrawl:
+    url: "https://mcp.firecrawl.dev/v2/mcp"
+    headers:
+      Authorization: "Bearer fc-7e6859ff39c04e049840cd4d2fb89865"

@@ -2,7 +2,7 @@
 §
 本机=Ubuntu,用户=administrator。桌面在/mnt/d/OneDrive/Desktop/(docx去那找)。Clash代理只绑127.0.0.1:7890:Github下载用curl.exe --proxy该地址,pip前unset代理。Windows hermes用uv装(venv无pip),WSL调.exe需Start-Process。
 §
-WSL(China)网页/政务检索: 首选搜狗+360so(requests+bs4直抓);cn.bing政务错乱、Baidu/DDG/Google不可达。查公众号用搜狗微信weixin.sogou.com/weixin?type=2(正文被antispider拦)；视频号封闭生态不进搜索引擎。详见skill chinese-government-site-retrieval。pip清华。
+WSL(China)检索: 首选搜狗+360so(requests+bs4直抓);cn.bing政务错乱、Baidu/Google不可达;公众号用搜狗微信type=2;视频号不进搜索;搜狗/360跳转链so.com/link requests直解400,web_extract可跟随落地页;gov.cn子域DNS拦用省局官网。见skill python-web-scraping-setup。pip清华。
 §
 用户（徐爱军）常处理苏州爱心之家老年公寓（民办非企业）的财务报表格式转换：小企业会计准则→民间非营利组织。要点：实收资本+未分配利润→非限定性净资产（负数），应收款项=应收账款+预付账款+其他应收款，应付款项=应付账款+其他应付款。技能已保存为 chinese-accounting-format-conversion。
 §
@@ -10,7 +10,7 @@ WSL(China)网页/政务检索: 首选搜狗+360so(requests+bs4直抓);cn.bing政
 §
 知识库存储原则：存方法不存结果，存经验不存指令。实战经验(窗口实然口径)>法规>网上，先查各skill实战经验库(敏感标[敏感]先请示)。
 §
-公众号铁律（用户反复强调）：①严禁AI幻觉，不确定政策/数据/法规绝对不写，引用标注官方文号，宁可少说不说错；②配图铁律：禁止复用任何历史图片、禁止建图片库，每次创作直接用AI生成或查找与主题高度相关的新图，每段配图严格对应本段主题；③模板固定：公司介绍(盈信2009-12-11/江敏创办/TSC五级438.11/17年)→核心业务→二维码→CTA三动作+话题标签5-8个勿漏(详见尾部规范条)→作者"苏州盈信企业管理"。
+公众号铁律：①严禁AI幻觉，不确定政策/法规/数据绝对不写，引用标官方文号，宁可少说不说错；②配图铁律：禁用任何历史图、禁建图库，每次AI生成或找主题相关新图，每段配图对应主题，封面绝不复用历史图；③模板固定：公司介绍(盈信2009-12-11/江敏/TSC五级438.11/17年)→核心业务→二维码→CTA三动作+标签5-8个→作者"苏州盈信企业管理"；④发布流程(2026-08-14)：默认不进草稿箱除非用户主动说；二维码/电话主动问；免费资料话术='📥免费领资料：关注我们，并在公众号对话框回复「关键词」，领取《XX》PDF。'(必带'关注我们')；'觉得有用'CTA保留。
 §
 用户触发词约定：「朋友圈」→wechat-moments-marketing出文案+3张Unsplash图+拷桌面+企微API推XuAiJun勿问确认。「调用短视频skill」→自动同时调爬虫skill(python-web-scraping-setup)按主题搜信息，输出要超前超脱的上帝视角、提出不同观点并分析得头头是道。
 §
@@ -22,4 +22,4 @@ Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git
 §
 素材注入skill只能作「备选项/备选方法之一」(像公众号排版风格库多选一)，不得写成唯一必选、不得绑架工作流，无关主题按原流程走不用它。例：抖音高赞泛粉素材已按此定位注入short-video-copywriting第九节+wechat-publish内容素材库。
 §
-人工HTML/SVG分镜5风格(漫画01/MBE02/极简03/数据图04/微信对话05)均存备选、用户全不满意——要真正AI生图的专业绘画质感。明天用户给参考风格链接。**下一最高优先任务：创造可用生图能力**=换可生图大模型或装生图skill(局部coze/image_gen/ComfyUI/文心/通义万相)，当前chudian视觉key脱敏不可用。生图建成后用其重做用户认可风格。参考wechat-comic-cells skill。
+生图未建成(chudian视觉key脱敏不可用)。**下一最高优先任务=创造可用生图能力**(换可生图大模型或装image_gen/ComfyUI等skill)，建成后重做用户认可风格。人工HTML/SVG分镜5风格用户全不满意，参考wechat-comic-cells skill。

@@ -433,7 +433,7 @@ def calc_qingshui_tax(pool, discount_rate=1.0, liq_cost=None, corp_tax_rate=0.25
 # ═══════════════════════════════════════════
 # 报告输出
 # ═══════════════════════════════════════════
-def gen_docx(findings, total_assets, out_path, tax=None):
+def gen_docx(findings, total_assets, out_path, tax=None, shareholders=None, company=None, attachments=None):
     """生成 Word 注销雷区诊断报告"""
     from docx import Document
     from docx.shared import Pt, RGBColor
@@ -463,6 +463,22 @@ def gen_docx(findings, total_assets, out_path, tax=None):
     H("公司注销 · 税务清税 雷区诊断报告", 20, (0x1F,0x49,0x7D), True)
     P("苏州盈信企业管理有限公司 · 高级会计师江敏", 10.5, (0x99,0x99,0x99), True)
     P("基于科目余额表/财务报表自动解析生成", 9, (0x99,0x99,0x99))
+    if company or shareholders:
+        H("主体及股东出资信息", 12, (0x1F,0x49,0x7D))
+        if company:
+            P(f"公司名称：{company}")
+        if shareholders:
+            for sh in shareholders:
+                cap = f"{sh.get('capital','')} 万元" if sh.get('capital') else "—"
+                rat = f"{sh.get('ratio','')}%" if sh.get('ratio') else "—"
+                paid = f"实缴 {sh.get('paid','')} 万元" if sh.get('paid') else ""
+                P(f"　股东：{sh.get('name','')} ｜ 持股 {rat} ｜ 认缴 {cap} ｜ {paid}".rstrip(" ｜"))
+        P("")
+    if attachments:
+        H("上传附件（情况说明等）", 12, (0x1F,0x49,0x7D))
+        for a in attachments:
+            P(f"　· {a}")
+        P("")
     P("")
     H("一、诊断结论")
     if not findings:

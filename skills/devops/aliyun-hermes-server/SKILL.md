@@ -21,13 +21,26 @@ description: 阿里云服务器(47.103.27.171) Hermes 运维：代码升级、�
 | 实例 | yingxinkuaiji，Ubuntu 22.04，root 登录 |
 | 主机名 | iZuf6hr71n2woh5l98hf1dZ |
 | Hermes 安装 | 官方安装脚本 → /usr/local/lib/hermes-agent（自带 venv），launcher /usr/local/bin/hermes（bash wrapper → venv/bin/hermes） |
-| systemd 服务 | hermes-gateway.service / hermes-wsl-manager.service / wecom-bridge.service |
+| systemd 服务 | hermes-gateway.service / hermes-wsl-manager.service / wecom-bridge.service / **hermes-diag.service**（注销清税诊断Web应用，见下） |
 | Hermes cron | 财税情报推送（每周一 8:30，脚本 unified_tax_loader.py，workdir /root） |
 | 系统 crontab | 每月1日 3:00 cleanup.sh（GitHub 推送）；acme.sh 证书续期 |
 
 ## 核心心智：数据同步 ≠ 代码升级
 
 hermes-data 仓库（见 hermes-data-sync skill）只同步**数据**（skills / SOUL.md / 记忆 / config.yaml），**不同步代码**。每台机器的 Hermes 代码必须各自执行 `hermes update`。所以「本机升级了」不代表「阿里云也升级了」——升级前先逐端 `hermes version` 对比。
+
+## 注销清税诊断 Web 应用（hermes-diag）
+
+供同事（不用 Hermes）上传报表自动出《注销雷区诊断报告》的公网工具。
+
+- **访问地址**：`https://47.103.27.171/diag/`（同事浏览器直接用，80→443 自动跳转）
+- **代码**：`/opt/hermes-data-app/`（app.py + qingshui_risk_engine.py + templates/）
+- **systemd 服务**：`hermes-diag.service`（venv 在 /opt/hermes-data-app/venv，端口 8000，HOST 0.0.0.0，Restart=always）
+- **nginx 反代**：`/etc/nginx/sites-enabled/hermes-gateway` 的 443 server 块内 `location /diag/` → `proxy_pass http://127.0.0.1:8000/`（剥离 /diag/ 前缀）。`location = /diag` 跳转到 `/diag/`。
+- **模板相对路径铁律**：app 挂在 /diag/ 子路径下，模板表单/下载/返回链接**必须用相对路径**（`action="diagnose"`、`href="download/xxx"`、`href="./"`），不能用绝对路径（会绕开 /diag/ 404）。app.py 已设 `TEMPLATES_AUTO_RELOAD=True`，更新模板无需重启，但改 app.py 后要 `systemctl restart hermes-diag.service`。
+- **依赖**：flask + openpyxl + xlrd + python-docx（清华镜像装）。改依赖后 pip install 进 /opt/hermes-data-app/venv。
+- **更新流程**：本机 `~/hermes-data-app/` 改完 → scp app.py/templates/ 到 /opt/hermes-data-app/ → `systemctl restart hermes-diag.service`。
+- **坑**：① 阿里云安全组需开放 8000（外网直接访问 8000 用，经 nginx 443 则只需 443）；② 上传的中文文件名用 uuid+原扩展名保存（secure_filename 会剥中文导致 openpyxl 认不出格式）。
 
 ## SSH 访问
 

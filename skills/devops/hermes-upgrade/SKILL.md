@@ -83,7 +83,11 @@ clarify 超时后系统说 "use your best judgement" 也不能继续——再试
      --exclude='skills/' --exclude='memories/' --exclude='obsidian-vault/' \
      --exclude='config.yaml' --exclude='cron/' --exclude='outputs/' \
      --exclude='scrapling/' --exclude='claw-memory/' \
+     --exclude='cli.py' \
      --exclude='sync-push-wsl.sh' --exclude='sync-pull-wsl.sh'
+   # NOTE cli.py 本机有定制（Ctrl+C 空闲不退出、改由 Ctrl+Q 退出），已被
+   # --exclude='cli.py' 保护，升级不会覆盖。升级后可用 diff 检查上游 cli.py
+   # 是否有其它值得合并的更新（见 Pitfalls 7）。
    ```
    原则：排除 `git ls-files` 里的用户数据；上游 zip 只有上游文件，只需排除
    与上游同名的数据目录（skills/、cron/、scripts/）和顶层用户文件
@@ -132,6 +136,19 @@ curl -sSL --http1.1 --retry 3 -o /tmp/hermes-main.zip \
 5. **rsync 不带 --delete**：只覆盖不删除，防止误删用户数据
 6. 阿里云官方安装的 `hermes version` 显示准确（upstream=真实上游 SHA）；混合仓库
    永远显示旧值——两端对比时别被误导
+7. **本机 cli.py 有本地定制**（Ctrl+C 空闲不退出、改用 Ctrl+Q 退出），升级 rsync
+   已用 `--exclude='cli.py'` 保护。代价是 cli.py 永不跟随上游自动更新。升级后可选
+   检查上游是否有其它有价值更新：
+   ```bash
+   diff /tmp/hermes-upstream/hermes-agent-main/cli.py cli.py | head -60
+   ```
+   若上游改动了 handle_ctrl_c / handle_ctrl_q 但未触及我们的定制点，可手动把这部分
+   差异合入本地 cli.py（参考 /tmp/cli.py.bak.* 或项目的定制注释定位）。
+   换机 / 重装 / cli.py 被意外覆盖后，用本技能的补丁脚本一键重放定制：
+   ```bash
+   python scripts/reapply-ctrl-c-idle-exit-patch.py <hermes-agent>/cli.py
+   ```
+   （幂等：已应用会打印 ALREADY APPLIED，不会重复修改。）
 
 ## Verification
 

@@ -1,6 +1,6 @@
-.bat含非ASCII在中文Win上UTF-8会坏仅纯ASCII可修；改同步.bat用write_file+英文,校验grep -cP非ASCII。防误删sync_guard.sh+P11见skill hermes-data-sync(curator视protected须adopt)。注销skill(company-deregistration,用户自有勿改)的qingshui_risk_engine.py把科目余额表「期初」当「期末」诊断,临注销公司(期初大期末小)必错,用前先人工核对期末(资产表C&G列),差>10%废弃重算；docx输出硬编home机/mnt/c/Users/Admin/Desktop,office机cp+sed改本机桌面勿改共享脚本。
+.bat在中文Win必须纯ASCII否则UTF-8坏；改同步.bat用write_file+英文并grep -cP验非ASCII。防误删sync_guard.sh+P11见hermes-data-sync(protected须adopt)。company-deregistration(用户自有勿改)的qingshui_risk_engine把「期初」当「期末」(临注销期初>期末必错),用前核对期末(资产表C&G列),差>10%废弃重算。docx输出硬编home机/mnt/c/Users/Admin/Desktop;office机cp+sed改本机桌面,勿改共享脚本。
 §
-本机Ubuntu;桌面/mnt/d/OneDrive/Desktop;Clash仅127.0.0.1:7890,GitHub下载用curl.exe走代理,pip前unset代理;Win hermes用uv装,调.exe需Start-Process。
+本机Ubuntu;桌面/mnt/d/OneDrive/Desktop;Clash127.0.0.1:7890走代理(curl.exe),pip前unset,Win hermes用uv装,调.exe需Start-Process。memory上限已调大5000/2200,config设,重启生效。
 §
 WSL(China)检索: 首选搜狗+360so(requests+bs4直抓);cn.bing政务错乱、Baidu/Google不可达;公众号用搜狗微信type=2;视频号不进搜索;搜狗/360跳转链so.com/link requests直解400,web_extract可跟随落地页;gov.cn子域DNS拦用省局官网。见skill python-web-scraping-setup。pip清华。
 §
@@ -22,6 +22,14 @@ Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git
 §
 素材注入skill只能作备选项之一,不得绑架工作流,无关主题按原流程。
 §
-生图未建成(chudian视觉key脱敏不可用)。**下一最高优先任务=创造可用生图能力**(换可生图大模型或装image_gen/ComfyUI等skill)，建成后重做用户认可风格。人工HTML/SVG分镜5风格用户全不满意，参考wechat-comic-cells skill。
+生图能力未建成(视觉key脱敏)。**最高优先=建成可用生图**:换可生图大模型或装image_gen/ComfyUI,建成后重做风格;人工分镜用户不满意,参考wechat-comic-cells。
 §
-Firecrawl(2026-08调研,16.9万★托管抓取API):免费1000credit/月,宜文档解析/海外JS站;国内政务/公众号/封闭平台仍用本地工具;徐总注册中,待fc-key接Hermes MCP。
+Firecrawl:免费1000cr/月,宜文档解析/海外JS站;国内政务/公众号/封闭平台用本地工具。
+§
+cli.py本地定制:空闲Ctrl+C不退出,退出用Ctrl+Q,升级排除cli.py,补丁重放见hermes-upgrade技能,已推github。
+§
+大文件用write_file一次写入易流式超时(静默失败)。大内容须拆成小块(多次write_file/patch追加),勿重试同一大调用。
+§
+徐总微信实时谈单/谈判,偏好紧凑速查卡式交付(如price-negotiation黄金六招速查卡)。做话术/谈判类产出默认出卡片式速查表,勿给长文。
+§
+price-negotiation触发词：用户说「价格/谈判/洽谈/砍价/压价」或含「优惠/打折/便宜/收费/报价/贵/比价/别家/免费/续费」等价格信号即调用该skill（不只限降价场景）。谈价优先用references/黄金六招速查卡。

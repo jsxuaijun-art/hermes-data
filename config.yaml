@@ -256,7 +256,7 @@ auxiliary:
     timeout: 30
 display:
   compact: false
-  personality: kawaii
+  personality: ''
   resume_display: full
   resume_exchanges: 10
   resume_max_user_chars: 300
@@ -402,16 +402,16 @@ memory:
   flush_min_turns: 6
   nudge_interval: 10
 delegation:
-  model: ''
-  provider: ''
+  model: kimi-k3
+  provider: telecom-kimi
   base_url: ''
   api_key: ''
   api_mode: ''
   inherit_mcp_toolsets: true
-  max_iterations: 50
+  max_iterations: 250
   child_timeout_seconds: 600
   reasoning_effort: ''
-  max_concurrent_children: 3
+  max_concurrent_children: 10
   max_spawn_depth: 1
   orchestrator_enabled: true
   subagent_auto_approve: false
@@ -506,18 +506,17 @@ approvals:
   mcp_reload_confirm: true
   destructive_slash_confirm: true
 command_allowlist:
-  - overwrite project env/config file
-  - stop/restart system service
   - recursive delete
-  - script execution via heredoc
-  - overwrite system config
-  - Windows cmd destructive delete
-  - copy/move file into system config path
-  - git force push (rewrites remote history)
-  - git branch force delete
-  - delete in root path
   - overwrite project env/config via redirection
+  - git reset --hard (destroys uncommitted changes)
+  - script execution via heredoc
+  - git force push (rewrites remote history)
+  - overwrite system config
+  - delete in root path
   - script execution via -e/-c flag
+  - stop/restart system service
+  - git branch force delete
+  - overwrite project env/config file
   - hermes update (restarts gateway, kills running agents)
 hooks_auto_accept: false
 security:
@@ -629,7 +628,7 @@ paste_collapse_threshold_fallback: 5
 paste_collapse_char_threshold: 2000
 computer_use:
   cua_telemetry: false
-_config_version: 33
+_config_version: 37
 platform_toolsets:
   cli:
     - terminal
@@ -651,33 +650,3 @@ platforms:
       port: 8642
   wecom:
     enabled: false
-
-# ── Fallback Model ────────────────────────────────────────────────────
-# Automatic provider failover when primary is unavailable.
-# Uncomment and configure to enable. Triggers on rate limits (429),
-# overload (529), service errors (503), or connection failures.
-#
-# Supported providers:
-#   openrouter   (OPENROUTER_API_KEY)  — routes to any model
-#   openai-codex (OAuth — hermes auth) — OpenAI Codex
-#   nous         (OAuth — hermes auth) — Nous Portal
-#   zai          (ZAI_API_KEY)         — Z.AI / GLM
-#   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
-#   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
-#   minimax      (MINIMAX_API_KEY)     — MiniMax
-#   minimax-cn   (MINIMAX_CN_API_KEY)  — MiniMax (China)
-#   bedrock      (AWS IAM / boto3)     — AWS Bedrock (Converse API)
-#
-# For custom OpenAI-compatible endpoints, add base_url and key_env.
-#
-# fallback_model:
-#   provider: openrouter
-#   model: anthropic/claude-sonnet-4
-
-# Firecrawl MCP (发布于 2026-08-18)
-# Firecrawl MCP (2026-08-18) - 远程 HTTP MCP server（官方端点，无需npm包）
-mcp_servers:
-  firecrawl:
-    url: "https://mcp.firecrawl.dev/v2/mcp"
-    headers:
-      Authorization: "Bearer fc-7e6859ff39c04e049840cd4d2fb89865"

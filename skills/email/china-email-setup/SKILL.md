@@ -154,3 +154,5 @@ v2 的 `envelope list` 用 `-m <NAME>` 指定邮箱（mailbox），不再用 `--
 - `scripts/probe-163-imap.sh` — openssl 直连探测 163 授权码是否有效（用法见脚本头注释）
 - `scripts/read_163.py` — **POP3 读信脚本**（163 被 IMAP 风控时的落地方案，himalaya 无 POP3，用此脚本直连 pop.163.com:995）。复制到桌面改 USER/PASS 即可用。
 - **每日监控落地**：`~/.hermes/scripts/read_163_daily.py` 是 read_163.py 的摘要版（读最近5封，无邮件静默），已注册为 cron「网易163·每日邮件监控」（`--script --no-agent`，每天09:05，**零 token**）。新邮箱接入也可照此套一个 daily 监控 cron。详见 hermes-15-level-upgrade `references/week1-email-mcp.md`。
+- `scripts/read_163_full.py` — **全文批量读取（triage 专用）**：daily 摘要只出主题行，cron agent 要分类时必须读全文。一次连接批量读最近 N 封，优先 text/plain、HTML-only 邮件（财新/DeepSeek 通知）剥标签兜底；凭据自动从 read_163_daily.py 解析（不重复维护）。
+- `references/163-sender-profiles.md` — **自动发件人画像速查表**：天眼查/DeepSeek/财新/领英各自处置类别 + 天眼查监控日报解读要点 + DeepSeek 类服务通知的「实操落点」翻译法 + 用户接受的巡检输出格式。cron triage 直接查表，不用每封重读。

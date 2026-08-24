@@ -1,14 +1,12 @@
-.bat含非ASCII在中文Win上UTF-8会坏仅纯ASCII可修；改同步.bat用write_file+英文,校验grep -cP非ASCII。防误删sync_guard.sh+P11见skill hermes-data-sync(curator视protected须adopt)。注销skill(company-deregistration,用户自有勿改)的qingshui_risk_engine.py把科目余额表「期初」当「期末」诊断,临注销公司(期初大期末小)必错,用前先人工核对期末(资产表C&G列),差>10%废弃重算；docx输出硬编home机/mnt/c/Users/Admin/Desktop,office机cp+sed改本机桌面勿改共享脚本。
+防误删sync_guard.sh+P11见skill hermes-data-sync(用户自有,curator须adopt),wsl-hermes-env§9亦然。注销skill(company-deregistration勿改)的qingshui_risk_engine.py把科目余额表「期初」当「期末」诊断,临注销公司(期初大期末小)必错,用前先人工核对期末(C&G列),差>10%废弃重算；docx输出硬编/mnt/c/Users/Admin/Desktop,office机本机改勿碰共享脚本。同步夹memories/源=~/.hermes/memories/(Hermes),非~/memories/(Codex)。
 §
-本机=Ubuntu,用户=administrator。桌面在/mnt/d/OneDrive/Desktop/(docx去那找)。Clash代理只绑127.0.0.1:7890:Github下载用curl.exe --proxy该地址,pip前unset代理。Windows hermes用uv装(venv无pip),WSL调.exe需Start-Process。
+交付文件默认放Windows桌面/mnt/c/Users/Admin/Desktop(用户名Admin),不放WSL桌面~/,不显示WSL路径。不生成md文件——除非写清打开方式，否则直接不生成(交付用docx/txt)。Clash代理只绑127.0.0.1:7890:Github用curl.exe --proxy,pip前unset代理。Windows hermes用uv装,WSL调.exe需Start-Process。
 §
-WSL(China)网页/政务检索: 首选搜狗+360so(requests+bs4直抓);cn.bing政务错乱、Baidu/DDG/Google不可达。查公众号用搜狗微信weixin.sogou.com/weixin?type=2(正文被antispider拦)；视频号封闭生态不进搜索引擎。详见skill chinese-government-site-retrieval。pip清华。
+政务/法律条文检索用anysearch CLI batch_search 可直抓权威官文(文号+施行日期)，已实操验证(法释〔2025〕4号等)。pip清华。
 §
 用户（徐爱军）常处理苏州爱心之家老年公寓（民办非企业）的财务报表格式转换：小企业会计准则→民间非营利组织。要点：实收资本+未分配利润→非限定性净资产（负数），应收款项=应收账款+预付账款+其他应收款，应付款项=应付账款+其他应付款。技能已保存为 chinese-accounting-format-conversion。
 §
 用户要求提到 GEO 时必须加载 geo-optimization 技能 + 8平台独立指南(百家号/网易号/新浪财经头条/企鹅号/搜狐号/今日头条/知乎/公众号)。偏好中文、直接给能用的方案没说废话。
-§
-知识库存储原则：存方法不存结果，存经验不存指令。实战经验(窗口实然口径)>法规>网上，先查各skill实战经验库(敏感标[敏感]先请示)。
 §
 公众号铁律（用户反复强调）：①严禁AI幻觉，不确定政策/数据/法规绝对不写，引用标注官方文号，宁可少说不说错；②配图铁律：禁止复用任何历史图片、禁止建图片库，每次创作直接用AI生成或查找与主题高度相关的新图，每段配图严格对应本段主题；③模板固定：公司介绍(盈信2009-12-11/江敏创办/TSC五级438.11/17年)→核心业务→二维码→CTA三动作+话题标签5-8个勿漏(详见尾部规范条)→作者"苏州盈信企业管理"。
 §

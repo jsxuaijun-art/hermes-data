@@ -5,39 +5,6 @@ description: Cross-platform web scraping environment setup — DrissionPage, scr
 
 # Python 爬虫环境设置
 
-## 工具选择原则 ★（2026-08-18 徐总定稿：谁能出结果用谁）
-
-**原则：哪个爬虫能达到效果就用哪个，不区分国内国外，先出结果优先。**
-遇到抓取任务：先判断 Firecrawl 能不能搞定、本地工具稳不稳，哪个更快到结果就用哪个，不硬分地域。
-（提示性参考，不是硬性分栏——海外+文档+结构化→Firecrawl 顺手；政务+公众号+封闭平台+数据私有+免费无限→本地顺手）
-
-**⚠️ 用国外资源前，提醒徐总开启代理（Clash）**
-- Firecrawl 云 API（api.firecrawl.dev / mcp.firecrawl.dev）WSL 实测**直连可达**，一般不用代理
-- 但访问 firecrawl.dev 官网/Dashboard、GitHub、npm registry、海外网站正文等**国外资源**时，
-  先提醒「请开启代理(Clash 全局)」再继续——WSL 里 git/curl/浏览器走代理有坑，需手动开
-
-| 场景 | 首选 | 备注 |
-|------|------|------|
-| 海外站 / JS渲染重 / 反爬强的境外页 | **Firecrawl**（MCP） | mcp_firecrawl_scrape 等 |
-| 网页/PDF/DOCX/XLSX → Markdown 或结构化JSON | **Firecrawl parse/scrape** | 一键转干净文本给LLM |
-| 要全文搜索结果 / 全站crawl / 定时监控 | **Firecrawl search/crawl/monitor** | 一条API搞定 |
-| 国内政务/政策公文 | **本地 requests+bs4** | 搜狗/360 直抓，见 chinese-government-site-retrieval |
-| 微信公众号正文 | **本地半强流程** | 搜狗微信，见 chinese-wechat-content-retrieval |
-| 小红书/抖音/视频号（封闭平台） | 两者都难 | 按该平台的既有note/方案 |
-| 数据要私有 / 免费无限量 / 重度批量 | **本地** Playwright/scrapling/curl_cffi | 不耗 credits |
-
-> 以上为**参考倾向**，真正原则（徐总 2026-08-18 定稿）：**谁能达到效果就用谁，不区分国内外，先出结果优先**。用国外资源前提醒徐总开代理。
-
-## Firecrawl（云 API · MCP 直连，2026-08-18 接入）
-
-- **性质**：云抓取管道 API，号称覆盖 96% 网页，托管反爬/JS渲染/代理轮换，输出 LLM-ready Markdown/JSON
-- **本机已配**：`~/.hermes/.env` 的 `FIRECRAWL_API_KEY`（0600 权限，不同步）+ `config.yaml` 的 `mcp_servers.firecrawl`（HTTP 端点 `https://mcp.firecrawl.dev/v2/mcp` + Bearer 头）
-- **⚠️ mcp 库锁定 1.28.1**（pyproject 项目的 `mcp==1.28.1`，勿升 2.x——`streamable_http_client` 的 yield 值数不同会导致 Hermes MCP 崩）
-- **免费档 1000 credits/月**：scrape/crawl/map/parse=1/page，search=2/10条，interact=2/浏览器分钟；失败请求不收费；重度再上 Hobby($16/月 5000页)
-- **MCP 工具（26 个，重启 Hermes 后生效）**：`firecrawl_scrape/search/crawl/map/parse/interact/agent` + `monitor_*` + `research_*`（论文/代码检索）
-- **触发词**：用户说「用 Firecrawl / 云抓 / 抓海外页 / 转文档 / 结构化抽取 / 搜全文」→ 走 MCP 工具
-- **局限**：海外代理池为主，国内政务/封闭平台（公众号/小红书/抖音/视频号）不保证能过，别指望用它替代本地政务流程
-
 ## 安装策略（A方案 — 当前）
 
 所有工具统一安装到 **Hermes 主 Python 环境**，不建独立 venv：
@@ -287,44 +254,6 @@ czj.sh.gov.cn 首页/文章页可 requests 直抓但栏目列表页返回 `Templ
 （浏览器直开触发 antispider wx_sh2、/link?url= 跳转解不出 mp.weixin 地址，靠摘要收集即可）；**要拿可点击的 mp.weixin 直链给用户：用搜狗网页版 www.sogou.com/web?query=<标题> 直接抓 return 的 mp.weixin.qq.com/s 秒传链接；但秒传链接正文是 JS 模板壳，自动化环境读不到全文，勿承诺能读正文**；
 视频号是微信封闭生态**进不了任何搜索引擎**，用 360 视频 tv.360kan.com 确认"无相关视频"即可排除该渠道。
 公众号文号必须到官方源二次核对（尤其警惕标题相近的两个号，如财办会〔2026〕7号 vs 财会〔2026〕8号），核对不到的标注"公众号口径未确认"，勿直接引用。
-
-## 新媒体平台检索现状与观察清单（2026.8.14 用户要求持续研究）
-
-**各平台当前真实能力：**
-
-| 平台 | 现状 | 判定 |
-|:--|:--|:--|
-| 抖音 | 短链→video id→browser+页面内fetch aweme API，拿标题/作者/数据/章节要点/视频转写 | ✅ 强 |
-| B站 | 有公开搜索/API | ✅ 可用 |
-| 公众号 | 搜狗微信抓标题+长摘要；mp.weixin 链接用手机UA+Referer拿全文 | ⚠️ 半强（搜索发现难，正文JS壳） |
-| 视频号 | 封闭生态，进不了搜索引擎；仅browser打开sph分享链接看JS渲染标题 | ❌ 封闭 |
-| 微博 | weibo.com/m.weibo.cn 反爬较强 | ⚠️ 受限 |
-| 小红书 | 反爬极强，需登录+xsec_token签名 | ❌ 基本拿不到 |
-
-**封闭/半封闭平台还可试的变通手段（按推荐序）：**
-1. **分享链接 meta 解析（轻量通用）**：平台分享到微信/QQ的卡片页带 `og:title/description/image`，requests 直抓分享短链→落地页的 meta 标签，能拿标题、简介、封面，无需登录。适用于视频号/小红书/公众号/微博/抖音/B站所有带分享卡片的平台。**这是目前对封闭平台最轻量的手段**，尚未系统验证。
-2. **浏览器打开分享链接看 JS 渲染页**：视频号（已验证能看标题）、小红书分享页有时可看。
-3. **第三方数据/聚合平台（付费/注册）**：新榜（公众号/视频号/小红书）、西瓜数据（公众号）、千瓜/灰豚（小红书）、蝉妈妈/飞瓜（抖音/快手）——榜单、热门、部分搜索。
-4. **开放平台 API（需企业资质+申请）**：抖音/微博/微信/B站开放平台——正规强手段，合规搜索拉取。
-5. **RSS 桥（RSSHub）**：微博、B站、部分平台可通过 RSSHub 订阅/检索，绕部分限制。
-6. **开源逆向工具（不稳定/有风险）**：xhs-api（小红书）、TikTokDownload 等——能用但不稳、可能违规，谨慎。
-   > **2026-Q3 更新**：小红书开源采集生态持续活跃，以下项目被社区推荐（均需登录态 Cookie，xhs 库已封装 x-s/x-t 签名）：
-   > - **xhs 库**（小红书数据采集，CSDN 2026-07 有教程，"xhs 让复杂 API 变简单"）
-   > - **XHS-Downloader2**（github.com/JoeanAmier/XHS-Downloader）
-   > - **RedNote MCP**（github.com/iFurySt/RedNote-MCP，小红书 MCP 服务）
-   > - **Spider_XHS**（小红书数据运营+爬虫）
-   > - 小红书网页版 Web API 逆向 2026 版可解 JSVMP 防护（CSDN 2026-03），但签名随版本变动，仍不稳、有合规风险，**谨慎评估后按需试用**。
-
-**持续观察项（用户要求：一旦出现强手段必须提醒）：**
-- [ ] 各平台**开放平台 API** 的搜索能力是否开放（尤其中小资质可申请）— **2026-Q3 无突破**：抖音/微博/微信开放平台仍企业资质导向、无公开免费搜索；视频号官方仅 channels.weixin.qq.com 视频号助手提供基础数据查询
-- [x] 第三方数据平台是否新增**免费搜索/索引**通道 — **2026-Q3 无免费新增**：新榜/新红仍以付费投放、达人管理、竞品跟踪为主（商业产品），未开放免费搜索；新榜矩阵通聚合 10+ 平台（视频号/抖音/小红书等）但需付费
-- [x] 是否出现**稳定开源逆向**方案（xhs-api 等成熟度）— **2026-Q3 部分进展（非强手段）**：小红书 xhs 库/XHS-Downloader2/RedNote MCP/Spider_XHS 持续活跃（需登录态 Cookie+签名），可用但签名随版本变动、仍不稳且有合规风险，**尚不足以稳定自动化抓取封闭平台全文/视频**
-- [ ] 微信/腾讯对**视频号的外部索引**（微信视频号助手、搜一搜开放程度）— 仍封闭，进不了搜索引擎
-- [ ] 分享链接 **og:meta 解析**在封闭平台（视频号/小红书）实测是否可行 — 尚未系统验证
-
-**2026-Q3 季度调研结论**：本季度无「强手段」突破。唯一实质进展是**小红书开源采集工具生态活跃**（xhs 库/XHS-Downloader2/RedNote MCP/Spider_XHS），但均需登录态且签名易变，只能算「可按需试用」的中等手段，不足以替代方案 B 人工采集。
-
-> 涉及新媒体检索任务时，先对照本表；本表能力变化/新手段出现 → 主动提醒用户。
 
 ## 爬虫调试流水账
 

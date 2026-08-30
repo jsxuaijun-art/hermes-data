@@ -20,6 +20,8 @@ Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git
 §
 素材注入/备选方法论只作「备选项」不绑架工作流(例:高赞泛粉已注入short-video第9节;类型五人物命运叙事已并入short-video-copywriting+reference)。
 §
-人工HTML/SVG分镜5风格(漫画01/MBE02/极简03/数据图04/微信对话05)均存备选、用户全不满意——要真正AI生图的专业绘画质感。明天用户给参考风格链接。**下一最高优先任务：创造可用生图能力**=换可生图大模型或装生图skill(局部coze/image_gen/ComfyUI/文心/通义万相)，当前chudian视觉key脱敏不可用。生图建成后用其重做用户认可风格。参考wechat-comic-cells skill。
+人工HTML/SVG分镜5风格(漫画01/MBE02/极简03/数据图04/微信对话05)均存备选、用户全不满意——要真正AI生图的专业绘画质感。下一最高优先任务=生图能力(换可生图大模型或coze/image_gen/ComfyUI/文心/通义万相),当前chudian视觉key脱敏不可用。用户会再给参考风格链接。参考wechat-comic-cells。
 §
 模型分工自动切换:子代理跑kimi-k3成稿+主会话deepseek编排,爆款写作默认派子代理不手切。
+§
+hermes cron CLI(2026.8实测):prompt是位置参数`hermes cron create <schedule> <prompt>`,无--prompt;子命令无log,查执行用`hermes cron runs <id>`;生命周期create→run(手动)→runs→remove。cron前`.lazy-refresh-incomplete`警告是噪音,venv其实健康(核心模块6/6 import通过),验证用import非警告。

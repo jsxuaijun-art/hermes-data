@@ -1,5 +1,0 @@
-用户要求安装安全扫描器，已完成：Nmap、ClamAV。未完成：Lynis、Rkhunter、Chkrootkit、Trivy、OpenVAS/Greenbone。下次启动时要提醒用户继续安装这些安全工具。
-§
-用户在进行短视频相关项目，涉及"自然流"和"纯广告"等概念。数据是从 GitHub Desktop 转过来的，可能与抖音/短视频运营有关。
-§
-用户江敏(manager)从事财税服务行业，苏州盈信企业管理有限公司。运营抖音"苏州注册公司江姐"/"江会计"，视频号"盈信税务"。使用 Hermes Agent + WorkBuddy/QClaw 双AI助手。跨电脑数据同步通过 GitHub 私有仓库 jsxuaijun-art/hermes-data 实现。WSL Ubuntu 24.04，Windows 用户名 Administrator。桌面路径 D:\360MoveData\Users\Admin\Desktop\ 但 WSL 访问 /mnt/c/Users/Administrator/Desktop/

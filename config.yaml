@@ -152,109 +152,109 @@ auxiliary:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 120
     download_timeout: 30
   web_extract:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 360
   compression:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 120
   skills_hub:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 30
   approval:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 30
   mcp:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 30
   title_generation:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 30
     language: ''
   tts_audio_tags:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 30
   triage_specifier:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 120
   kanban_decomposer:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 180
   profile_describer:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 60
   curator:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 600
   monitor:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 60
   background_review:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 120
   moa_reference:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 600
   moa_aggregator:
     provider: custom
     model: deepseek-v4-flash
     base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     timeout: 600
   session_search:
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: "${DEEPSEEK_API_KEY}"
     base_url: https://llm.chudian.site/v1
     extra_body: {}
     max_concurrency: 3
     model: deepseek-v4-flash
     provider: custom
     timeout: 30
-display:
+isplay:
   compact: false
   personality: ''
   resume_display: full
@@ -405,7 +405,6 @@ delegation:
   model: kimi-k3
   provider: telecom-kimi
   base_url: ''
-  api_key: ''
   api_mode: ''
   inherit_mcp_toolsets: true
   max_iterations: 250
@@ -628,7 +627,7 @@ paste_collapse_threshold_fallback: 5
 paste_collapse_char_threshold: 2000
 computer_use:
   cua_telemetry: false
-_config_version: 37
+_config_version: 39
 platform_toolsets:
   cli:
     - terminal
@@ -650,3 +649,25 @@ platforms:
       port: 8642
   wecom:
     enabled: false
+
+# ── Fallback Model ────────────────────────────────────────────────────
+# Automatic provider failover when primary is unavailable.
+# Uncomment and configure to enable. Triggers on rate limits (429),
+# overload (529), service errors (503), or connection failures.
+#
+# Supported providers:
+#   openrouter   (OPENROUTER_API_KEY)  — routes to any model
+#   openai-codex (OAuth — hermes auth) — OpenAI Codex
+#   nous         (OAuth — hermes auth) — Nous Portal
+#   zai          (ZAI_API_KEY)         — Z.AI / GLM
+#   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
+#   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
+#   minimax      (MINIMAX_API_KEY)     — MiniMax
+#   minimax-cn   (MINIMAX_CN_API_KEY)  — MiniMax (China)
+#   bedrock      (AWS IAM / boto3)     — AWS Bedrock (Converse API)
+#
+# For custom OpenAI-compatible endpoints, add base_url and key_env.
+#
+# fallback_model:
+#   provider: openrouter
+#   model: anthropic/claude-sonnet-4

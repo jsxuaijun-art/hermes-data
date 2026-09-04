@@ -18,6 +18,8 @@ chinese-accounting-format-conversion:f4dd70cfbc3a7418953dde7f2caa4e00
 chinese-exam-preparation:d9604b78aaf7f9d7df064aa381089c22
 claude-code:f438d67c46a38dbd05b9626929dc8c7f
 claude-design:a839ed75e38167058cb363f63b64c6a3
+client-communication:2979e9e8c32b53ad62a4313774fd50d8
+client-group-welcome:2defbb2d848e952c17a8ce51268cde14
 codebase-inspection:efbcc1317dff77882314739b1b9bc065
 codex:21b2653d97d8418a937b7e6db0458461
 comfyui:356ff97bbf7f59fce5444c270a3e7d77
@@ -87,6 +89,7 @@ polymarket:7644c886e028c229bc8c1f54114c3170
 popular-web-designs:1ad85f358fe449a8aa554796652ebd91
 powerpoint:f19c4f1b0d3e06fd38b28f02aafaac54
 pretext:a173114edf667924f1b8ff707fc7776d
+price-negotiation:6b7ea4f458c0225df681e44c5ec3d484
 python-debugpy:cdd5230fc44fe99a97b5387bd381252b
 reality-testing-decisions:07e0cb0a087b2c12c93f9e64dfd34419
 requesting-code-review:f7e902570802e21f340955384385abda

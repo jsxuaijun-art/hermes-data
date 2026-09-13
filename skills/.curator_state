@@ -1,8 +1,8 @@
 {
-  "last_report_path": "/home/dmin/.hermes/logs/curator/20260830-090501",
-  "last_run_at": "2026-08-30T09:05:01.360789+00:00",
-  "last_run_duration_seconds": 3.534808,
-  "last_run_summary": "auto: 2 marked stale, 1 reactivated; llm: error: No LLM provider configured. Run `hermes model` to select a provider, or run `hermes setup` for first-time configuration.",
+  "last_report_path": "/home/dmin/.hermes/logs/curator/20260913-095343",
+  "last_run_at": "2026-09-13T09:53:43.108783+00:00",
+  "last_run_duration_seconds": 1.525464,
+  "last_run_summary": "auto: 9 marked stale, 1 reactivated; llm: error: No LLM provider configured. Run `hermes model` to select a provider, or run `hermes setup` for first-time configuration.",
   "paused": false,
-  "run_count": 9
+  "run_count": 11
 }

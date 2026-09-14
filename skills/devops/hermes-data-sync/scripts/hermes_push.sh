@@ -44,8 +44,14 @@ if [ -f .git/MERGE_MSG ] || [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ]
 fi
 git stash pop 2>/dev/null
 
-# --- 3) stage + sync_guard 防误删闸 (传本机 hermes root 启用一致性检测) ---
+# --- 3) stage + leak_scan 脱敏泄漏扫描 (防真实身份进仓库) ---
 git add -A
+if ! python3 "$SKILL_DIR/scripts/leak_scan.py" "$HERMES_SYNC_DIR"; then
+  echo "[leak_scan] SENSITIVE DATA DETECTED - PUSH ABORTED. If intentional: export LEAK_SCAN_BYPASS=1 and rerun."
+  exit 1
+fi
+
+# --- 3.5) sync_guard 防误删闸 (传本机 hermes root 启用一致性检测) ---
 if ! bash "$GUARD_SCRIPT" "$HERMES_SYNC_DIR" "$HOME"; then
   echo "[sync_guard] DELETION DETECTED - PUSH ABORTED. If intentional: export SYNC_GUARD_BYPASS=1 and rerun."
   exit 1

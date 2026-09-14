@@ -247,6 +247,7 @@ Only config files from `~/.codex/` are synced — exclude runtime data:
 | `scripts/claude_codex_pull.sh` | Claude+Codex 拉取 |
 | `scripts/hermes_sync_path.sh` | 路径自动探测（桌面HermesAgent→Admin/hermes-sync→用户hermes-sync→全域扫描） |
 | `scripts/sync_guard.sh` | **v3** 防误删闸（三道防线）：①删除拦截 ②一致性提醒 ③**缺失阻断**——本机 `~/.hermes/skills` 缺某个远端已有的 skill 时**强制中止推送**（防"推送机技能不全→add -A删远端skill"，QD两次误删根因）。推送机必须技能全 |
+| `scripts/leak_scan.py` | **v3.1【脱敏泄漏扫描】(2026-09 新增,防真实身份进公开仓库)**：在 `git add -A` 之后、sync_guard 之前运行。正则扫所有被跟踪文件：①统一社会信用代码疑似未脱敏（首位5/9=客户主体工商·民政、末8位非全X、2~17位≥2字母——跳过机关码1开头/数字串/二进制误报）；②身份证号含真实出生日期；③可配本地精确词表 `~/.hermes/leak-blocklist.txt`（本地不推送）。命中任一项即中止推送（`LEAK_SCAN_BYPASS=1` 强制）。规则与 `security/desensitization` skill 一致 |
 
 ### 拷贝到其他电脑的步骤（已验证）
 

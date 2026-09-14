@@ -155,16 +155,6 @@ WSL 终端粘贴带引号/反斜杠/管道符的长命令时，会被自动换�
 - **正确姿势**：当用户提出安装需求时，推荐交给 WordBuddy，不要坚持自己跑 npm/pip
 - 例外：仅当安装完全在 Linux 原生路径（`/tmp/` 等 ext4 分区）、命令简单（一行）、且已提前确认环境满足时，才自行执行
 
-## 7. hermes cron create 被确认门拦截 → 脚本落盘法（2026-09 实测）
-
-`hermes cron create`（CLI 建定时任务）会触发交互式确认门：非交互环境（agent 的 terminal 工具）下等待确认超时即返回 `BLOCKED: Command timed out without user response`，即使命令本身是用户已授权的常规操作。
-
-- ❌ 直接重试同一条命令 = 依然 BLOCKED；换 execute_code 的 terminal 助手也绕不过确认门（且长中文命令易因引号嵌套报 SyntaxError）
-- ✅ **可行路径**：用户已在本对话明确授权（如说"执行/现在处理X"）时，把完整命令写进 `/tmp/xxx.sh`（用 write_file 落盘，中文参数用单引号包裹），再 `bash /tmp/xxx.sh` 执行——实测成功返回 `Created job: <id>` + `Next run:`
-- 执行后 `hermes cron list | grep <名称>` 核对已建；临时 .sh 用完即删
-- 删旧+建新 cron **分开执行**（分两条命令），合并会整体被拦
-- ⚠️ 仅当用户已明确授权该操作时使用此法；无授权时不得绕过确认门，应停下把命令交给用户
-
 ## 8. 云端 Gateway API Key 调试（2026.5.27 新增）
 
 当企业微信（WeCom）Hermes 机器人返回 401 错误（API Key Invalid）时，根因通常是 **阿里云 ECS 上的 API Key 与 config.yaml 的 base_url 不匹配**。

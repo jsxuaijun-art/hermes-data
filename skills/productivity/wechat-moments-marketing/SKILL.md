@@ -340,8 +340,8 @@ cp /tmp/img_xxx.jpg "/mnt/c/Users/Administrator/Desktop/<主题>_01_<场景>.jpg
 
 企业微信凭证（已验证可用）：
 - CorpID: `wwc7fc356cf7297e7f`
-- AgentId: `1000037`
-- Secret: `c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM`
+- AgentId: `1000036`
+- Secret: `ww-gknY3ZjQXa9NpsSlxMsP8Z7VEP7D20Mjz3o5vNKE`
 - 用户ID: `XuAiJun`（徐爱军）
 
 流程：
@@ -355,25 +355,6 @@ cp /tmp/img_xxx.jpg "/mnt/c/Users/Administrator/Desktop/<主题>_01_<场景>.jpg
 > 当前 WSL 公网IP：用 `curl -s ifconfig.me` 获取。
 > 配置路径：企微管理后台 → 应用管理 → AgentId对应的应用 → 企业可信IP。
 
-## 企微API发送前置与已知坑（2026.9.6 实测排掉）
-
-**发送前必须满足两个前置**（否则报错）：
-1. 自建应用要先配「接收消息服务器URL（回调）」或「可信域名」，控制台才允许配「企业可信IP」。报 `60020 not allow access from your ip` = 可信IP没配/没生效。
-2. 调用机公网IP要加进「企业可信IP」（WSL 报错里的 IP 用 `curl -s ifconfig.me` 查）。
-
-**现成回调基础设施（复用，别重搭）**：
-- 域名 `callback.yingxinkuaiji.com`（Let's Encrypt HTTPS，nginx 443）
-- 后端 `wecom-bridge.service`（hermes_bridge.py，监听 127.0.0.1:8800）
-- URL=`https://callback.yingxinkuaiji.com/wecom/callback`，Token=`e23hCHGJGmTmFyAxswEb4G`，EncodingAESKey=`ELNEV9LRSaAERI88WQru5wGrB7IDhgcQHTbpSi7yOIH`（**安全模式**）
-- 新 Agent 填同一套 URL/Token/AESKey 即可通过验证
-
-**三个必踩的坑（本会话已排掉）**：
-1. nginx 若 rewrite `/wecom/callback`→`/wecom`，与后端路由 `/wecom/callback` 不匹配 → 404 → 验证不通过。**不要 rewrite，原样 proxy_pass。**
-2. `sites-enabled` 里不能残留同 `server_name` 的失效备份（如 `callback.bak.*`），会抢域名导致加载旧配置。删掉。
-3. `hermes_bridge.py` 里 wechatpy 调用参数顺序：`check_signature(msg_signature, timestamp, nonce, echostr)`——老代码传 `(timestamp, nonce, echostr, msg_signature)` 顺序错，验签永远失败。已修复；改代码时别改错。
-
-**端到端自测法**：用真 token + AES 加密 echostr 构造 GET 打实际 URL，HTTP 200 且响应==明文 echostr 即验证通过（可先用 `PrpCrypto` 加密）。
-
 ### Python 发送模板
 
 ```python
@@ -381,10 +362,10 @@ import json, urllib.request, os
 
 def upload_and_send(image_paths, text_content, touser="XuAiJun"):
     token = json.loads(urllib.request.urlopen(
-        f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM"
+        f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=ww-gknY3ZjQXa9NpsSlxMsP8Z7VEP7D20Mjz3o5vNKE"
     ).read())["access_token"]
     
-    text_payload = {"touser": touser, "msgtype": "text", "agentid": 1000037,
+    text_payload = {"touser": touser, "msgtype": "text", "agentid": 1000036,
         "text": {"content": text_content}}
     req = urllib.request.Request(
         f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
@@ -406,7 +387,7 @@ def upload_and_send(image_paths, text_content, touser="XuAiJun"):
         )
         media_id = json.loads(urllib.request.urlopen(req).read())["media_id"]
         
-        img_payload = {"touser": touser, "msgtype": "image", "agentid": 1000037,
+        img_payload = {"touser": touser, "msgtype": "image", "agentid": 1000036,
             "image": {"media_id": media_id}}
         req = urllib.request.Request(
             f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
@@ -447,19 +428,19 @@ def upload_and_send(image_paths, text_content, touser="XuAiJun"):
 
 **路径二：企业微信推送（企微营销号）**
 每次出图后，通过企微API发送给徐总：
-1. 获取token：`POST qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM`
+1. 获取token：`POST qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=ww-gknY3ZjQXa9NpsSlxMsP8Z7VEP7D20Mjz3o5vNKE`
 2. 上传图片文件获得media_id（multipart/form-data上传）
 3. 先发一条text消息（含完整文案+发布说明）
 4. 再发3条image消息（每张图一条）
 5. 接收人：`XuAiJun`（徐爱军的企业微信userid）
-6. AgentId: `1000037`
+6. AgentId: `1000036`
 
 ### 企微API常用代码片段（Python）
 
 ```python
 # 获取token
 import json, urllib.request
-url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM"
+url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=ww-gknY3ZjQXa9NpsSlxMsP8Z7VEP7D20Mjz3o5vNKE"
 token = json.loads(urllib.request.urlopen(url).read())["access_token"]
 
 # 上传图片
@@ -477,14 +458,14 @@ result = json.loads(urllib.request.urlopen(req).read())
 # 发送文本
 urllib.request.urlopen(urllib.request.Request(
     f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
-    data=json.dumps({"touser": "XuAiJun", "msgtype": "text", "agentid": 1000037,
+    data=json.dumps({"touser": "XuAiJun", "msgtype": "text", "agentid": 1000036,
         "text": {"content": "文案内容"}}, ensure_ascii=False).encode("utf-8"),
     headers={"Content-Type": "application/json"}))
 
 # 发送图片
 urllib.request.urlopen(urllib.request.Request(
     f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
-    data=json.dumps({"touser": "XuAiJun", "msgtype": "image", "agentid": 1000037,
+    data=json.dumps({"touser": "XuAiJun", "msgtype": "image", "agentid": 1000036,
         "image": {"media_id": media_id}}).encode(),
     headers={"Content-Type": "application/json"}))
 ```
@@ -530,4 +511,3 @@ cp /tmp/img_03.jpg "/mnt/c/Users/Administrator/Desktop/<主题>_03_<场景>.jpg"
 8. **图片素材禁止出现外国人面孔**（用户明确要求）
 9. **照片优先于文字卡**：生活型内容尽量用真实照片，比任何设计精良的文字卡都更有感染力
 10. **配图尺寸统一800×800正方形**：朋友圈展开后显示最完整
-11. **企微API发送必须经用户确认（最高优先级，2026.9.5 用户明确）**：无论密钥是否有效，**任何企微 message/send 都必须在发送前得到用户明确批示**，绝不自动推送、绝不"勿问确认"直接发。标准流程：先生成好文案+配图并交付审阅 → 用户说"发送/可以发" → 才调 API。若密钥失效（40001 invalid credential）则停下，先引导用户更新密钥，不硬发。

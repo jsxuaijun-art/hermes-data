@@ -22,12 +22,16 @@ echo "[path] Sync dir = $HERMES_SYNC_DIR"
 
 # --- 1) rsync WSL -> 同步夹 (skills 去 --delete 防误删) ---
 echo "[1] rsync WSL -> sync dir ..."
-mkdir -p "$HERMES_SYNC_DIR/memories" "$HERMES_SYNC_DIR/skills"
+mkdir -p "$HERMES_SYNC_DIR/memories" "$HERMES_SYNC_DIR/skills" "$HERMES_SYNC_DIR/plugins"
 rsync -a ~/.hermes/SOUL*.md "$HERMES_SYNC_DIR/" 2>/dev/null
 rsync -a ~/.hermes/config.yaml "$HERMES_SYNC_DIR/" 2>/dev/null
 rsync -a ~/.hermes/memories/ "$HERMES_SYNC_DIR/memories/" 2>/dev/null
 rsync -a --exclude='.curator_backups/' --exclude='gstack/*/dist/' --exclude='*.tar.gz' --exclude='*.tar' \
   ~/.hermes/skills/ "$HERMES_SYNC_DIR/skills/" 2>/dev/null
+# plugins/ 用户插件随设备走(如 desensitize-read 脱敏钩子)。
+# 注意: ~/.hermes/leak-blocklist.txt 在 ~/.hermes 根目录, 不在本清单内, 保持本地不推送(含真实身份)。
+rsync -a --exclude='*__pycache__*' --exclude='*.pyc' \
+  ~/.hermes/plugins/ "$HERMES_SYNC_DIR/plugins/" 2>/dev/null
 echo "[OK]"
 
 # --- 2) git pull --rebase (同步远端) ---

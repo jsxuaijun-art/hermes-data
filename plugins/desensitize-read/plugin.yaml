@@ -1,0 +1,6 @@
+name: desensitize-read
+version: "1.0.0"
+description: "读入内容自动脱敏：读文件/搜索/终端/网页等「读入型」工具的结果在进入模型上下文之前，自动脱敏——统一社会信用代码（末8位→X）、身份证号（中间8位→X）、法定身份字段后的姓名（前两字→T）、以及精确词表内的真实主体（公司名/信用码/法人名等，见 ~/.hermes/leak-blocklist.txt）。防止客户真实身份进入对话上下文与下游模型。非阻断，失败即放行。关闭：DESENSITIZE_READ_DISABLE=1。"
+author: "徐爱军（jsxuaijun-art）"
+hooks:
+  - transform_tool_result

@@ -1,7 +1,7 @@
 ---
 name: desensitization
 description: 上传材料先脱敏再进对话：公司名拼音首字母、信用代码末8位X、法人名前两字TT。
-version: 1.0.0
+version: 1.1.0
 author: 徐爱军（jsxuaijun-art）
 license: Proprietary
 trigger: >-
@@ -36,6 +36,23 @@ metadata:
 **为什么必须前置**：文件本身保存在用户本地磁盘，不会上传给模型提供商；但读取后的文字会进入对话上下文，每一轮都作为 API 请求发给模型提供商（如 DeepSeek），且对话前缀可能被提供商缓存。真实文字一旦进对话即已外发、不可撤回。因此脱敏必须在**读取前/进入上下文前**完成。真实版本只允许出现在本地交付物（如提交税务机关的报告），不允许出现在公开仓库、skill 库、同步内容。
 
 > ⚠️ 本 skill 内的示例一律使用**虚构主体/占位符**，绝不放真实主体当示例——本 skill 自身也在推送前 `leak_scan.py` 扫描范围内。
+
+## 自动兜底：desensitize-read 插件（已启用）
+
+本 skill 是**策略层**（我来执行规则）；`desensitize-read` 插件是**执行层**（读入即拦，不依赖我是否记得），二者配合实现"出现即自动脱敏、无需手动调用"。
+
+- 位置：`~/.hermes/plugins/desensitize-read/`（已随 `hermes_push.sh` 同步到各设备）
+- 机制：挂 `transform_tool_result` 钩子——「读入型」工具（read_file / search_files / web_extract / web_search / terminal / execute_code / browser_* / vision_analyze）的结果，在进入模型上下文**之前**自动脱敏；只作用于外部读入内容，不改 agent 自身产出（write_file/patch/skill_manage）
+- 自动执行的规则：① 词表精确替换（`~/.hermes/leak-blocklist.txt`，`真实=脱敏` 格式）② 信用代码末8位→X ③ 身份证号中间8位→X ④ 法定身份字段（法定代表人/负责人/股东/投资人/联系人/办税人…：）后的姓名前两字→T
+- 启用：`hermes plugins enable desensitize-read`（写入 config.yaml 的 `plugins.enabled`）；**下次会话生效**，每台设备各自执行一次
+- 关闭：环境变量 `DESENSITIZE_READ_DISABLE=1`；自定义目标工具：`DESENSITIZE_READ_TOOLS=read_file,terminal`
+- 边界：只拦"工具读取的内容"，我已读入的历史上下文它管不到；游离出现的姓名（无标准字段前缀）认不出，靠词表兜底
+- 接新客户：把真实公司全名/简称/信用代码/法人名按 `真实=脱敏` 追加进 `~/.hermes/leak-blocklist.txt`（该文件在 ~/.hermes 根目录、**不推送**，含真实值安全）
+
+**三层防线**：
+1. **读取时** — desensitize-read 插件自动脱敏（本机一切会话，含我自己读文件）
+2. **我执行时** — 本 skill 规则（记忆注入+触发词，无需手动喊）
+3. **推送时** — `hermes_push.sh` 的 `leak_scan.py` 扫描，命中即中止推送
 
 ## 脱敏规则（硬性，用户定稿）
 
@@ -99,5 +116,6 @@ grep -l "GFSBDT（SZ）有限公司" <目录> | wc -l  # 应 ≥1
 
 ## 关联
 
-- `hermes-data-sync`：推送/同步前自动 `leak_scan.py` 防真实身份进公开仓库
+- `desensitize-read` 插件（`~/.hermes/plugins/desensitize-read/`）：读入时自动脱敏的执行层
+- `hermes-data-sync`：推送/同步前自动 `leak_scan.py` 防真实身份进公开仓库（推送流程已含 plugins/ 同步）
 - `tax-audit-response` / `tax-risk-self-check-report`：案例建档一律脱敏入库

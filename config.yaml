@@ -650,6 +650,13 @@ platforms:
       port: 8642
   wecom:
     enabled: false
+plugins:
+  enabled:
+    - desensitize-read
+  disabled: []
+  entries:
+    desensitize-read:
+      allow_tool_override: false
 
 # ── Fallback Model ────────────────────────────────────────────────────
 # Automatic provider failover when primary is unavailable.

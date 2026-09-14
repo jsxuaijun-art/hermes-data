@@ -85,27 +85,28 @@ def main():
         print('[leak_scan] 用法: leak_scan.py <同步夹> [--blocklist <词表文件>]')
         return 2
     repo = args[0]
+    def _read_bl(path):
+        """读词表：每行取 'real=masked' 的左侧真实值（兼容旧格式单列）。"""
+        toks = []
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                for ln in f:
+                    ln = ln.strip()
+                    if not ln or ln.startswith('#'):
+                        continue
+                    toks.append(ln.split('=', 1)[0].strip())
+        except Exception:
+            return []
+        return [t for t in toks if t]
+
     blocklist = []
     if '--blocklist' in sys.argv:
         i = sys.argv.index('--blocklist')
         if i + 1 < len(sys.argv):
-            bp = sys.argv[i + 1]
-            try:
-                with open(bp, 'r', encoding='utf-8') as f:
-                    blocklist = [ln.strip() for ln in f
-                                 if ln.strip() and not ln.lstrip().startswith('#')]
-            except Exception:
-                blocklist = []
+            blocklist = _read_bl(sys.argv[i + 1])
     # 默认本地精确词表(不随 skill 推送, 存 ~/.hermes/leak-blocklist.txt)
     if not blocklist:
-        default = os.path.expanduser('~/.hermes/leak-blocklist.txt')
-        if os.path.exists(default):
-            try:
-                with open(default, 'r', encoding='utf-8') as f:
-                    blocklist = [ln.strip() for ln in f
-                                 if ln.strip() and not ln.lstrip().startswith('#')]
-            except Exception:
-                blocklist = []
+        blocklist = _read_bl(os.path.expanduser('~/.hermes/leak-blocklist.txt'))
 
     findings = []
     for rel in tracked_files(repo):

@@ -1,4 +1,4 @@
-防误删sync_guard.sh+P11见skill hermes-data-sync(用户自有,curator须adopt),wsl-hermes-env§9亦然。注销skill(company-deregistration勿改)的qingshui_risk_engine.py把科目余额表「期初」当「期末」诊断,临注销公司(期初大期末小)必错,用前先人工核对期末(C&G列),差>10%废弃重算；docx输出硬编/mnt/c/Users/Admin/Desktop,office机本机改勿碰共享脚本。同步夹memories/源=~/.hermes/memories/(Hermes),非~/memories/(Codex)。
+防误删sync_guard.sh+P11见skill hermes-data-sync,wsl-hermes-env§9亦然。注销skill(company-deregistration勿改)qingshui_risk_engine.py把「期初」当「期末」诊断,临注销公司必错,用前人工核对期末(C&G列),差>10%废弃。同步夹memories源=~/.hermes/memories/。
 §
 交付文件默认放Windows桌面/mnt/c/Users/Admin/Desktop(用户名Admin),不放WSL桌面~/,不显示WSL路径。不生成md文件——除非写清打开方式，否则直接不生成(交付用docx/txt)。Clash代理只绑127.0.0.1:7890:Github用curl.exe --proxy,pip前unset代理。Windows hermes用uv装,WSL调.exe需Start-Process。
 §
@@ -18,10 +18,10 @@ Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git
 §
 公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
 §
-素材注入/备选方法论只作「备选项」不绑架工作流(例:高赞泛粉已注入short-video第9节;类型五人物命运叙事已并入short-video-copywriting+reference)。
-§
-人工HTML/SVG分镜5风格(漫画01/MBE02/极简03/数据图04/微信对话05)均存备选、用户全不满意——要真正AI生图的专业绘画质感。下一最高优先任务=生图能力(换可生图大模型或coze/image_gen/ComfyUI/文心/通义万相),当前chudian视觉key脱敏不可用。用户会再给参考风格链接。参考wechat-comic-cells。
+人工HTML/SVG分镜5风格存备选、用户全不满意——要真AI生图专业质感。最高优先任务=生图能力(coze/image_gen/ComfyUI/文心/通义万相),chudian视觉key脱敏不可用,用户会再给风格链接。参考wechat-comic-cells。
 §
 模型分工自动切换:子代理跑kimi-k3成稿+主会话deepseek编排,爆款写作默认派子代理不手切。
 §
 hermes cron CLI(2026.8实测):prompt是位置参数`hermes cron create <schedule> <prompt>`,无--prompt;子命令无log,查执行用`hermes cron runs <id>`;生命周期create→run(手动)→runs→remove。cron前`.lazy-refresh-incomplete`警告是噪音,venv其实健康(核心模块6/6 import通过),验证用import非警告。
+§
+脱敏铁律(处理任何上传材料自动执行):涉①公司名称②统一社会信用代码③法定代表人姓名/身份证号一律脱敏。①公司名除"有限公司"外汉字→拼音首字母大写(格福斯半导体(苏州)有限公司→GFSBDT(SZ)有限公司);②统一社会信用代码(18位)保留前10位,末8位→X;③法人姓名前两字→TT(杨建国→TT国)。真实主体交付物在加工/同步/入库边界先脱敏,真实版不入公开仓库不入skill库。

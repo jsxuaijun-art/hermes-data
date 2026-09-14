@@ -2,7 +2,7 @@
 §
 交付文件默认放Windows桌面/mnt/c/Users/Admin/Desktop(用户名Admin),不放WSL桌面~/,不显示WSL路径。不生成md文件——除非写清打开方式，否则直接不生成(交付用docx/txt)。Clash代理只绑127.0.0.1:7890:Github用curl.exe --proxy,pip前unset代理。Windows hermes用uv装,WSL调.exe需Start-Process。
 §
-政务/法律条文检索用anysearch CLI batch_search 可直抓权威官文(文号+施行日期)，已实操验证(法释〔2025〕4号等)。pip清华。
+政务/法律条文检索用anysearch CLI batch_search 可直抓权威官文(文号+施行日期)，已实操验证。pip清华。
 §
 用户（徐爱军）常处理苏州爱心之家老年公寓（民办非企业）的财务报表格式转换：小企业会计准则→民间非营利组织。要点：实收资本+未分配利润→非限定性净资产（负数），应收款项=应收账款+预付账款+其他应收款，应付款项=应付账款+其他应付款。技能已保存为 chinese-accounting-format-conversion。
 §
@@ -24,4 +24,4 @@ Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git
 §
 hermes cron CLI(2026.8实测):prompt是位置参数`hermes cron create <schedule> <prompt>`,无--prompt;子命令无log,查执行用`hermes cron runs <id>`;生命周期create→run(手动)→runs→remove。cron前`.lazy-refresh-incomplete`警告是噪音,venv其实健康(核心模块6/6 import通过),验证用import非警告。
 §
-脱敏铁律(处理任何上传材料自动执行):①公司名称除"有限公司"外汉字逐字取拼音首字母大写(例:甲乙丙丁（苏州）有限公司→JYBD（SZ）有限公司,简称同步)②信用代码18位保前10位末8位全X③法人姓名前两字→TT(杨建国→TT国)。真实主体交付物(如税局报告)仅本地留真实版,公开/入库/同步一律脱敏。已建插件desensitize-read自动执行:需hermes plugins enable(下次会话生效),推送含plugins/词表leak-blocklist留本地。
+脱敏铁律(处理任何上传材料自动执行):①公司名除"有限公司"外汉字逐字取拼音首字母大写(例:甲乙丙丁(苏州)有限公司→JYBD(SZ)有限公司,简称同步)②信用代码18位保前10末8位全X③法人姓名前两字→TT(杨建国→TT国)。真实主体交付物仅本地留真实版,公开/入库/同步一律脱敏。插件desensitize-read只拦工具读入(下次会话生效),用户直接发文字走纪律层;公司名无格式不被自动识别靠人工纪律。用户明确不要本地词表存真实身份(这户和以后都不加,勿再提议)。

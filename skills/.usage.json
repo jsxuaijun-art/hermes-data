@@ -1835,14 +1835,14 @@
     "created_by": null,
     "last_patched_at": "2026-09-16T06:59:45.780725+00:00",
     "last_reused_patch_generation": 2,
-    "last_used_at": "2026-09-16T07:35:08.196735+00:00",
-    "last_viewed_at": "2026-09-16T07:35:08.184886+00:00",
+    "last_used_at": "2026-09-16T08:35:56.928759+00:00",
+    "last_viewed_at": "2026-09-16T08:35:56.918584+00:00",
     "patch_count": 2,
     "patch_generation": 2,
     "pinned": false,
     "state": "active",
-    "use_count": 5,
-    "view_count": 5
+    "use_count": 8,
+    "view_count": 8
   },
   "scraping-dispatch": {
     "archived_at": null,
@@ -2007,15 +2007,15 @@
     "created_at": "2026-09-04T08:18:22.718954+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-09-16T07:21:31.183767+00:00",
-    "last_reused_patch_generation": 7,
-    "last_used_at": "2026-09-16T07:20:51.657456+00:00",
-    "last_viewed_at": "2026-09-16T07:20:51.644842+00:00",
+    "last_reused_patch_generation": 9,
+    "last_used_at": "2026-09-16T08:36:43.021373+00:00",
+    "last_viewed_at": "2026-09-16T08:36:43.011300+00:00",
     "patch_count": 9,
     "patch_generation": 9,
     "pinned": false,
     "state": "active",
-    "use_count": 3,
-    "view_count": 3
+    "use_count": 4,
+    "view_count": 4
   },
   "social-media/short-video-copywriting": {
     "archived_at": null,

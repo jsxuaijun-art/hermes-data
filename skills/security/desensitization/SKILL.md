@@ -42,7 +42,8 @@ metadata:
 本 skill 是**策略层**（我来执行规则）；`desensitize-read` 插件是**执行层**（读入即拦，不依赖我是否记得），二者配合实现"出现即自动脱敏、无需手动调用"。
 
 - 位置：`~/.hermes/plugins/desensitize-read/`（已随 `hermes_push.sh` 同步到各设备）
-- 机制：挂 `transform_tool_result` 钩子——「读入型」工具（read_file / search_files / web_extract / web_search / terminal / execute_code / browser_* / vision_analyze）的结果，在进入模型上下文**之前**自动脱敏；只作用于外部读入内容，不改 agent 自身产出（write_file/patch/skill_manage）
+- 机制：挂 `transform_tool_result` 钩子——「本地读入 / 用户上传」类工具（read_file / search_files / terminal / execute_code / vision_analyze）的结果，在进入模型上下文**之前**自动脱敏；只作用于外部读入内容，不改 agent 自身产出（write_file/patch/skill_manage）
+- **脱敏边界（用户 2026-09-15 定稿）**：只有用户**主动发送**的信息/文件才脱敏；agent 主动抓网页/搜索（web_search / web_extract / browser_*）得到的公开数据**不脱敏**，已从插件默认目标集移除
 - 自动执行的规则：① 词表精确替换（`~/.hermes/leak-blocklist.txt`，`真实=脱敏` 格式）② 信用代码末8位→X ③ 身份证号中间8位→X ④ 法定身份字段（法定代表人/负责人/股东/投资人/联系人/办税人…：）后的姓名前两字→T
 - 启用：`hermes plugins enable desensitize-read`（写入 config.yaml 的 `plugins.enabled`）；**下次会话生效**，每台设备各自执行一次
 - 关闭：环境变量 `DESENSITIZE_READ_DISABLE=1`；自定义目标工具：`DESENSITIZE_READ_TOOLS=read_file,terminal`

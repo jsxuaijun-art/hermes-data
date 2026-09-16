@@ -1,8 +1,12 @@
 """desensitize-read plugin — 读入内容自动脱敏，防止真实主体信息进入模型上下文。
 
-挂一个 ``transform_tool_result`` 钩子：对「读入型」工具的结果（read_file /
-search_files / web_extract / web_search / terminal / execute_code / browser_* /
-vision_analyze）在追加进对话上下文之前，按固定规则脱敏，返回字符串即替换结果。
+挂一个 ``transform_tool_result`` 钩子：对「本地读入 / 用户上传」类工具的结果
+（read_file / search_files / terminal / execute_code / vision_analyze）在追加进
+对话上下文之前，按固定规则脱敏，返回字符串即替换结果。
+
+脱敏边界（用户 2026-09-15 定稿）：只有「用户主动发送的信息/文件」才脱敏；
+agent 主动抓网页/搜索（web_search / web_extract / browser_*）得到的公开数据不脱敏，
+故这些工具已从默认目标集移除。自定义可用 DESENSITIZE_READ_TOOLS=read_file,terminal 覆盖。
 
 脱敏规则（与 security/desensitization skill 一致）：
   ① 精确词表 ~/.hermes/leak-blocklist.txt（real=masked 或单列 real）→ 替换为 masked/[已脱敏]
@@ -29,17 +33,19 @@ from typing import Any, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-# 「读入型」工具：其结果是外部内容，需脱敏后才进上下文
+# 「读入型」工具：其结果是外部内容，需脱敏后才进上下文。
+# 边界（用户 2026-09-15 定稿）：只有「用户主动发送的信息/文件」需要脱敏；
+# agent 主动抓网页/搜索（web_search / web_extract / browser_*）得到的公开数据【不脱敏】。
+# 故默认集只保留「本地读入 / 用户上传」类工具：
+#   read_file / search_files（读本地文件）、vision_analyze（看用户上传的图/截图）、
+#   terminal / execute_code（本地执行——用户上传文件常经此读取）。
+# 网络抓取类（web_search / web_extract / browser_navigate / browser_snapshot / browser_console）
+# 已从默认集移除，不脱敏。
 _DEFAULT_TARGET_TOOLS = {
     "read_file",
     "search_files",
-    "web_extract",
-    "web_search",
     "terminal",
     "execute_code",
-    "browser_navigate",
-    "browser_snapshot",
-    "browser_console",
     "vision_analyze",
 }
 

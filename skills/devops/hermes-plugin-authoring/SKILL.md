@@ -93,7 +93,12 @@ python3 ~/.hermes/skills/devops/hermes-plugin-authoring/scripts/verify_transform
 
 - **非阻断**：钩子体 try/except，任何异常原样放行——处理失败绝不卡死主流程。
 - **收窄范围**：只处理目标工具名；处理 agent 自身产出（`write_file` / `patch` /
-  `skill_manage` 等结果）会自伤。
+  `skill_manage` 等结果）会自伤。**按数据来源分桶**（2026-09-15 实测，用户定边界
+  「只脱敏用户主动发送的信息/文件，agent 抓网页/搜索的公开数据不脱敏」）：目标工具集
+  拆成「本地/用户上传类」（read_file / search_files / terminal / execute_code /
+  vision_analyze）与「网络抓取类」（web_search / web_extract / browser_*，**不处理**）。
+  分桶直接体现在模块级 `_DEFAULT_TARGET_TOOLS` set 里；`DESENSITIZE_READ_TOOLS`
+  环境变量可运行时覆盖（每次调用动态读 `os.environ`）。
 - **控制成本**：transform 钩子在每次匹配调用都跑，设大小上限（≥2MB 跳过）。
 - **结果形态**：`transform_tool_result` 收到的 result 可能是 dict 或 JSON 字符串，
   兼容两种；返回字符串即替换。
@@ -113,6 +118,11 @@ python3 ~/.hermes/skills/devops/hermes-plugin-authoring/scripts/verify_transform
    字符串即替换是实测验证过的契约。
 6. **姓名/无格式字段识别有上限**：上下文正则（如 `法定代表人：杨建国`）只认
    「字段名＋冒号」形式；游离出现的姓名要词表兜底，别宣称全覆盖。
+7. **改插件源码≠当前会话生效**：`_DEFAULT_TARGET_TOOLS` 这类**模块级常量在插件
+   import（进程启动）时定值**，改了源码当前会话仍是旧逻辑，必须**重开会话**才能
+   验证；`DESENSITIZE_READ_TOOLS` 等环境变量虽每次调用动态读 `os.environ`，但外部
+   改不了已运行进程的环境——结论统一：**插件任何改动（源码/配置）都要新会话才生效**，
+   向用户说明时别承诺「本次已生效」。
 
 ## Verification
 

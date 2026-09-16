@@ -14,7 +14,7 @@
 §
 文章改写要求:除换措辞还要打乱结构顺序/重组角度与逻辑链,结构层面不雷同;五大事项类可重排/拆分重组/调侧重点。
 §
-Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git引擎(push obsidian-vault)。脚本hermes_only_snapshot.sh+obsidian_sync.sh。cron每日12:28归档、周一12:28复盘。更新后跑obsidian_sync.sh。详obsidian skill。
+Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git引擎(push obsidian-vault)。脚本hermes_only_snapshot.sh+obsidian_sync.sh。cron每日12:28归档、周一12:28复盘。更新后跑obsidian_sync.sh。勿把~/.hermes运行时目录搬进vault(密钥/SQLite/9pfs/--delete)。详obsidian skill。
 §
 公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
 §
@@ -24,4 +24,4 @@ Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git
 §
 hermes cron CLI(2026.8实测):prompt是位置参数`hermes cron create <schedule> <prompt>`,无--prompt;子命令无log,查执行用`hermes cron runs <id>`;生命周期create→run(手动)→runs→remove。cron前`.lazy-refresh-incomplete`警告是噪音,venv其实健康(核心模块6/6 import通过),验证用import非警告。
 §
-脱敏铁律(处理任何上传材料自动执行):①公司名除"有限公司"外汉字逐字取拼音首字母大写(例:甲乙丙丁(苏州)有限公司→JYBD(SZ)有限公司,简称同步)②信用代码18位保前10末8位全X③法人姓名前两字→TT(杨建国→TT国)。真实主体交付物仅本地留真实版,公开/入库/同步一律脱敏。插件desensitize-read只拦工具读入(下次会话生效),用户直接发文字走纪律层;公司名无格式不被自动识别靠人工纪律。用户明确不要本地词表存真实身份(这户和以后都不加,勿再提议)。
+脱敏边界【全局规则,适用所有skill】(2026.9.15定稿):只有用户主动发送的信息/文件才脱敏;agent抓网页/搜索(web_search/web_extract/browser_*)公开数据不脱敏,插件desensitize-read默认目标集已剔除网络类(read_file/search_files/terminal/execute_code/vision_analyze保留)。脱敏铁律(处理任何上传材料自动执行):①公司名除

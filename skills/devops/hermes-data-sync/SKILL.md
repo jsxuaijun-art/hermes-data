@@ -465,6 +465,8 @@ Full `rsync -a ~/.hermes/ ...` (step 1 of the .bat) never hits this — it creat
 | **rebase 报 "deleted by us: SKILL.md"** | 远端某 sync 提**删除了文件**,你的提交改它→change/delete 冲突 | 这是**多机同步把文件从 git 删掉的严重信号**：`git show <我的提交>:<路径> > /tmp/x` 取回 → `cp`回工作区 → `add` → `GIT_EDITOR=true git rebase --continue` |
 | **skill 在某台机"消失",但 git 历史有它** | 被某个 `sync` 提交 `--diff-filter=D` 删了(如 company-deregistration 被 f20de05 误删) | `git log --oneline --diff-filter=D -- <路径>` 定位删除提交 → 从源机 `~/.hermes/skills/…` rsync 回 → `add/commit/push` 补回主仓库 |
 | **rebase --continue 报 editor 错误** | 非交互终端无编辑器 | 前置 `GIT_EDITOR=true`（复用原信息） |
+| **push 报 `fatal: not a git repository (or any parent up to mount point /mnt)` 且输出格式是 `[1/4][2/4][3/4]`** | 双击了**旧版内联 .bat**（v2 结构 `[1/4]` 步进），它 `cd` 进 `Desktop/HermesAgent` 或某无 `.git` 目录；不是这台机 v3 脚本坏了 | 换成桌面正确 v3 `.bat`。**判断 v3**：桌面 `Hermes同步-推送.bat` 应只有一行核心 `wsl -d Ubuntu -- bash ~/.hermes/skills/devops/hermes-data-sync/scripts/hermes_push.sh`（输出 `[1][2][3]`）；若 .bat 是 `rsync`+`git add -A` 内联大串（步进 `[1/4]`）=旧版，删掉换 v3 |
+| **v3 脚本自验（排除脚本坏）：探测命中 `Admin/hermes-sync` 而非 `Desktop/HermesAgent`** | `Desktop/HermesAgent` 无 `.git`、`Admin/hermes-sync` 才有（remote=hermes-data），这是正常的 | `eval "$(bash ~/.hermes/skills/devops/hermes-data-sync/scripts/hermes_sync_path.sh)"` 看 `HERMES_SYNC_DIR`；`bash .../hermes_push.sh` 完整跑应 exit 0（探测→rsync→pull--rebase→leak_scan→sync_guard→commit→push） |
 
 > ⚠️ **2026-08-07 实战最深教训（本机 office/Administrator/b91136e 确认）：**
 > ① `company-deregistration`(注销skill) **曾被 `f20de05 sync` 从 GitHub 误删**——它是"某一环节工作区缺它→sync 提交顺势把它删进 git"。已在本机补回并 push(`b91136e`)。**结论：凡是"某台机器本地没有的 skill/文件"，若用了 `rsync --delete` 或 `git add -A` 的同步提交，会被当成"删除"从仓库抹掉。** 多机同步务必保证每台工作区都有全量 skill，否则 --delete/add -A 会静默删文件。

@@ -1,0 +1,21 @@
+{
+  "disclaimer": "内容仅供参考，具体以官方政策为准",
+  "voice": "zh-CN-YunyangNeural",
+  "shots": [
+    {
+      "image": "shot1.png",
+      "text": "你明明知道便宜没好货。可看到 99 元包年代账，你还是点了。",
+      "zoom": "in"
+    },
+    {
+      "image": "shot2.png",
+      "text": "低价是怎么低下去的？无非三件事：少报、漏报、不核对。",
+      "zoom": "in"
+    },
+    {
+      "image": "shot3.png",
+      "text": "为了省一年几千块代账费，可能搭进去几万、几十万。便宜的账，迟早要还。",
+      "zoom": "none"
+    }
+  ]
+}

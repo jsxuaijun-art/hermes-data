@@ -1,0 +1,43 @@
+{
+  "id": "02",
+  "name": "刘润（红蓝撞色）",
+  "source": "刘润",
+  "source_url": "https://mp.weixin.qq.com/s/4fCXpjdNtadd0fjOefn56g",
+  "style_summary": "财务思维风格：15px正文·1.75em行高·不首行缩进靠段距·红(#FF2941)蓝(#0052FF)双色撞色强调·加粗突出重点",
+  "typography": {
+    "font_family": "\"PingFang SC\", system-ui, -apple-system, BlinkMacSystemFont, \"Helvetica Neue\", \"Hiragino Sans GB\", \"Microsoft YaHei UI\", \"Microsoft YaHei\", Arial, sans-serif",
+    "body_font_size": "15px",
+    "body_color": "rgba(0, 0, 0, 0.9)",
+    "body_line_height": 1.75,
+    "letter_spacing": "0.578px",
+    "text_align": "justify",
+    "text_indent": "0em",
+    "background_color": "#FFFFFF"
+  },
+  "headings": {
+    "style": "纯加粗，红蓝撞色",
+    "h1_font_size": "22px",
+    "h1_color": "#FF2941",
+    "h2_font_size": "18px",
+    "h2_color": "#0052FF",
+    "font_weight": "bold",
+    "decoration": "无背景色块、无左侧色条、无边框"
+  },
+  "emphasis": {
+    "style": "红蓝撞色加粗",
+    "primary_color": "#FF2941",
+    "secondary_color": "#0052FF",
+    "font_weight": "bold",
+    "usage": "正文重点词/数字用红#FF2941，标题用蓝#0052FF，形成撞色冲击"
+  },
+  "quotes": {
+    "style": "灰色底蓝边框",
+    "border_color": "#0052FF",
+    "background": "#F7F8FA"
+  },
+  "images": {
+    "count": ">=3",
+    "placement": "段落间穿插"
+  },
+  "overall_vibe": "知性、简洁、红蓝撞色有冲击力、财务商业感、重点数字醒目"
+}

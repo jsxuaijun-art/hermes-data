@@ -1,27 +1,27 @@
-防误删sync_guard.sh+P11见skill hermes-data-sync,wsl-hermes-env§9亦然。注销skill(company-deregistration勿改)qingshui_risk_engine.py把「期初」当「期末」诊断,临注销公司必错,用前人工核对期末(C&G列),差>10%废弃。同步夹memories源=~/.hermes/memories/。
+防误删sync_guard+P11见skill hermes-data-sync,wsl-hermes-env§9。注销skill勿改qingshui_risk_engine.py(把「期初」当「期末」),用前人工核对期末(C&G列)差>10%废弃。memories源=~/.hermes/memories/。
 §
-交付文件默认放Windows桌面/mnt/c/Users/Admin/Desktop(用户名Admin),不放WSL桌面~/,不显示WSL路径。不生成md文件——除非写清打开方式，否则直接不生成(交付用docx/txt)。Clash代理只绑127.0.0.1:7890:Github用curl.exe --proxy,pip前unset代理。Windows hermes用uv装,WSL调.exe需Start-Process。
+AI内容纪律(徐总2026.9.21定稿,权威文档:Obsidian公司运营/AI内容纪律+桌面txt):A涉法文案→严守严禁幻觉先核实再引带文号带依据清单;"法"=全部法律层面不限于税法(宪法/民典/公司/劳动/广告/反不正当竞争/个信法+行政法规部门规章司法解释+地方性法规政府规章+监管政策文号法定义务权利),无论主题是否财税.C非文案(客户答复/财税咨询/测算/报表)→等同A严守,B创作文案(泛话题/趣味破播/爆款/脑洞)→豁免尽情发挥,只守平台合规红线;交叉规则:B整篇可飞但引具体法规/数据当卖点那句回A须有据,一句话涉法必严创作可飞非文案必严。
 §
-政务/法律条文检索用anysearch CLI batch_search 可直抓权威官文(文号+施行日期)，已实操验证。pip清华。
+GEO必加载geo-optimization技能+8平台指南(百家号/知乎/网易号/新浪财经头条/企鹅号/搜狐号/今日头条/公众号)。中文、直接给能用方案。
 §
-用户（徐爱军）常处理苏州爱心之家老年公寓（民办非企业）的财务报表格式转换：小企业会计准则→民间非营利组织。要点：实收资本+未分配利润→非限定性净资产（负数），应收款项=应收账款+预付账款+其他应收款，应付款项=应付账款+其他应付款。技能已保存为 chinese-accounting-format-conversion。
-§
-用户要求提到 GEO 时必须加载 geo-optimization 技能 + 8平台独立指南(百家号/网易号/新浪财经头条/企鹅号/搜狐号/今日头条/知乎/公众号)。偏好中文、直接给能用的方案没说废话。
-§
-公众号铁律（用户反复强调）：①严禁AI幻觉，不确定政策/数据/法规绝对不写，引用标注官方文号，宁可少说不说错；②配图铁律：禁止复用任何历史图片、禁止建图片库，每次创作直接用AI生成或查找与主题高度相关的新图，每段配图严格对应本段主题；③模板固定：公司介绍(盈信2009-12-11/江敏创办/TSC五级438.11/17年)→核心业务→二维码→CTA三动作+话题标签5-8个勿漏(详见尾部规范条)→作者"苏州盈信企业管理"。
+公众号铁律：①涉政策/数据/法条绝对不写幻觉，引用标官方文号宁少勿错；②配图禁止复用历史图/建图库，每次生成或查高相关新图逐段对应；③模板：公司介绍(盈信2009-12-11/江敏创办/TSC5级438.11/17年)→核心业务→二维码→CTA三动作+话题5-8个勿漏→作者"苏州盈信企业管理"。交付统一C:\Users\Administrator\Desktop。
 §
 用户触发词约定：「朋友圈」→wechat-moments-marketing出文案+3张Unsplash图+拷桌面+企微API推XuAiJun勿问确认。「调用短视频skill」→自动同时调爬虫skill(python-web-scraping-setup)按主题搜信息，输出要超前超脱的上帝视角、提出不同观点并分析得头头是道。
 §
 文章改写要求:除换措辞还要打乱结构顺序/重组角度与逻辑链,结构层面不雷同;五大事项类可重排/拆分重组/调侧重点。
 §
-Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git引擎(push obsidian-vault)。脚本hermes_only_snapshot.sh+obsidian_sync.sh。cron每日12:28归档、周一12:28复盘。更新后跑obsidian_sync.sh。勿把~/.hermes运行时目录搬进vault(密钥/SQLite/9pfs/--delete)。详obsidian skill。
+Obsidian=第二知识库:D盘/mnt/d/obsidian-vault主库+obsidian_sync.sh,勿搬~/.hermes运行时(密钥/SQLite/--delete)。详obsidian skill。
 §
 公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
 §
-人工HTML/SVG分镜5风格存备选、用户全不满意——要真AI生图专业质感。最高优先任务=生图能力(coze/image_gen/ComfyUI/文心/通义万相),chudian视觉key脱敏不可用,用户会再给风格链接。参考wechat-comic-cells。
+文案创作路由(9.22):短视频默认豆包db;明说用Kimi才覆盖;爆款长文默认Kimi并主动提示·本机代目=CordC2.8.5(F:\CordC\)AllowLAN在设置→网络
 §
-模型分工自动切换:子代理跑kimi-k3成稿+主会话deepseek编排,爆款写作默认派子代理不手切。
-§
-hermes cron CLI(2026.8实测):prompt是位置参数`hermes cron create <schedule> <prompt>`,无--prompt;子命令无log,查执行用`hermes cron runs <id>`;生命周期create→run(手动)→runs→remove。cron前`.lazy-refresh-incomplete`警告是噪音,venv其实健康(核心模块6/6 import通过),验证用import非警告。
+hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策监控已部署(cron'苏州城市破播'周二五9点投企微内部群'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才自动触发,手动run不投递;细节见short-video-copywriting类型五);政务检索用anysearch抓官文(文号+日期)。pip清华。
 §
 脱敏边界【全局规则,适用所有skill】(2026.9.15定稿):只有用户主动发送的信息/文件才脱敏;agent抓网页/搜索(web_search/web_extract/browser_*)公开数据不脱敏,插件desensitize-read默认目标集已剔除网络类(read_file/search_files/terminal/execute_code/vision_analyze保留)。脱敏铁律(处理任何上传材料自动执行):①公司名除
+§
+技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library,管理器~/skill-library-ops/skilllib.py,cron skill-exchange周日23:00。
+§
+本机(/home/administrator)Hermes升级=混合目录隔离法勿git reset:gh-proxy.com下tar→独立目录→venv pip install -e→config migrate→hermes gateway restart;新版api_server需强API_SERVER_KEY(openssl rand -hex 32入.env)否则exit78;详hermes-auto-upgrade-wsl。
+§
+代理=CordC2.8.5(F:\CordC\),AllowLAN在设置→网络;条件脚本~/.hermes/proxy.sh。

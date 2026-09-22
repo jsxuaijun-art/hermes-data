@@ -217,3 +217,17 @@ git push origin main
 判断依据：冲突涉及 **`--ours`（保留 rebase 目标=远端新版本）**。Hermes 的日记/索引文件在冲突之外，rebase 后自动保留。若冲突出现在 Hermes-Only 自主文件，才需人工判断合并。**应判断"冲突文件属于谁"**：非本助手（WorkBuddy/其他助手-Only）的文件一律 `--ours` 取远端，本助手自主文件才逐条合并。
 
 **注意**：subagent 委托同步时，上述验证逻辑必须在 parent 用 `execute_code` 中通过 `subprocess` 执行，不能再次委托给 subagent。`obsidian_sync.sh` 脚本本身无问题，问题是 subagent 自报告不可靠。
+
+### P15 日记/周报出现空档期（多日/多周无新文件）→ 先查 gateway 与 cron 调度器存活，再归因内容缺失
+
+**场景**：每日归档 cron 应每天产日记，但某段时间（如 2026-09 整月）`projects/日记/` 一直停在旧日期，无 9 月文件。
+
+**常见误判**：以为"那个月没活动/没内容"或"内容被 rsync 冲掉了"。实际根因可能是**调度器压根没在跑**。
+
+**诊断顺序**：
+1. `session_search` 看目标日期的会话——若全是 `cron_*` 自身任务、无独立用户 cli 会话，别急着定论"今日无活动"。
+2. 交叉验证 WSL 引擎与 D盘主库 `projects/日记/` 目录——两边都停在同一天 = 不是 rsync 冲掉，而是这个 cron 长期没执行。
+3. **查 gateway 健康**：`systemctl --user status hermes-gateway` 看重启计数；`journalctl --user -u hermes-gateway` 找 `ImportError`。2026-09 实战根因：`cron/scheduler_provider.py` 缺 `scheduler_for_profile_mode` → gateway 每次启动崩、systemd 崩溃重启 4234 次 → cron 调度器根本没 run → 每日归档/周报全部哑火。
+4. 修复并重启后，**归档 cron 自身能准点触发本身就是修复生效的端到端验证**，可直接写进当日日记。
+
+**原则**：归档链路是"有则归因、无则先查调度器存活"。空档期优先怀疑 gateway/cron 基础设施，而非内容缺失。

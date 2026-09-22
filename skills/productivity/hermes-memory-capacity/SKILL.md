@@ -37,6 +37,8 @@ hermes config set memory.user_char_limit 2200
 ## Pitfalls
 - **不要用 patch/write_file 直接改 `~/.hermes/config.yaml` 的 memory 段** —— 会被安全机制拒绝，报 "Agent cannot modify security-sensitive configuration. Edit ~/.hermes/config.yaml directly or use 'hermes config' instead." 必须走 `hermes config set`。
 - **上限在启动时读取** —— 改了不重启不生效；让用户 Ctrl+Q / /quit 退出后重新 `hermes`。
+- **「超限 N 字」被拒 ≠ 必须扩容，批量精简可解（2026-09-21 实战）** —— memory 工具报「超限 42 字」（新词条 2242 字 > 当前上限 2200）时，说明容量已满。若不便扩容（config 改动需重启才生效，cron/会话中途做不到），用**一次批量原子操作**：1 个 `replace` 精简旧词条（`old_text` 必须逐字精确匹配现有词条全文）+ 1 个 `add` 新词条，同批一次提交可成功。不要反复单独尝试 `add`——多次失败会触发工具保护。实战一次成功（占用 2168/2200）。
+- **「注入上限」与 `memory_char_limit` 是两个开关** —— 用户曾"放开容量"后仍报超限，是因为 memory 工具头部实际显示的注入上限（如 `[x/2200 chars]`）未变；判断剩余空间一律以工具头部实际显示为准，别只看 config 值。
 - 判断"能否扩容"时，先查 `hermes_cli/config.py` 的 DEFAULT_CONFIG 和 `agent/agent_init.py` / `tools/memory_tool.py` 是否 honor 配置覆盖（`load_on_disk_store()` 也 honor），不要想当然认为不能调。
 
 ## 参考

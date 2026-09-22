@@ -84,6 +84,80 @@ hermes --version                  # 应显示 Up to date
   stdin 无应答），timeout 后无输出 —— 手动 git 操作才是可靠路径
 - 运行中的会话进程加载的是启动时的代码，`hermes --version` 在**新开进程**里验证
 
+### 4. 升级后 gateway 立即退出 exit 78：新版 api_server 强密钥守卫（0.21.3 实测坑）
+
+**症状**：升级到 0.21.x 后 `systemctl --user restart hermes-gateway` → `Active: failed (exit-code)`，`status=78`。78 在 unit 里是 `RestartPreventExitStatus`，**有意不重试**（不是崩溃循环）。日志：
+
+```
+ERROR gateway.platforms.api_server: [Api_Server] Refusing to start: API_SERVER_KEY is required \
+  for the API server, including loopback-only binds on 127.0.0.1.
+ERROR gateway.run: Gateway hit a non-retryable startup conflict: api_server: API_SERVER_KEY \
+  was rejected by the startup guard ...
+Gateway exiting cleanly: ... status=78
+```
+
+**根因**：新版 api_server 启动守卫要求 `API_SERVER_KEY` 是强密钥（≥16 字符，`has_usable_secret` 校验）。旧版无此守卫，config.yaml 里 `platforms.api_server.enabled: true` 裸跑过也不报错；升级后立即拒绝启动并**连带整个 gateway 退出**。
+
+**修复**（保持 enabled:true 意图、不降级安全）：
+```bash
+grep -c 'API_SERVER_KEY' ~/.hermes/.env   # 0 = 缺
+echo "API_SERVER_KEY=$(openssl rand -hex 32)" >> ~/.hermes/.env
+hermes gateway restart   # 或 hermes-agent/venv/bin/hermes gateway restart（顺带刷新 unit）
+```
+之后 `ss -tlnp | grep 8642` 应看到监听。不用的也可以 `platforms.api_server.enabled: false`，但用户明确配置过就配 key 更对。
+
+**排查纪律**：先 `journalctl --user -u hermes-gateway -n 30 | grep -iE 'ERROR|exit|78'` 看退出码，别先怀疑配置/凭据；gateway 日志里 `check_fn xxx returned False` 刷屏 = 缺 key 工具的 check_fn 正常返回，不是错误，排查时 exclude。
+
+### 5. gateway 崩溃循环（restart counter 高涨）＝混合目录版本失配（2026.9 实测）
+
+**症状**：`systemctl --user status hermes-gateway` 显示 active 但 Main PID 每次变、
+日志重复 `Scheduled restart job, restart counter is at 4234`（每 ~20s 一次）、
+`hermes cron status` 报 "Gateway is not running"（调度的 cron 全部停摆）。
+
+**根因**：混合目录（git 跟踪数据、源码 untracked）升级时**部分文件被覆盖**：
+新文件（如 `gateway/run.py`）引用了旧文件（如 `cron/scheduler_provider.py`）
+里不存在的符号。本机实例：`from cron.scheduler_provider import
+scheduler_for_profile_mode` → ImportError，该函数在全项目任何文件、任何 git
+历史里都不存在（`git log -S` 无结果）——是 run.py 引用了从未实现的函数。
+
+**诊断三步**：
+```bash
+journalctl --user -u hermes-gateway --no-pager -n 40 | grep -iE "import|error|traceback"
+grep -n "from cron.scheduler_provider import" gateway/run.py   # 缺哪个名字
+grep -rn "def <名字>" cron/                                    # 全项目确认不存在
+```
+
+**修复**：在被引用的旧文件里补上缺失符号（向后兼容、最小侵入）。本例 run.py
+只把返回值交给 `cron_provider.start(...)` 与 isinstance 判断 → 补一个 identity
+包装函数即可（multiplex 实际由 `InProcessCronScheduler.start()` 的
+`profile_homes` 参数处理）。补完 syntax-check（lint ok）→ 重启 gateway →
+确认 restart counter 不再涨、日志无 ImportError、目标平台 connected。
+
+**教训**：混合目录下**任何跨文件符号引用都可能失配**。修 bug 前先
+`grep -rn "def <symbol>"` 全项目确认符号是否存在；gateway 崩溃循环优先怀疑
+ImportError，不要先怀疑配置/凭据。
+
+**修复后验证 cron 真的会投递**（2026.9 实测）：
+- **gateway 在线是 cron 自动触发的硬前提**——调度器由 gateway 托管
+  （systemd `hermes-gateway.service`）；gateway 崩着，周二/五这类定时任务
+  永远不会自动跑。
+- **手动 `hermes cron run <id>` 是独立进程（source=direct）**：能跑脚本、
+  显示 succeeded，但投递依赖常驻 gateway 的适配器——gateway 离线时
+  succeeded 不代表消息送到了企微。验证闭环 = gateway connected → 触发 →
+  gateway.log 有 send 记录 → 收件端真实收到。
+- **deliver 到企微群用 `wecom:<群chat_id>`，不能用群名**。群 chat_id 查
+  `~/.hermes/state.db` 的 sessions 表（key 形如
+  `agent:main:wecom:group:<chat_id>:<user_id>`）。例：内部群「徐江机器人」
+  = `wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg`（成员 XuAiJun +
+  GaoJiHuiJiShianna）。投群报 93001 `not allow send msg in room` = 机器人
+  不在该群/chat_id 不对，回 sessions 表核对。
+- **手动 run 报 `claim_job_for_fire() got an unexpected keyword argument
+  'return_job'`** = 同属混合目录失配：`tools/cronjob_tools.py` 按新版 API
+  调 `cron/jobs.py` 的旧签名。修法：给 `claim_job_for_fire` 加
+  `return_job=False` 参数（True 时成功返回 job dict，向后兼容），补跑
+  `tests/cron/test_claim_job_for_fire.py` 全绿，再 `hermes cron run` 验证
+  从 failed → succeeded。
+
 ## 版本旗标快查
 
 - `hermes version` 不是合法子命令（argparse 报 invalid choice）—— 版本用 `hermes --version`

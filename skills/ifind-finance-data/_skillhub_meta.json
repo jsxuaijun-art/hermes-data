@@ -1,0 +1,10 @@
+{
+  "name": "同花顺iFinD金融数据查询",
+  "installedAt": 1788751743080,
+  "source": "marketplace",
+  "version": "1.4.0",
+  "skillId": "skill_2083031467671093248",
+  "iconSource": "https://openplatform-cdn.codebuddy.cn/public/5c2646b6-d24b-42e3-ac18-b2fee6046eb1/avatar/skill/au_476963ee-072.png",
+  "iconLocalPath": "C:\\Users\\Administrator\\.workbuddy\\skills\\ifind-finance-data\\_icon.png",
+  "iconDownloadedFrom": "https://openplatform-cdn.codebuddy.cn/public/5c2646b6-d24b-42e3-ac18-b2fee6046eb1/avatar/skill/au_476963ee-072.png"
+}

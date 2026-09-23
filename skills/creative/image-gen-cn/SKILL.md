@@ -16,7 +16,8 @@ metadata:
 用户说「生图」「AI生图」「生成图片」「画一张xxx」「通义万相」「wanx」「做个AI图的」时触发。配合 wechat-comic-cells 的路线B，产出真·AI绘画质感（用户明确不满意纯SVG手绘风格，要求专业绘画质感）。
 
 ## 核心脚本
-`/home/dmin/.hermes/scripts/image_gen_cn.py`
+`$HOME/.hermes/skills/creative/image-gen-cn/scripts/image_gen_cn.py`
+(脚本内嵌本 skill 的 `scripts/` 目录，随 skill 跨机同步，勿用绝对用户路径)
 
 ## 依赖的 key（二选一）
 - **通义万相（主推，免费额度，中文效果好）**：`DASHSCOPE_API_KEY`
@@ -45,16 +46,35 @@ python3 /home/dmin/.hermes/scripts/image_gen_cn.py --provider siliconflow \
 
 尺寸：通义万相 `1024*1024`(方) / `720*1280`(竖,公众号配图用) / `1280*720`(横)。硅基流动用 `1024x1024` 等 x 分隔。
 
+## 真实生图主推（2026-09 已实测打通）：豆包 Seedream 5.0 Pro
+`$HOME/.hermes/skills/creative/image-gen-cn/scripts/image_gen_seedream.py` — 走电信中转 `aigw.telecomjs.com/v1`（OpenAI 兼容 /images/generations，同步返回可下载 url）。
+- 模型：`doubao-seedream-5.0-pro-0724`，中文文字渲染/画面质量强，适合财税配图。
+- 环境变量（~/.hermes/.env）：`SEEDREAM_API_KEY` + `SEEDREAM_BASE_URL=https://aigw.telecomjs.com/v1`
+- 用法：`python3 $HOME/.hermes/skills/creative/image-gen-cn/scripts/image_gen_seedream.py --prompt "..." --out /tmp/x.png --size 720x1280`
+- 该中转平台 /models 只有这一个 seedream 模型，无视觉模型、无 VL。
+
+## 出图验收：主会话视觉路由
+主模型 deepseek-v4-flash 无视觉，`vision_analyze` 走 `auxiliary.vision`。已配为 chudian 的
+`deepseek-v4-flash-vision-exp`（base_url https://llm.chudian.site/v1，key 复用 DEEPSEEK_API_KEY），
+实测能准确读画面/查文字乱码。需要"看"图时直接 vision_analyze 即可。备选免费：智谱 GLM-4.6V-Flash/bigmodel.cn（需另注册）。
+
 ## 关键命令（当前机器实测）
 ```bash
-python3 /home/dmin/.hermes/scripts/image_gen_cn.py --provider dashscope --prompt "扁平插画风格，会计师江姐(红衫棕长发)在办公室讲解税务政策，对话气泡，暖橙色背景" --out /tmp/jie.png
+SK=~/.hermes/skills/creative/image-gen-cn/scripts
+python3 $SK/image_gen_cn.py --provider dashscope --prompt "扁平插画风格，会计师江姐(红衫棕长发)在办公室讲解税务政策，对话气泡，暖橙色背景" --out /tmp/jie.png
+python3 $SK/image_gen_seedream.py --prompt "扁平插画风格，会计师江姐(红衫棕长发)在办公室讲解税务政策，对话气泡，暖橙色背景" --out /tmp/jie.png
 ```
 
 ## 工作流（公众号分镜用）
-1. 确认 key：`grep DASHSCOPE /home/dmin/.hermes/.env` 或直接跑脚本看是否报「未设置」
+1. 确认 key：`grep -E "SEEDREAM|DASHSCOPE" $HOME/.hermes/.env` 或直接跑脚本看是否报「未设置」
 2. 出图：按 wechat-comic-cells 的分镜剧本，逐格调用本skill生图
 3. 验证：主模型无视觉时，用 RapidOCR 验文字（AI生图文字可能乱码，重要文案慎用AI图）或用 vision_analyze 让有视觉的辅助模型确认画面
 4. 发布：传服务器 `/var/www/html/images/`，插 wechat-publish 文章
+
+## 跨电脑使用（重要）
+- 两个脚本内嵌本 skill 的 `scripts/` 目录，随 skill 经 GitHub `jsxuaijun-art/hermes-data` 全量同步，拉取后立即可用（目录扫描制，无需重启）。
+- **`.env` 不同步**（每台电脑独立）：新电脑必须手动在 `~/.hermes/.env` 配 `SEEDREAM_API_KEY`（和 `SEEDREAM_BASE_URL=https://aigw.telecomjs.com/v1`），否则脚本报「未设置」。key 在电信中转后台可查。
+- 主模型无视觉：生图验收用 `vision_analyze`（auxiliary.vision 走 chudian 的 deepseek-v4-flash-vision-exp，复用 DEEPSEEK_API_KEY，需每台 .env 都有该 key）。
 
 ## Pitfalls
 - **AI生图文字会乱码**：含关键政策文案/数字的格子别用AI生图，用路线A(HTML/SVG真实字体)。AI图适合场景/人物/氛围，文字单独用真实排版叠加。

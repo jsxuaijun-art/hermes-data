@@ -25,3 +25,7 @@ hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策�
 本机(/home/administrator)Hermes升级=混合目录隔离法勿git reset:gh-proxy.com下tar→独立目录→venv pip install -e→config migrate→hermes gateway restart;新版api_server需强API_SERVER_KEY(openssl rand -hex 32入.env)否则exit78;详hermes-auto-upgrade-wsl。
 §
 代理=CordC2.8.5(F:\CordC\),AllowLAN在设置→网络;条件脚本~/.hermes/proxy.sh。
+§
+模型分工铁律:①一般性工作+爬虫skill搜索→chudian平台deepseek V4 Flash(节约);②公众号写作→KIMI-K3(子代理成稿);③文案创作→doubao;④完成文案创作/公众号写作时必须向用户汇报用的是哪个模型;⑤deepseek V4 Flash干不了的工作→提示建议、由用户拍板用哪个模型(如生图直接用doubao-seedream-5.0-pro-0724)。
+§
+生图铁律:有生图任务一律走doubao-seedream-5.0-pro-0724(经电信中转aigw.telecomjs.com/v1,OpenAI兼容),严禁用deepseek-v4-flash或降级其他模型,整任务跑完再回默认模型。脚本内嵌于image-gen-cn skill的scripts/目录($HOME/.hermes/skills/creative/image-gen-cn/scripts/image_gen_seedream.py),随skill跨机同步;key在每台机的.env配SEEDREAM_API_KEY(.env不同步需手动配)。视觉验收:auxiliary.vision用chudian的deepseek-v4-flash-vision-exp(复用DEEPSEEK_API_KEY),vision_analyze看图查乱码。见image-gen-cn skill。

@@ -13,6 +13,70 @@ metadata:
 
 > The **core worker lifecycle** (including the `kanban_create` fan-out pattern and the "decompose, don't execute" rule) is auto-injected into every kanban process via the `KANBAN_GUIDANCE` system-prompt block. This skill is the deeper playbook when you're an orchestrator profile whose whole job is routing.
 
+## Kanban Setup from Scratch
+
+When the user wants to try Kanban for the first time and has only the default profile:
+
+### 1. Create specialist profiles
+
+Each profile is an independent agent with its own model, config, and SOUL.md:
+
+```
+hermes profile create researcher --clone
+hermes profile create writer --clone
+hermes profile create reviewer --clone
+```
+
+Add a --description flag so the kanban decomposer can route by role:
+```
+hermes profile create researcher --clone --description "政策研究、资料搜集、行业调研"
+hermes profile create writer --clone --description "文案创作、营销素材"
+```
+
+### 2. Write SOUL.md per profile
+
+Each profile needs a role-defining SOUL.md at `~/.hermes/profiles/<name>/SOUL.md`. Researcher profiles get analysis/research guidance; writer profiles get hooks/CTA/SEO guidance.
+
+### 3. Set different models
+
+Cheaper models for research, better models for writing/review:
+```
+hermes config set --profile researcher model.default deepseek-chat
+hermes config set --profile writer model.default deepseek-chat
+```
+
+Verify: `hermes profile list`
+
+### 4. Create and dispatch tasks
+
+```
+# Create a task (note: --body not --description)
+hermes kanban create "研究主题" --assignee researcher --body "详细说明"
+
+# Create a dependent task
+hermes kanban create "写脚本" --assignee writer --body "要求" --parent <task_id>
+
+# Dispatch workers for all ready tasks
+hermes kanban dispatch
+```
+
+### 5. Monitor results
+
+```
+hermes kanban list          # check status (running/done)
+hermes kanban show <id>     # detailed output + comments
+hermes kanban log <id>      # full worker log transcript
+```
+
+### Key gotchas
+
+- `hermes kanban create` uses `--body` for the task description, NOT `--description`. The --description flag on `hermes profile create` sets the role description used by the decomposer.
+- Workers run in scratch workspaces by default (files deleted on completion). Use `--workspace dir:/path` to persist output.
+- The dispatcher must be called explicitly (`hermes kanban dispatch`) unless the gateway daemon is running.
+- The dispatcher silently drops unknown assignees — a task assigned to a non-existent profile sits in `ready` forever with no error.
+
+See references/kanban-setup-workflow.md for a complete worked example.
+
 ## Profiles are user-configured — not a fixed roster
 
 Hermes setups vary widely. Some users run a single profile that does everything; some run a small fleet (`docker-worker`, `cron-worker`); some run a curated specialist team they've named themselves. There is **no default specialist roster** — the orchestrator skill does not know what profiles exist on this machine.

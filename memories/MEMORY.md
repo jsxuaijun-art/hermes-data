@@ -1,31 +1,27 @@
-防误删sync_guard+P11见skill hermes-data-sync,wsl-hermes-env§9。注销skill勿改qingshui_risk_engine.py(把「期初」当「期末」),用前人工核对期末(C&G列)差>10%废弃。memories源=~/.hermes/memories/。
+用户从事财税服务行业（苏州/上海中小微企业客户），偏好实操级可直接交付客户的报告。WSL环境(Ubuntu22.04,Python3.10)。桌面路径C:\Users\jsxuaijun\Desktop（对应WSL路径/mnt/c/Users/jsxuaijun/Desktop）。Word文档用纯Python标准库生成，政府公文排版：标题二号黑体、正文三号仿宋、一级标题三号黑体、二级标题三号楷体。
 §
-AI内容纪律(徐总2026.9.21定稿,权威文档:Obsidian公司运营/AI内容纪律+桌面txt):A涉法文案→严守严禁幻觉先核实再引带文号带依据清单;"法"=全部法律层面不限于税法(宪法/民典/公司/劳动/广告/反不正当竞争/个信法+行政法规部门规章司法解释+地方性法规政府规章+监管政策文号法定义务权利),无论主题是否财税.C非文案(客户答复/财税咨询/测算/报表)→等同A严守,B创作文案(泛话题/趣味破播/爆款/脑洞)→豁免尽情发挥,只守平台合规红线;交叉规则:B整篇可飞但引具体法规/数据当卖点那句回A须有据,一句话涉法必严创作可飞非文案必严。
+【公司信息】苏州盈信企业管理有限公司，姑苏区，2009年成立。法定代表人/创始人：江敏（女），2001年入行，24年从业经验，高级会计师（2018年评上，时年37岁，100%用盈信自身业务成果评审通过）。2024年通过高级会计师人才引进落户上海，不到1个月办好，全程线上。子公司：苏州盈信税务服务有限公司（工业园区）、尚艾慧科技（上海）有限公司（闵行区）。协会会员：苏州园区会计学会、苏州会计服务业协会、江苏省代理记账协会。团队：骨干8年以上，C9硕士、注册税务师、会计师。服务数据：累计1000+客户，90%转介绍。知名客户：阿里系企业、京东、高合汽车。外资服务：3-5家日韩外资同行分包业务。品牌释义："盈"为满，"信"为信誉/信用/信任。三面锦旗：专业精湛/财税卫士、敬业专业/财税管家、严谨务实/财税合规。网站：yingxinkuaiji.com。苏州有证财税公司4920家（财政部dljz.mof.gov.cn），含无证约1.5-2万家，老板本人是高级会计师的≤5家。
 §
-GEO必加载geo-optimization技能+8平台指南(百家号/知乎/网易号/新浪财经头条/企鹅号/搜狐号/今日头条/公众号)。中文、直接给能用方案。
+【经典案例】1. 孙总：16年前注册第一家公司→现在10家公司，全部盈信服务。2. 韩资企业：高企认定+研发加计扣除，年合规节税100万+。3. 5亿食品企业：ERP落地+乱账梳理。4. 韩资企业注销：房产土地清算+税务注销+资本汇回韩国。5. 西山大哥：免费帮注销，获赠枇杷/橘子/碧螺春。
 §
-公众号铁律：①涉政策/数据/法条绝对不写幻觉，引用标官方文号宁少勿错；②配图禁止复用历史图/建图库，每次生成或查高相关新图逐段对应；③模板：公司介绍(盈信2009-12-11/江敏创办/TSC5级438.11/17年)→核心业务→二维码→CTA三动作+话题5-8个勿漏→作者"苏州盈信企业管理"。交付统一C:\Users\Administrator\Desktop。
+【工作偏好】务实高效，直接要结果，不需要过度解释。技术操作谨慎细致，偏好逐步确认后再推进。长任务会主动索要进度更新并确认完成状态。提交交付物优先通过文件发送。对信息来源要求严格——报告中的信息需要标注来源链接。API Key更新：必须用Python写文件而非sed（特殊字符问题）。
 §
-用户触发词约定：「朋友圈」→wechat-moments-marketing出文案+3张Unsplash图+拷桌面+企微API推XuAiJun勿问确认。「调用短视频skill」→自动同时调爬虫skill(python-web-scraping-setup)按主题搜信息，输出要超前超脱的上帝视角、提出不同观点并分析得头头是道。
+【manager反馈偏好】manager对交付质量满意时会说"OK,你真棒"。偏好直接给结果、可操作的内容。对信息来源要求严格——报告中的信息需要标注来源链接，不能只说"综合知识"。
 §
-文章改写要求:除换措辞还要打乱结构顺序/重组角度与逻辑链,结构层面不雷同;五大事项类可重排/拆分重组/调侧重点。
+阿里云47.103.27.171(Ubuntu22.04 Hermes v0.15.1)。财税情报定时任务每周一三五09:05执行，推送到企微群yingxin_inner（webhook key 41872151-7e41-410f-b006-a0db3f6f4e30）。脚本路径已修复，无需保存到本地。
 §
-Obsidian=第二知识库:D盘/mnt/d/obsidian-vault主库+obsidian_sync.sh,勿搬~/.hermes运行时(密钥/SQLite/--delete)。详obsidian skill。
+Codex v0.135 + DeepSeek V4 Flash 配置：
+1. 代理 ~/.hermes/skills/.../codex/scripts/codex-proxy.py 监听:9090（WS+HTTP POST）
+2. API key base64 编码存储（绕 Hermes 掩码）
+3. 关键修复：response.completed 必须含 usage.input_tokens/output_tokens（缺则重连5次）
+4. 启动：`python3 .../codex-proxy.py` 后台
+5. 使用：`codex exec --model deepseek-v4-flash --skip-git-repo-check "prompt"`
+6. ~/.codex/config.toml: openai_base_url = "http://127.0.0.1:9090/v1"
+7. 备用：~/bin/codex-ds（基于 hermes chat）
+8. WS RFC 6455，服务器→客户端不发 mask
 §
-公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
+humanizer skill 已扩展：新增 Content Strategy Pre-Processing 模块（含2026抖音算法规则），参考文件 references/douyin-2026-algorithm.md。算法核心：收藏率>复访率>铁粉>完播>点赞，搜索流量50%+，7天考核周期，前5秒口播关键词。做短视频脚本/内容策划时自动加载此模块优化内容结构后 humanize。
 §
-文案创作路由(9.22):短视频默认豆包db;明说用Kimi才覆盖;爆款长文默认Kimi并主动提示·本机代目=CordC2.8.5(F:\CordC\)AllowLAN在设置→网络
+用户使用QCNET99（ASP建站系统）管理yingxinkuaiji.com。对网站技术操作自称"小白"，需要极细致分步引导（说清点哪个按钮、输入什么）。其他技术工作（服务器、代码）仍偏好直接给结果。
 §
-hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策监控已部署(cron'苏州城市破播'周二五9点投企微内部群'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才自动触发,手动run不投递;细节见short-video-copywriting类型五);政务检索用anysearch抓官文(文号+日期)。pip清华。
-§
-脱敏边界【全局规则,适用所有skill】(2026.9.15定稿):只有用户主动发送的信息/文件才脱敏;agent抓网页/搜索(web_search/web_extract/browser_*)公开数据不脱敏,插件desensitize-read默认目标集已剔除网络类(read_file/search_files/terminal/execute_code/vision_analyze保留)。脱敏铁律(处理任何上传材料自动执行):①公司名除
-§
-技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library,管理器~/skill-library-ops/skilllib.py,cron skill-exchange周日23:00。
-§
-本机(/home/administrator)Hermes升级=混合目录隔离法勿git reset:gh-proxy.com下tar→独立目录→venv pip install -e→config migrate→hermes gateway restart;新版api_server需强API_SERVER_KEY(openssl rand -hex 32入.env)否则exit78;详hermes-auto-upgrade-wsl。
-§
-代理=CordC2.8.5(F:\CordC\),AllowLAN在设置→网络;条件脚本~/.hermes/proxy.sh。
-§
-模型分工铁律:①一般性工作+爬虫skill搜索→chudian平台deepseek V4 Flash(节约);②公众号写作→KIMI-K3(子代理成稿);③文案创作→doubao;④完成文案创作/公众号写作时必须向用户汇报用的是哪个模型;⑤deepseek V4 Flash干不了的工作→提示建议、由用户拍板用哪个模型(如生图直接用doubao-seedream-5.0-pro-0724)。
-§
-生图铁律:有生图任务一律走doubao-seedream-5.0-pro-0724(经电信中转aigw.telecomjs.com/v1,OpenAI兼容),严禁用deepseek-v4-flash或降级其他模型,整任务跑完再回默认模型。脚本内嵌于image-gen-cn skill的scripts/目录($HOME/.hermes/skills/creative/image-gen-cn/scripts/image_gen_seedream.py),随skill跨机同步;key在每台机的.env配SEEDREAM_API_KEY(.env不同步需手动配)。视觉验收:auxiliary.vision用chudian的deepseek-v4-flash-vision-exp(复用DEEPSEEK_API_KEY),vision_analyze看图查乱码。见image-gen-cn skill。
+GEO skill 已完整：含门户渠道策略（搜狐/新浪/网易/腾讯，70%行业分析+30%带盈信，文末作者简介，审核比知乎严，新浪最严），QCNET99后台三步操作（分类→文章→菜单，链接地址写相对路径），PDF外化策略（列举法手动记录+文字呈现），示范基地引用模板，知乎/公众号/小红书内容模板。参考文件含 portal-publishing-guide.md。

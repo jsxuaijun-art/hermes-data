@@ -13,16 +13,6 @@ triggers:
 
 # Cron Tasks — Autonomous Reminder Escalation
 
-## Cronjob 调度语法（schedule 字段）
-
-Hermes `cronjob`（action=create/update）的 `schedule` 用 **5 段标准 cron**（分 时 日 月 周）。常见坑：
-
-- `28 12 * * *` = 每天 12:28 ✅
-- `28 12 * * 1` = 每周一 12:28 ✅
-- ❌ 不要写 7 段（如 `0 12 28 * * *`）：会静默解析成「每月 28 号 12:00」，不是「每天 12:28」。建好后必须核对返回的 `next_run_at` 是否符合预期，发现跑错立即 `action=remove` 重建。
-
-调试顺序中的其他要点：建任务后读返回的 `next_run_at` 验证；需改投递渠道用 `action=update` + `deliver`（如 `wecom:<user> dm` / `origin` / `local`）。
-
 ## Core Principle
 
 When running as a cron job with no user present, every message is a "last chance" until proven otherwise. Evolve the message — never repeat yourself.

@@ -2,7 +2,7 @@
 name: word-documents
 title: Word Documents
 description: Create, format, and convert rich Word (.docx) documents using python-docx — tables, styling, Chinese fonts, shading, headers, and page layout.
-trigger: user asks to create a Word document, convert to .docx, save as Word format, or generate a formatted document for print/sharing. Also triggers on any request to "生成报告" or "发报告" without explicitly saying Word — user prefers .docx delivery for all research reports.
+trigger: user asks to create a Word document, convert to .docx, save as Word format, or generate a formatted document for print/sharing.
 category: productivity
 ---
 
@@ -127,53 +127,6 @@ def add_table(headers, rows, col_widths=None):
     doc.add_paragraph()  # spacing after table
 ```
 
-## Report Delivery Workflow
-
-When the user asks to generate a report/research summary/analysis document (without specifying format), the default delivery is **Word .docx** saved to the **Windows desktop**. This is the user's explicit preference.
-
-### Target Path (WSL)
-
-```python
-# Discover Windows username
-import os
-users = [u for u in os.listdir('/mnt/c/Users/') 
-         if u not in ('All Users', 'Default', 'Default User', 'Public', 'desktop.ini')]
-username = users[0]  # the real human user
-desktop = f'/mnt/c/Users/{username}/Desktop/'
-```
-
-For this user: `/mnt/c/Users/Administrator/Desktop/`
-
-### Standard Report Structure
-
-When generating a research report as .docx, follow this structure:
-
-1. **Cover page** — centered title (22pt bold, dark blue), subtitle with scope (12pt gray), date + author attribution (11pt gray)
-2. **Page break** before body content
-3. **Numbered sections** (一、八...) with headings at level 1-3
-4. **Tables** using `Light Grid Accent 1` style (simpler than custom shading for quick reports)
-5. **Color coding** for risk/emphasis:
-   - 🔴 RED = 高风险/异常 (RGBColor(0xCC, 0x00, 0x00))
-   - 🟢 GREEN = 正面/合规 (RGBColor(0x00, 0x80, 0x00))
-   - 🔵 BLUE = 标题/强调 (RGBColor(0x1F, 0x49, 0x7D))
-   - 🟠 ORANGE = 需关注/警告 (RGBColor(0xCC, 0x66, 0x00))
-   - ⚪ GRAY = 免责声明/页脚 (RGBColor(0x66, 0x66, 0x66))
-6. **Closing** — divider + attribution line + disclaimer
-
-### Save and Verify
-
-```bash
-# Check file size (should be > 10 KB)
-ls -lh /mnt/c/Users/Administrator/Desktop/文件名.docx
-```
-
-### Naming Convention
-
-Use descriptive Chinese filenames: `{主题核心词}{报告类型}.docx`
-- ✅ `高新技术企业税务合规研究报告.docx`
-- ✅ `Python爬虫工具全景报告.docx`
-- ❌ `report.docx` (too generic, won't be findable on desktop)
-
 ## File Paths on Windows via WSL
 
 Windows paths in WSL: `/mnt/c/Users/<username>/Desktop/filename.docx`
@@ -250,13 +203,6 @@ Choose the approach based on your dependency availability and input format.
 5. **Avoid `w:shd` color string parsing errors**: Use `parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color}"/>')` — `nsdecls("w")` is critical for the XML namespace.
 
 6. **PermissionError when overwriting .docx open in Windows Word**: If the target .docx file is currently open in Word on Windows, `doc.save()` raises `PermissionError: [Errno 13] Permission denied`. The file is locked by the Windows file-sharing system. Solutions: (a) save to a **new filename** (e.g., `-完整版.docx` suffix) to avoid the collision, or (b) ask the user to close the file in Word first. Check if this is the issue before debugging other causes — the file permissions (`rwxrwxrwx`) will look fine in `ls -la`.
-
-7. **Missing imports in standalone scripts**: When writing a standalone script (not using the skill's helper functions), it's easy to miss imports. Two common omissions:
-   - `WD_TABLE_ALIGNMENT` comes from `docx.enum.table`, **not** `docx.enum.text`. `from docx.enum.text import WD_ALIGN_PARAGRAPH` does NOT include it.
-   - `nsdecls` is in `docx.oxml.ns`, **not** `docx.oxml`. Use `from docx.oxml.ns import nsdecls` — `from docx.oxml import nsdecls` raises `ImportError`.
-   Always start with the full import block shown in [Core Setup](#core-setup) above.
-
-8. **`add_bullet()` doesn't support `bold=` and `color=` together**: The function passes these as kwargs via `style='List Bullet'`, but mixing custom styling with bullet style can cause issues. For styled bullet items, use raw `doc.add_paragraph()` calls instead
 
 ## Terminal Grid Table Formatting
 

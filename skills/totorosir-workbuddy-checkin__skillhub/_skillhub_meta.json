@@ -1,0 +1,19 @@
+{
+  "slug": "totorosir-workbuddy-checkin",
+  "name": "WorkBuddy签到助手",
+  "version": "3.1.2",
+  "installedAt": 1790430458959,
+  "source": "skillhub",
+  "namespace": "user_3a370331",
+  "canonicalName": "@user_3a370331/totorosir-workbuddy-checkin",
+  "iconSource": "https://skillhub-1388575217.cos.accelerate.myqcloud.com/skill-icons/uploads/640481/2e2d9190ae1446b4a153d152f971797b.png",
+  "labels": {
+    "requires_api_key": "false"
+  },
+  "description_zh": "WorkBuddy签到助手（WorkBuddy「Buddy 加油站」每日签到自动化 Skill，接口直签，无需点击 GUI，跨平台支持 Windows / macOS / Linux）。当用户说\"每天自动签到 WorkBuddy / 每日签到 / 自动领 Buddy 加油站积分 / 自动领 100 积分 / 设置 WorkBuddy 每日签到 / WorkBuddy 打卡 / 自动打卡 WorkBuddy / 帮我签到一次 / 现在签个到 / 检查签到环境 / 派猫猫旅行 / 猫猫旅行 / 旅行积分 / 领旅行奖励 / Buddy 在旅行吗 / 还有多久回来 / 自动派猫猫 / 推送签到结果 / 签到通知发钉钉 / 客户端被更新后签不了 / 5.6.2 签到失败 / 登录态加密了\"时使用。原理是读取本机已登录 WorkBuddy 的登录态 accessToken，直接调用官方签到接口完成领取，并支持派猫猫旅行全自动闭环（先领后派）；支持桌面通知与 12 类渠道的多渠道消息推送（钉钉/飞书/企业微信/微信/邮件/短信/QQ/Slack/Telegram/Bark/通用 Webhook/系统通知），推送接口设计与配置项对齐 totorosir-push-message 技能。**v3.1.0 起兼容 WorkBuddy 客户端 5.6.2+ 的 AtRestEncryption**：登录态 accessToken 被 AES-256-GCM 信封加密时，脚本会自动解密再取出 JWT，解决\"客户端更新到 5.6.2 后旧脚本无法签到\"的问题。",
+  "description_en": "WorkBuddy签到助手（WorkBuddy「Buddy 加油站」每日签到自动化 Skill，接口直签，无需点击 GUI，跨平台支持 Windows / macOS / Linux）。当用户说\"每天自动签到 WorkBuddy / 每日签到 / 自动领 Buddy 加油站积分 / 自动领 100 积分 / 设置 WorkBuddy 每日签到 / WorkBuddy 打卡 / 自动打卡 WorkBuddy / 帮我签到一次 / 现在签个到 / 检查签到环境 / 派猫猫旅行 / 猫猫旅行 / 旅行积分 / 领旅行奖励 / Buddy 在旅行吗 / 还有多久回来 / 自动派猫猫 / 推送签到结果 / 签到通知发钉钉 / 客户端被更新后签不了 / 5.6.2 签到失败 / 登录态加密了\"时使用。原理是读取本机已登录 WorkBuddy 的登录态 accessToken，直接调用官方签到接口完成领取，并支持派猫猫旅行全自动闭环（先领后派）；支持桌面通知与 12 类渠道的多渠道消息推送（钉钉/飞书/企业微信/微信/邮件/短信/QQ/Slack/Telegram/Bark/通用 Webhook/系统通知），推送接口设计与配置项对齐 totorosir-push-message 技能。**v3.1.0 起兼容 WorkBuddy 客户端 5.6.2+ 的 AtRestEncryption**：登录态 accessToken 被 AES-256-GCM 信封加密时，脚本会自动解密再取出 JWT，解决\"客户端更新到 5.6.2 后旧脚本无法签到\"的问题。",
+  "installs": 116092,
+  "installedContentHash": "sha256:f20941631c51a14d2ae29fbb3b2042d9c1531404e43dd6742d007ec2175d43a0",
+  "iconLocalPath": "C:\\Users\\Admin\\.workbuddy\\skills\\totorosir-workbuddy-checkin__skillhub\\_icon.png",
+  "iconDownloadedFrom": "https://skillhub-1388575217.cos.accelerate.myqcloud.com/skill-icons/uploads/640481/2e2d9190ae1446b4a153d152f971797b.png"
+}

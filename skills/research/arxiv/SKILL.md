@@ -1,9 +1,14 @@
 ---
 name: arxiv
+<<<<<<< LOCAL (this PC)
 description: Search and retrieve academic papers from arXiv using their free REST API. No API key needed. Search by keyword, author, category, or ID. Combine with web_extract or the ocr-and-documents skill to read full paper content.
+=======
+description: "Search arXiv papers by keyword, author, category, or ID."
+>>>>>>> REPO (github)
 version: 1.0.0
 author: Hermes Agent
 license: MIT
+platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [Research, Arxiv, Papers, Academic, Science, API]

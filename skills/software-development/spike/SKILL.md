@@ -8,7 +8,11 @@ platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [spike, prototype, experiment, feasibility, throwaway, exploration, research, planning, mvp, proof-of-concept]
+<<<<<<< LOCAL (this PC)
     related_skills: [sketch, writing-plans, subagent-driven-development, plan]
+=======
+    related_skills: [sketch, subagent-driven-development, plan]
+>>>>>>> REPO (github)
 ---
 
 # Spike
@@ -20,7 +24,11 @@ Load this when the user says things like "let me try this", "I want to see if X 
 ## When NOT to use this
 
 - The answer is knowable from docs or reading code — just do research, don't build
+<<<<<<< LOCAL (this PC)
 - The work is production path — use `writing-plans` / `plan` instead
+=======
+- The work is production path — use the `plan` skill instead
+>>>>>>> REPO (github)
 - The idea is already validated — jump straight to implementation
 
 ## If the user has the full GSD system installed

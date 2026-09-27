@@ -1,6 +1,10 @@
 ---
 name: findmy
+<<<<<<< LOCAL (this PC)
+description: Track Apple devices and AirTags via FindMy.app on macOS using AppleScript and screen capture.
+=======
 description: "Track Apple devices/AirTags via FindMy.app on macOS."
+>>>>>>> REPO (github)
 version: 1.0.0
 author: Hermes Agent
 license: MIT

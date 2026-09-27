@@ -1,3 +1,6 @@
+<<<<<<< LOCAL (this PC)
+# Codex CLI — Quick Reference
+=======
 ---
 name: codex
 description: "Delegate coding to OpenAI Codex CLI (features, PRs)."
@@ -47,12 +50,24 @@ If DeepSeek returns `400: insufficient tool messages following tool_calls messag
 Codex sends `{"type": "auto"}` but DeepSeek expects `"auto"` (string). Same for `"required"` and `"none"`. The proxy must translate the object form to strings.
 
 ### 3. role: "user" with tool_call_id (multi-turn crash)
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+OpenAI's autonomous coding agent CLI.
+=======
 Codex sends tool results as `{"role": "user", "tool_call_id": "..."}` (responses API format), but DeepSeek's chat/completions API requires `{"role": "tool", "tool_call_id": "..."}`. The proxy must detect this and rewrite the role. This only manifests on the **second turn** of a tool-use conversation — the first turn works fine, then subsequent multi-turn prompts fail with the same 400 as bug #1.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Installation
+=======
 Start with **non-streaming** requests to verify JSON structure, then test streaming:
+>>>>>>> REPO (github)
 
 ```bash
+<<<<<<< LOCAL (this PC)
+npm install -g @openai/codex
+=======
 # Non-stream: verify output shape
 curl -s http://127.0.0.1:11435/v1/responses -d '{"stream":false,...}'
 # Expected: output[0] = message, output[1+] = function_call(s)
@@ -68,11 +83,19 @@ curl -s -N http://127.0.0.1:11435/v1/responses -d '{"stream":true,...}' | grep -
 When using a non-OpenAI model (e.g. `deepseek-chat`), Codex shows:
 ```
 Model metadata for `deepseek-chat` not found. Defaulting to fallback metadata
+>>>>>>> REPO (github)
 ```
 This means Codex lacks the model's context window, truncation policy, and other parameters. **Fix: create a model catalog JSON and point config.toml to it.**
 
+<<<<<<< LOCAL (this PC)
+Auth: `OPENAI_API_KEY` env var or Codex OAuth (`~/.codex/auth.json`).
+=======
 **Step 1 — Create `~/.codex/model_catalog.json`:**
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Commands
+=======
 ```json
 {
   "models": [
@@ -113,15 +136,31 @@ This means Codex lacks the model's context window, truncation policy, and other 
 }
 ```
 Keys `base_instructions` and all listed fields are **required** by Codex v0.134.0 — omitting them or setting `null` causes `failed to parse model_catalog_json`.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+| Flag | Effect |
+|------|--------|
+| `exec "prompt"` | One-shot execution and exit |
+| `--full-auto` | Sandboxed, auto-approves file changes |
+| `--yolo` | No sandbox, no approvals (fastest) |
+=======
 **Step 2 — Add to `~/.codex/config.toml`:**
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## One-Shot
+=======
 ```toml
 model_catalog_json = "/home/dmin/.codex/model_catalog.json"
 ```
+>>>>>>> REPO (github)
 
 **Step 3 — Verify:**
 ```bash
+<<<<<<< LOCAL (this PC)
+codex exec "Add dark mode toggle to settings"
+=======
 codex debug models  # Should show your model in the list
 codex doctor         # Config should show ✓ loaded
 ```
@@ -141,13 +180,22 @@ terminal(command="codex exec 'Add dark mode toggle to settings'", workdir="~/pro
 For scratch work (Codex needs a git repo):
 ```
 terminal(command="cd $(mktemp -d) && git init && codex exec 'Build a snake game in Python'", pty=true)
+>>>>>>> REPO (github)
 ```
 
 ## Background Mode (Long Tasks)
 
+<<<<<<< LOCAL (this PC)
+```bash
+=======
 ```
 # Start in background with PTY
+>>>>>>> REPO (github)
 terminal(command="codex exec --full-auto 'Refactor the auth module'", workdir="~/project", background=true, pty=true)
+<<<<<<< LOCAL (this PC)
+# Monitor with process(action="poll"|"log")
+# Send input: process(action="submit", data="yes")
+=======
 # Returns session_id
 
 # Monitor progress
@@ -201,16 +249,30 @@ terminal(command="git worktree remove /tmp/issue-78", workdir="~/project")
 
 ## Batch PR Reviews
 
+>>>>>>> REPO (github)
 ```
 # Fetch all PR refs
 terminal(command="git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*'", workdir="~/project")
 
+<<<<<<< LOCAL (this PC)
+## PR Review
+=======
 # Review multiple PRs in parallel
 terminal(command="codex exec 'Review PR #86. git diff origin/main...origin/pr/86'", workdir="~/project", background=true, pty=true)
 terminal(command="codex exec 'Review PR #87. git diff origin/main...origin/pr/87'", workdir="~/project", background=true, pty=true)
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+Clone to temp dir:
+```bash
+REVIEW=$(mktemp -d)
+git clone https://github.com/user/repo.git $REVIEW
+cd $REVIEW && gh pr checkout 42
+codex review --base origin/main
+=======
 # Post results
 terminal(command="gh pr comment 86 --body '<review>'", workdir="~/project")
+>>>>>>> REPO (github)
 ```
 
 ## Rules
@@ -227,9 +289,19 @@ terminal(command="gh pr comment 86 --body '<review>'", workdir="~/project")
 
 When running Codex from mainland China with a non-OpenAI provider (e.g. DeepSeek):
 
+<<<<<<< LOCAL (this PC)
+## Key Pitfalls
+=======
 - `api.openai.com` is blocked by the GFW — Codex's built-in reachability check will always fail against OpenAI, producing false "DNS blocked" warnings
 - Use `startup_update_check = false` in `config.toml` to avoid update-probe timeouts
 - Run `codex doctor` and inspect the `reachability` line — a 404 on your proxy bridge is a **real problem**; a timeout on OpenAI is **expected**
 - The false "DNS blocked" message does **not** mean WSL itself can't reach the internet — verify separately with `curl` to `api.deepseek.com` and `registry.npmjs.org`
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+- **Always use `pty=true`** for interactive TUI sessions
+- **Git repo required** — use `mktemp -d && git init` for scratch work
+- **Scratch work:** `cd $(mktemp -d) && git init && codex exec 'Build a snake game'`
+=======
 See `references/china-network-debug.md` for a complete layered diagnosis workflow, config recommendations, and a one-liner verification checklist.
+>>>>>>> REPO (github)

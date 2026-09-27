@@ -1,6 +1,6 @@
 ---
 name: sph-video-downloader
-description: 下载微信视频号(weixin.qq.com/sph/)链接的无水印视频，并可选用 faster-whisper 做中文语音转写提取口播文案。首选 奇云API(qyapi.ipaybuy.cn)，redfox.hk 作备选。This skill should be used when the user pastes a 视频号 link and wants a watermark-free mp4 download or its transcript.
+description: 下载微信视频号(weixin.qq.com/sph/)链接的无水印视频，并可选用 faster-whisper 做中文语音转写提取口播文案。This skill should be used when the user pastes a 视频号 link and wants a watermark-free mp4 download or its transcript.
 agent_created: true
 ---
 
@@ -13,53 +13,35 @@ agent_created: true
 
 ## 一、原理（先讲清楚为什么这么干）
 
-微信视频号的网页分享链接形如 `https://weixin.qq.com/sph/XXXXXXXX`，**网页本身不暴露直链**，且需要登录态才能看到视频地址。
-自己逆向成本高、易失效。实战里走第三方解析 API，**首选 奇云API（qyapi.ipaybuy.cn），redfox.hk 作备选**。
+微信视频号的网页分享链接形如 `https://weixin.qq.com/sph/XXXXXXXX`，**网页本身不暴露直链**，且需要登录态才能看到视频地址。自己逆向成本高、易失效。实战里走的是 **奇云 API（qyapi.ipaybuy.cn）**：
 
-### 解析层（奇云API，首选）
-1. 把视频号链接以 GET 请求 `https://qyapi.ipaybuy.cn/api/sph_parse`，带 `appId` + `appKey`（查询参数）。
-2. 接口返回 JSON，`code=200` 表示成功；`data.mediaUrl` 就是**无加密直链**（域名 `finder.video.qq.com/...`），可直接下载；`data.video_url` 是中转地址（兜底用）；**`data.title` 还会带回视频标题**（比 redfox 多一个字段）。
+1. **解析层**：把视频号链接作为 `url` 参数，连同 `appId` + `appKey`，GET 请求 `https://qyapi.ipaybuy.cn/api/sph_parse`。返回 JSON，`data` 里关键字段：
+   - `mediaUrl`：**无加密直链**（优先，可直接下载/在线看）
+   - `video_url`：加密直链（部分视频 `mediaUrl` 为空时回退用它，格式 `finder.video.qq.com/...`，实测可直接下）
+   - `title`：发布**描述文案**（作者配文，不是口播逐字稿）
+   - `cover_url`：封面图
+2. **下载层**：直链是普通 HTTPS 文件，用 `urllib` 或 `curl` 直接拉即可，无需任何登录态（下载时带 `Referer: https://weixin.qq.com/` 更稳）。
+3. **文案层（可选）**：视频号接口**不返回口播逐字稿**。要拿口播文案，只能先下视频，再做**语音转文字（ASR）**。中文用 `faster-whisper`（比 openai-whisper 快、不依赖 torch）。
 
-### 解析层（redfox.hk，备选）
-把视频号链接 POST 给 `https://redfox.hk/story/api/parseWork/parse`，带 `X-API-KEY`，接口返回 JSON，其中 `data.videoUrl` 就是**无水印直链**（域名通常是 `finder.video.qq.com/...`）。
-
-### 下载层
-直链是普通 HTTPS 文件，用 `urllib` 或 `curl` 直接拉即可，无需任何登录态。
-
-### 文案层（可选）
-视频号接口**不返回**口播文字，只有 `title`（标题/话题标签）。要拿口播文案，只能先下视频，再做**语音转文字（ASR）**。中文用 `faster-whisper`（比 openai-whisper 快、不依赖 torch）。
-
-> 关键点：解析接口只给「视频+封面(+标题)」，不给「口播文字」。口播文案必须靠 ASR 自己转。
+> 关键点：奇云返回 `title`（作者配文），但**口播逐字稿**必须靠 ASR 自己转。
 
 ---
 
-## 二、计费（两家对比）
+## 二、计费（奇云）
 
-### 奇云API（首选）
-- 视频号单次解析：**¥0.001–0.003/个**（按量积分阶梯：当日 500 次内 3 分/次，1000 次+ 仅 1 分/次），比 redfox 便宜约 10–60 倍。
-- **不成功不计费**；QPS 60/s，每日不限量。
-- 终身版套餐约 ¥158 / ¥199，无月费。
-- 注册/密钥：https://qyapi.ipaybuy.cn/
-
-### redfox.hk（备选）
-- 充值比：100 元 = 1000 积分（即 1 积分 = 0.1 元）。
-- 视频号单次解析单价：**0.6 积分** ≈ **0.06 元/个**。
-- 100 元约可下 1666 个视频。
-- 余额不足会返回 `code: 3201`（"积分余额不足"），充值后重试即可。
+- 奇云按官网套餐计费，使用前请确认账号已购套餐 / 余额充足。
+- 额度/余额不足会返回非 200（如 `code != 200`），返回 `msg` 里会有提示，按提示去 https://qyapi.ipaybuy.cn 处理即可。
+- （历史参考：曾用 redfox 方案为 0.6 积分/次、100 元=1000 积分，已弃用，仅作对比。）
 
 ---
 
 ## 三、前置条件
 
-1. **奇云API 凭据**（首选，`appId` + `appKey`）
-   - 获取：https://qyapi.ipaybuy.cn/ 注册 → 控制台拿 AppId / AppKey
-   - 用法：设环境变量 `QIYUN_APP_ID` / `QIYUN_APP_KEY`，或把值写进 `scripts/parse_download_qiyun.py` 顶部常量。
-2. **redfox API Key**（备选，格式 `ak_xxxx` 或 `ark_xxxx`）
-   - 获取：https://redfox.hk/settings/api-keys （注册即得个人 Token）
-   - 用法：设环境变量 `REDFOX_API_KEY`，或把 Key 写进 `scripts/parse_download.py` 顶部常量。
-3. **Python 3.12+**（WorkBuddy 自带隔离 Python 即可）。
-4. **联网**：能直连 `qyapi.ipaybuy.cn` / `redfox.hk` 与 `modelscope.cn`（见第六节坑点，HuggingFace 被墙）。
-5. **ASR 额外依赖**（仅提取文案时需要）：`faster-whisper`、`imageio-ffmpeg`、`modelscope`。
+1. **奇云 AppId + AppKey**（在 https://qyapi.ipaybuy.cn 官网注册获取）
+   - 用法：设环境变量 `QIYUN_APP_ID` 与 `QIYUN_APP_KEY`，或填进 `parse_download.py` 顶部常量。
+2. **Python 3.12+**（WorkBuddy 自带隔离 Python 即可）。
+3. **联网**：能直连 `qyapi.ipaybuy.cn` 与 `modelscope.cn`（见第六节坑点，HuggingFace 被墙）。
+4. **ASR 额外依赖**（仅提取文案时需要）：`faster-whisper`、`imageio-ffmpeg`、`modelscope`。
 
 ---
 
@@ -68,11 +50,11 @@ agent_created: true
 ### 方式 A：只下载视频（最常见）
 ```
 用户给链接
-  → 调 redfox 解析接口拿 videoUrl（无水印直链）
+  → 调奇云 sph_parse 接口拿 mediaUrl / video_url（无水印直链）
   → 下载直链到本地 mp4
   → 把直链 + 文件路径回给用户
 ```
-耗时：解析 <5s，下载按文件大小（几 MB~几十 MB）几十秒。
+耗时：解析 <3s，下载按文件大小（几 MB~几十 MB）几十秒。
 
 ### 方式 B：下载 + 提取口播文案
 ```
@@ -87,7 +69,7 @@ agent_created: true
 
 ## 五、完整脚本（位于本技能 scripts/ 目录）
 
-### 0) parse_download_qiyun.py —— 奇云API 解析 + 下载（首选，一体化）
+### 1) parse_download.py —— 解析 + 下载（一体化）
 ```python
 import os, sys, json, urllib.request, urllib.error, urllib.parse
 
@@ -96,90 +78,8 @@ for _k in ("HTTPS_PROXY","HTTP_PROXY","ALL_PROXY","https_proxy","http_proxy","al
     os.environ.pop(_k, None)
 
 API_URL = "https://qyapi.ipaybuy.cn/api/sph_parse"
-APP_ID = os.environ.get("QIYUN_APP_ID", "在此填入你的奇云AppId")
-APP_KEY = os.environ.get("QIYUN_APP_KEY", "在此填入你的奇云AppKey")
-
-def _get_json(url):
-    req = urllib.request.Request(url, method="GET")
-    req.add_header("Content-Type", "application/json")
-    req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        print("HTTPError:", e.code, e.read().decode("utf-8","ignore")[:300]); sys.exit(1)
-    except Exception as e:
-        print("RequestError:", e); sys.exit(1)
-
-def main():
-    if len(sys.argv) < 2:
-        print("用法: python parse_download_qiyun.py <视频号链接> [输出mp4路径]")
-        sys.exit(1)
-    url = sys.argv[1]
-    vid = url.rstrip("/").split("/")[-1]
-    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join("videos", vid + ".mp4")
-    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
-
-    if APP_ID.startswith("在此填入") or APP_KEY.startswith("在此填入"):
-        print("错误：未配置奇云凭据。请设置环境变量 QIYUN_APP_ID / QIYUN_APP_KEY，"
-              "或在脚本顶部常量填入。注册：https://qyapi.ipaybuy.cn/")
-        sys.exit(1)
-
-    q = urllib.parse.urlencode({"appId": APP_ID, "appKey": APP_KEY, "url": url})
-    api = f"{API_URL}?{q}"
-    print("请求奇云解析接口 ...", API_URL)
-    result = _get_json(api)
-
-    code = result.get("code")
-    print("code:", code, "| msg:", result.get("msg", ""))
-    if str(code) != "200":
-        print("解析失败:", json.dumps(result, ensure_ascii=False)[:500]); sys.exit(1)
-
-    data = result.get("data") or {}
-    # 奇云返回多个地址：mediaUrl=无加密直链(首选)；video_url=中转地址(兜底)
-    video_url = data.get("mediaUrl") or data.get("video_url") or data.get("video_url_v2")
-    title = data.get("title")
-    if title:
-        print("标题:", title)
-    if not video_url:
-        print("无可用视频地址，返回:", json.dumps(data, ensure_ascii=False)[:300]); sys.exit(1)
-
-    src = "mediaUrl(无加密直链)" if data.get("mediaUrl") else "video_url(中转)"
-    print(f"无水印地址[{src}]:", video_url)
-    print("下载中 ->", out)
-    vreq = urllib.request.Request(video_url)
-    vreq.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-    vreq.add_header("Referer", "https://weixin.qq.com/")
-    try:
-        with urllib.request.urlopen(vreq, timeout=120) as r:
-            total = int(r.headers.get("content-length", 0))
-            done = 0
-            with open(out, "wb") as f:
-                while True:
-                    chunk = r.read(65536)
-                    if not chunk: break
-                    f.write(chunk); done += len(chunk)
-                    if total: print(f"\r{done*100//total}%", end="", flush=True)
-    except Exception as e:
-        print("\n下载失败:", e); sys.exit(1)
-    print(f"\n已保存: {out}  size={os.path.getsize(out)} bytes")
-
-if __name__ == "__main__":
-    main()
-```
-
-> 注：奇云 `code=200` 为成功；无效凭据返回 `code:1001 商户平台参数错误`。`mediaUrl` 为无加密直链优先使用，`video_url`（中转 `dw.ipaybuy.cn`）作兜底，`title` 会带回视频标题。
-
-### 1) parse_download.py —— redfox 解析 + 下载（备选，一体化）
-```python
-import os, sys, json, urllib.request, urllib.error
-
-# 清空本地代理，避免被 127.0.0.1:7890 等死代理拦截（见第六节）
-for _k in ("HTTPS_PROXY","HTTP_PROXY","ALL_PROXY","https_proxy","http_proxy","all_proxy"):
-    os.environ.pop(_k, None)
-
-API_URL = "https://redfox.hk/story/api/parseWork/parse"
-API_KEY = os.environ.get("REDFOX_API_KEY", "在此填入你的ak_开头Key")
+APP_ID = os.environ.get("QIYUN_APP_ID", "在此填入你的AppId")
+APP_KEY = os.environ.get("QIYUN_APP_KEY", "在此填入你的AppKey")
 
 def main():
     if len(sys.argv) < 2:
@@ -190,10 +90,10 @@ def main():
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join("videos", vid + ".mp4")
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
 
-    payload = json.dumps({"url": url, "source": "短视频下载器-WorkBuddy"}).encode("utf-8")
-    req = urllib.request.Request(API_URL, data=payload, method="POST")
+    qs = urllib.parse.urlencode({"appId": APP_ID, "appKey": APP_KEY, "url": url})
+    req = urllib.request.Request(f"{API_URL}?{qs}", method="GET")
+    req.add_header("User-Agent", "Mozilla/5.0")
     req.add_header("Content-Type", "application/json")
-    req.add_header("X-API-KEY", API_KEY)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             result = json.loads(resp.read().decode("utf-8"))
@@ -204,24 +104,32 @@ def main():
 
     code = result.get("code")
     print("code:", code, "| msg:", result.get("msg",""))
-    if str(code).startswith("2"):
+    if str(code) == "200":
         data = result.get("data") or {}
-        video_url = data.get("videoUrl")
-        if not video_url:
-            print("无 videoUrl，返回:", json.dumps(data, ensure_ascii=False)[:300]); sys.exit(1)
-        print("无水印直链:", video_url)
+        if data.get("title"):
+            print("title:", data["title"])
+        media_url = data.get("mediaUrl") or data.get("video_url") or data.get("video_url_v2")
+        if not media_url:
+            print("无直链，返回:", json.dumps(data, ensure_ascii=False)[:300]); sys.exit(1)
+        print("无水印直链:", media_url)
         print("下载中 ->", out)
-        vreq = urllib.request.Request(video_url)
-        with urllib.request.urlopen(vreq, timeout=120) as r:
-            total = int(r.headers.get("content-length", 0))
-            done = 0
-            with open(out, "wb") as f:
-                while True:
-                    chunk = r.read(65536)
-                    if not chunk: break
-                    f.write(chunk); done += len(chunk)
-                    if total: print(f"\r{done*100//total}%", end="", flush=True)
-        print(f"\n已保存: {out}  size={os.path.getsize(out)} bytes")
+        vreq = urllib.request.Request(media_url, headers={
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)",
+            "Referer": "https://weixin.qq.com/",
+        })
+        try:
+            with urllib.request.urlopen(vreq, timeout=180) as r:
+                total = int(r.headers.get("content-length", 0))
+                done = 0
+                with open(out, "wb") as f:
+                    while True:
+                        chunk = r.read(65536)
+                        if not chunk: break
+                        f.write(chunk); done += len(chunk)
+                        if total: print(f"\r{done*100//total}%", end="", flush=True)
+            print(f"\n已保存: {out}  size={os.path.getsize(out)} bytes")
+        except Exception as e:
+            print("\n下载失败:", e); sys.exit(1)
     else:
         print("解析失败:", json.dumps(result, ensure_ascii=False)[:500]); sys.exit(1)
 
@@ -319,8 +227,10 @@ pip install faster-whisper imageio-ffmpeg modelscope
    - `finder.video.qq.com` 的直链带 `token` 签名，通常数小时~1天失效。
    - 对策：拿到直链**尽快下载**；失效就重新解析原链接。
 
-6. **视频号接口不返回文案**
-   - `title` 为空，整包 JSON 无任何文字字段。别指望接口拿描述，只能走 ASR。
+6. **视频号接口不返回口播逐字稿，但奇云返回 title（发布配文）**
+   - 奇云 `sph_parse` 返回的 `title` 是作者写的那句**描述文案**（如 `#每日分享|...`），不是视频里说话的口播稿。
+   - 要口播逐字稿，只能走 ASR（先下视频再转写）。
+   - 部分视频 `title` 也会为空，属正常。
 
 ---
 
@@ -328,12 +238,11 @@ pip install faster-whisper imageio-ffmpeg modelscope
 
 1. 复制本技能文件夹到目标机的 `~/.workbuddy/skills/`（或直接将本技能的 scripts/ 拷过去）。
 2. 装 Python 3.12+，建 venv，装 `faster-whisper imageio-ffmpeg modelscope`（只要下载视频可不装后两个）。
-3. **首选奇云**：注册 https://qyapi.ipaybuy.cn/ 拿 `appId`/`appKey`，设环境变量 `QIYUN_APP_ID`/`QIYUN_APP_KEY`，或填进 `parse_download_qiyun.py` 顶部常量。
-4. 下载视频（奇云，首选）：
+3. 到 https://qyapi.ipaybuy.cn 注册拿 AppId + AppKey，设环境变量 `QIYUN_APP_ID` 与 `QIYUN_APP_KEY`，或填进 `parse_download.py` 顶部常量。
+4. 下载视频：
    ```bash
-   python scripts/parse_download_qiyun.py "https://weixin.qq.com/sph/XXXXXXXX"
+   python scripts/parse_download.py "https://weixin.qq.com/sph/XXXXXXXX"
    ```
-   （redfox 备选：`python scripts/parse_download.py "https://weixin.qq.com/sph/XXXXXXXX"`，需 `REDFOX_API_KEY`）
 5. （要文案）先 `python scripts/download_model.py` 拉模型，记下 `MODEL_PATH=`，设 `FW_MODEL_DIR` 或改 `transcribe_text.py` 里的路径，再：
    ```bash
    python scripts/transcribe_text.py videos/XXXXXXXX.mp4

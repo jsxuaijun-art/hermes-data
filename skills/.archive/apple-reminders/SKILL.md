@@ -1,6 +1,10 @@
 ---
 name: apple-reminders
+<<<<<<< LOCAL (this PC)
+description: Manage Apple Reminders via remindctl CLI (list, add, complete, delete).
+=======
 description: "Apple Reminders via remindctl: add, list, complete."
+>>>>>>> REPO (github)
 version: 1.0.0
 author: Hermes Agent
 license: MIT

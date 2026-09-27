@@ -1,9 +1,14 @@
 ---
 name: teams-meeting-pipeline
+<<<<<<< LOCAL (this PC)
 description: "Operate the Teams meeting summary pipeline via Hermes CLI — summarize meetings, inspect pipeline status, replay jobs, manage Microsoft Graph subscriptions."
+=======
+description: Teams meeting summaries, job replay, Graph subscriptions.
+>>>>>>> REPO (github)
 version: 1.1.0
 author: Hermes Agent + Teknium
 license: MIT
+platforms: [linux, macos, windows]
 prerequisites:
   env_vars: [MSGRAPH_TENANT_ID, MSGRAPH_CLIENT_ID, MSGRAPH_CLIENT_SECRET]
   commands: [hermes]
@@ -39,7 +44,11 @@ Multilingual trigger examples (not exhaustive):
 
 ## Prerequisites
 
+<<<<<<< LOCAL (this PC)
 Before using the pipeline, verify these are set in `~/.hermes/.env`:
+=======
+Before using the pipeline, verify these are set in `${HERMES_HOME:-~/.hermes}/.env`:
+>>>>>>> REPO (github)
 
 ```bash
 MSGRAPH_TENANT_ID=...
@@ -69,6 +78,7 @@ hermes teams-pipeline subscriptions         # current Graph webhook subscription
 hermes teams-pipeline run <job-id>          # replay a stored job (re-summarize, re-deliver)
 hermes teams-pipeline fetch --meeting-id <id>   # dry-run: resolve meeting + transcript without persisting
 hermes teams-pipeline fetch --join-web-url "<url>"   # dry-run by join URL
+hermes teams-pipeline fetch --join-web-url "<url>" --organizer-user-id <id>   # organizer-scoped lookup (required for /meet/ short URLs)
 ```
 
 ### Subscription management

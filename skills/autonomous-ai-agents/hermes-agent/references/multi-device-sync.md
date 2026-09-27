@@ -124,6 +124,9 @@ This is ideal for the pull script because:
 
 The push script should still do a `fetch + reset` first (to get the latest remote state), then re-apply WSL data, then commit+push — this ensures you push on top of the absolute latest remote head. See the push template below for this pattern.
 
+<<<<<<< LOCAL (this PC)
+## Script Template (push.bat) — Pure ASCII Only!
+=======
 ## General Web Access from WSL in China
 
 Beyond git sync, Hermes Agent's `web` and `search` toolsets also fail from WSL when the Windows proxy isn't configured. This affects:
@@ -154,6 +157,7 @@ If the user needs to search Chinese educational resources (Wenku, Baidu, Jyeoo, 
 菁优网搜: "闵行 七下 数学 期末"
 Direct URL: https://wenku.baidu.com/search?word=闵行区七年级数学期末
 ```
+>>>>>>> REPO (github)
 
 This template uses a **fetch+reset+reapply** pattern to avoid conflicts: reset to latest remote, then re-copy WSL data on top, commit, and push.
 

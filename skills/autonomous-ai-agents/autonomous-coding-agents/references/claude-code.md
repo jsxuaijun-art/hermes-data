@@ -1,3 +1,6 @@
+<<<<<<< LOCAL (this PC)
+# Claude Code — Detailed CLI Reference
+=======
 ---
 name: claude-code
 description: "Delegate coding to Claude Code CLI (features, PRs)."
@@ -66,14 +69,23 @@ npm install -g @anthropic-ai/claude-code
 # 5. Verify:
 nvm use 24 && claude --version
 ```
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+All the detailed CLI flags, subcommands, and patterns for Claude Code orchestration.
+=======
 **Proxy tips for restricted environments:**
 - Always set `http_proxy`/`https_proxy` environment variables before npm/git operations
 - npm has its own proxy setting: `npm config set proxy http://<proxy>:<port>`
 - For curl: use `-x` flag or env variables
 - After initial setup, node/npm/claude commands usually do NOT need the proxy for normal operation
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Installation & Auth
+=======
 ### Windows / macOS
+>>>>>>> REPO (github)
 
 ```bash
 # macOS (Homebrew):
@@ -84,6 +96,11 @@ npm install -g @anthropic-ai/claude-code
 
 # Windows: install via nvm-windows or download Node installer directly from nodejs.org
 npm install -g @anthropic-ai/claude-code
+<<<<<<< LOCAL (this PC)
+claude auth login --console          # API key billing
+claude auth login --sso              # Enterprise SSO
+claude doctor                         # health check
+=======
 ```
 
 ### Interactive Mode vs Print Mode Discrepancy (CRITICAL)
@@ -218,31 +235,55 @@ Wait 3-4 seconds, then verify:
 ```python
 terminal(command="sleep 4 && curl -s --max-time 3 -o /dev/null -w '%{http_code}' http://localhost:3000/", timeout=10)
 # → Expected: 200
+>>>>>>> REPO (github)
 ```
 
+<<<<<<< LOCAL (this PC)
+## Print Mode (`-p`) — Non-Interactive (PREFERRED)
+=======
 #### Start proxy (manual — user terminal)
+>>>>>>> REPO (github)
 
 ```bash
+<<<<<<< LOCAL (this PC)
+claude -p "Add error handling to all API calls in src/" --allowedTools "Read,Edit" --max-turns 10
+=======
 source ~/.hermes/.env && \
 ANTHROPIC_PROXY_BASE_URL=https://api.deepseek.com \
 ANTHROPIC_PROXY_API_KEY="$DEEPSEEK_API_KEY" \
 COMPLETION_MODEL=deepseek-chat \
 PORT=3000 \
 npx anthropic-proxy
+>>>>>>> REPO (github)
 ```
 
 Or using the startup script:
 
+### Structured JSON Output
 ```bash
+<<<<<<< LOCAL (this PC)
+claude -p "Analyze auth.py" --output-format json --max-turns 5
+=======
 ~/start-deepseek-proxy.sh
 # Or in background:
 nohup ~/start-deepseek-proxy.sh &
+>>>>>>> REPO (github)
 ```
 
+<<<<<<< LOCAL (this PC)
+Returns: `session_id`, `num_turns`, `total_cost_usd`, `subtype` (success/error).
+=======
 #### Stop proxy
+>>>>>>> REPO (github)
 
+### Piped Input
 ```bash
+<<<<<<< LOCAL (this PC)
+cat src/auth.py | claude -p "Review this code for bugs" --max-turns 1
+git diff HEAD~3 | claude -p "Summarize these changes" --max-turns 1
+=======
 kill $(ps aux | grep "anthropic-proxy" | grep -v grep | awk '{print $2}')
+>>>>>>> REPO (github)
 ```
 
 ### Shell Function Approach (MOST RELIABLE for nvm setups)
@@ -251,9 +292,15 @@ kill $(ps aux | grep "anthropic-proxy" | grep -v grep | awk '{print $2}')
 
 **Solution:** Shell function in `.bashrc` — overrides PATH unconditionally, immune to hash caching:
 
+### JSON Schema
 ```bash
+<<<<<<< LOCAL (this PC)
+claude -p "List all functions" --output-format json \
+  --json-schema '{"type":"object","properties":{"functions":{"type":"array","items":{"type":"string"}}},"required":["functions"]}'
+=======
 # Add to ~/.bashrc (single line):
 claude() { ANTHROPIC_API_KEY=sk-placeholder ANTHROPIC_BASE_URL=http://localhost:3000 /home/dmin/.nvm/versions/node/v24.16.0/bin/claude "$@"; }
+>>>>>>> REPO (github)
 ```
 
 **How it works:**
@@ -272,7 +319,12 @@ claude() { ANTHROPIC_API_KEY=sk-placeholder ANTHROPIC_BASE_URL=http://localhost:
 
 ### Moving from Wrapper Script to Shell Function (if you already set up the wrapper)
 
+### Session Continuation
 ```bash
+<<<<<<< LOCAL (this PC)
+claude -p "Continue" --resume <session-id> --max-turns 5
+claude -p "Resume last" --continue --max-turns 1
+=======
 # 1. Remove the wrapper's PATH addition from .bashrc
 sed -i '/PATH.*local.bin.*PATH/d' ~/.bashrc
 
@@ -283,11 +335,16 @@ echo 'claude() { ANTHROPIC_API_KEY=sk-placeholder ANTHROPIC_BASE_URL=http://loca
 
 # 4. Reload
 source ~/.bashrc
+>>>>>>> REPO (github)
 ```
 
 For full third-party model support without a proxy, use [OpenCode](https://opencode.ai) — a provider-agnostic open-source fork with native OpenAI-compatible API support:
 
+### Bare Mode (CI/Scripting)
 ```bash
+<<<<<<< LOCAL (this PC)
+claude --bare -p "Run all tests" --allowedTools "Read,Bash" --max-turns 10
+=======
 npm install -g opencode-ai@latest
 opencode run 'Your task' --model deepseek/deepseek-chat
 ```
@@ -507,6 +564,7 @@ To selectively load context in bare mode:
 ### Fallback Model for Overload
 ```
 terminal(command="claude -p 'task' --fallback-model haiku --max-turns 5", timeout=90)
+>>>>>>> REPO (github)
 ```
 Automatically falls back to the specified model when the default is overloaded (print mode only).
 
@@ -575,20 +633,53 @@ Automatically falls back to the specified model when the default is overloaded (
 | `--plugin-dir <paths...>` | Load plugins from directories for this session only |
 | `--disable-slash-commands` | Disable all skills/slash commands |
 
+<<<<<<< LOCAL (this PC)
+## Key CLI Flags
+=======
 ### Debugging
 | Flag | Effect |
 |------|--------|
 | `-d, --debug [filter]` | Enable debug logging with optional category filter (e.g., `"api,hooks"`, `"!1p,!file"`) |
 | `--debug-file <path>` | Write debug logs to file (implicitly enables debug mode) |
+>>>>>>> REPO (github)
 
 ### Agent Teams
 | Flag | Effect |
 |------|--------|
+<<<<<<< LOCAL (this PC)
+| `-p, --print` | Non-interactive one-shot |
+| `-c, --continue` | Resume most recent session |
+| `-r, --resume <id>` | Resume specific session |
+| `--fork-session` | Create new session ID when resuming |
+| `--model sonnet\|opus\|haiku` | Model selection |
+| `--effort low\|medium\|high\|max\|auto` | Reasoning depth |
+| `--max-turns <n>` | Cap agentic loops (print mode only) |
+| `--max-budget-usd <n>` | Cap API spend (print mode) |
+| `--dangerously-skip-permissions` | Auto-approve ALL tool use |
+| `--allowedTools "Read,Edit"` | Whitelist specific tools |
+| `--output-format text\|json\|stream-json` | Output format |
+| `--bare` | Skip hooks, plugns, MCP, OAuth |
+| `--from-pr <number>` | Resume linked to a PR |
+| `--worktree [name]` | Isolated git worktree |
+=======
 | `--teammate-mode <mode>` | How agent teams display: `auto`, `in-process`, or `tmux` |
 | `--brief` | Enable `SendUserMessage` tool for agent-to-user communication |
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Allowed Tools Syntax
+=======
 ### Tool Name Syntax for --allowedTools / --disallowedTools
+>>>>>>> REPO (github)
 ```
+<<<<<<< LOCAL (this PC)
+Read                     # All file reading
+Edit                     # File editing (existing files)
+Write                    # File creation (new files)
+Bash                     # All shell commands
+Bash(git *)              # Only git commands
+WebSearch                # Web search capability
+=======
 Read                    # All file reading
 Edit                    # File editing (existing files)
 Write                   # File creation (new files)
@@ -599,6 +690,7 @@ Bash(npm run lint:*)    # Pattern matching with wildcards
 WebSearch               # Web search capability
 WebFetch                # Web page fetching
 mcp__<server>__<tool>   # Specific MCP tool
+>>>>>>> REPO (github)
 ```
 
 ## Settings & Configuration
@@ -609,6 +701,9 @@ mcp__<server>__<tool>   # Specific MCP tool
 3. **Project:** `.claude/settings.json` (shared, git-tracked)
 4. **User:** `~/.claude/settings.json` (global)
 
+<<<<<<< LOCAL (this PC)
+## Interactive Mode (via tmux)
+=======
 ### Permissions in Settings
 ```json
 {
@@ -619,16 +714,39 @@ mcp__<server>__<tool>   # Specific MCP tool
   }
 }
 ```
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+```bash
+# Start session
+tmux new-session -d -s claude-work -x 140 -y 40
+tmux send-keys -t claude-work 'cd /project && claude' Enter
+=======
 ### Memory Files (CLAUDE.md) Hierarchy
 1. **Global:** `~/.claude/CLAUDE.md` — applies to all projects
 2. **Project:** `./CLAUDE.md` — project-specific context (git-tracked)
 3. **Local:** `.claude/CLAUDE.local.md` — personal project overrides (gitignored)
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+# Dialog handling: trust (Enter), permissions (Down+Enter)
+sleep 5 && tmux send-keys -t claude-work Enter
+sleep 3 && tmux send-keys -t claude-work Down && sleep 0.3 && tmux send-keys -t claude-work Enter
+=======
 Use the `#` prefix in interactive mode to quickly add to memory: `# Always use 2-space indentation`.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+# Send task
+tmux send-keys -t claude-work 'Refactor the auth module to use JWT tokens' Enter
+=======
 ## Interactive Session: Slash Commands
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+# Monitor
+tmux capture-pane -t claude-work -p -S -50
+=======
 ### Session & Context
 | Command | Purpose |
 |---------|---------|
@@ -643,7 +761,13 @@ Use the `#` prefix in interactive mode to quickly add to memory: `# Always use 2
 | `/status` | Show version, connectivity, and session info |
 | `/todos` | List tracked action items from the conversation |
 | `/exit` or `Ctrl+D` | End session |
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+# Clean up
+tmux kill-session -t claude-work
+```
+=======
 ### Development & Review
 | Command | Purpose |
 |---------|---------|
@@ -652,10 +776,26 @@ Use the `#` prefix in interactive mode to quickly add to memory: `# Always use 2
 | `/plan [description]` | Enter Plan mode with auto-start for task planning |
 | `/loop [interval]` | Schedule recurring tasks within the session |
 | `/batch` | Auto-create worktrees for large parallel changes (5-30 worktrees) |
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Key Interactive Slash Commands
+=======
 ### Configuration & Tools
+>>>>>>> REPO (github)
 | Command | Purpose |
 |---------|---------|
+<<<<<<< LOCAL (this PC)
+| `/compact [focus]` | Compress context to save tokens |
+| `/clear` | Wipe conversation history |
+| `/cost` | View token usage |
+| `/review` | Request code review |
+| `/plan` | Enter plan mode |
+| `/model [model]` | Switch models |
+| `/effort [level]` | Set reasoning effort |
+| `/memory` | Open CLAUDE.md editing |
+| `/exit` or Ctrl+D | End session |
+=======
 | `/model [model]` | Switch models mid-session (use arrow keys to adjust effort) |
 | `/effort [level]` | Set reasoning effort: `low`, `medium`, `high`, `max`, or `auto` |
 | `/init` | Create a CLAUDE.md file for project memory |
@@ -901,8 +1041,15 @@ Configure in `.claude/settings.json` (project) or `~/.claude/settings.json` (glo
   }]
 }
 ```
+>>>>>>> REPO (github)
 
 ## MCP Integration
+<<<<<<< LOCAL (this PC)
+```bash
+claude mcp add -s user github -- npx @modelcontextprotocol/server-github
+claude mcp add postgres -- npx @anthropic-ai/server-postgres --connection-string ...
+claude mcp list
+=======
 
 Add external tool servers for databases, APIs, and services:
 
@@ -927,6 +1074,7 @@ terminal(command="claude mcp add puppeteer -- npx @anthropic-ai/server-puppeteer
 ### MCP in Print/CI Mode
 ```
 terminal(command="claude --bare -p 'Query database' --mcp-config mcp-servers.json --strict-mcp-config", timeout=60)
+>>>>>>> REPO (github)
 ```
 `--strict-mcp-config` ignores all MCP servers except those from `--mcp-config`.
 
@@ -938,12 +1086,32 @@ Reference MCP resources in chat: `@github:issue://123`
 - **Output tokens:** `export MAX_MCP_OUTPUT_TOKENS=50000` — cap output from MCP servers to prevent context flooding
 - **Transports:** `stdio` (local process), `http` (remote), `sse` (server-sent events)
 
+<<<<<<< LOCAL (this PC)
+## Settings Hierarchy
+1. CLI flags (highest)
+2. `.claude/settings.local.json` (personal, gitignored)
+3. `.claude/settings.json` (shared, git-tracked)
+4. `~/.claude/settings.json` (global)
+=======
 ## Monitoring Interactive Sessions
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## CLAUDE.md
+Auto-loaded from project root. Use for persistent project context.
+=======
 ### Reading the TUI Status
+>>>>>>> REPO (github)
 ```
+<<<<<<< LOCAL (this PC)
+~/.claude/CLAUDE.md                          # global, all projects
+./CLAUDE.md                                   # project-specific
+.claude/CLAUDE.local.md                       # personal overrides
+.claude/rules/*.md                            # modular rules
+=======
 # Periodic capture to check if Claude is still working or waiting for input
 terminal(command="tmux capture-pane -t dev -p -S -10")
+>>>>>>> REPO (github)
 ```
 
 Look for these indicators:

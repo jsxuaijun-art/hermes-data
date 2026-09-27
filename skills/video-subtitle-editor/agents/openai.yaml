@@ -1,0 +1,4 @@
+# yaml-language-server: $schema=https://codex.sonnet.ai/v1/schemas/openai.yaml
+display_name: 口播视频字幕特效编辑器
+short_description: 全功能口播视频字幕特效工具，支持语音识别、8种动态字幕效果、进度条合成
+default_prompt: 请帮我处理一个口播视频，使用视频字幕特效编辑器为它添加动态字幕

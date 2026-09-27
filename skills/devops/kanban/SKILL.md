@@ -52,7 +52,17 @@ If *none* of those apply, use `delegate_task` instead or answer directly.
 | `ops` | Runs scripts, manages services, handles deployments | `dir:` |
 | `pm` | Writes specs, acceptance criteria | `scratch` |
 
+## Codex Lane Integration
+
+For tasks where a Kanban worker delegates bounded implementation to **Codex CLI** in an isolated worktree, see:
+
+- `references/kanban-codex-lane.md` — full protocol: worktree isolation, prompt construction, monitoring, reconciliation checklist, and `kanban_complete` metadata schema
+- `templates/pmb-codex-lane-prompt.md` — reusable prompt template for prediction-market-bot work
+
+Hermes always owns the Kanban lifecycle. Codex is an input lane only — its output is untrusted until Hermes reviews the diff and passes verification.
+
 ## See Also
 
 - `references/orchestrator.md` — decomposition playbook, anti-temptation rules, task graph patterns
 - `references/worker.md` — workspace handling, good summary shapes, retry diagnostics, edge cases
+- `references/kanban-codex-lane.md` — Codex CLI integration for bounded implementation

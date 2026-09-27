@@ -1,7 +1,12 @@
 ---
 name: dogfood
+<<<<<<< LOCAL (this PC)
 description: Systematic exploratory QA testing of web applications — find bugs, capture evidence, and generate structured reports
+=======
+description: "Exploratory QA of web apps: find bugs, evidence, reports."
+>>>>>>> REPO (github)
 version: 1.0.0
+platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [qa, testing, browser, web, dogfood]

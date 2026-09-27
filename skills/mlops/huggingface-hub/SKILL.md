@@ -1,10 +1,15 @@
 ---
 name: huggingface-hub
+<<<<<<< LOCAL (this PC)
 description: Hugging Face Hub CLI (hf) — search, download, and upload models and datasets, manage repos, query datasets with SQL, deploy inference endpoints, manage Spaces and buckets.
+=======
+description: "HuggingFace hf CLI: search/download/upload models, datasets."
+>>>>>>> REPO (github)
 version: 1.0.0
 author: Hugging Face
 license: MIT
 tags: [huggingface, hf, models, datasets, hub, mlops]
+platforms: [linux, macos, windows]
 ---
 
 # Hugging Face CLI (`hf`) Reference Guide

@@ -1,29 +1,87 @@
+<<<<<<< LOCAL (this PC)
+# Kanban Orchestrator Playbook
+=======
 # Orchestrator Decomposition Playbook — Full Reference
 
 > Previously the standalone `kanban-orchestrator` skill. Absorbed into the `kanban` umbrella.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+> **Core worker lifecycle** (including the kanban_create fan-out pattern and "don't do the work yourself" rule) is auto-injected via KANBAN_GUIDANCE. This playbook is the deeper detail for routing work.
+=======
 The core worker lifecycle (including the `kanban_create` fan-out pattern and the "don't do the work yourself" rule) is auto-injected into every kanban process via the `KANBAN_GUIDANCE` system-prompt block. This reference is the deeper playbook when you're an orchestrator profile whose whole job is routing.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Profiles are user-configured — not a fixed roster
+=======
 ## Profiles are user-configured (not a fixed roster)
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+There is **no default specialist roster**. Before fanning out, ground decomposition in profiles that actually exist:
+=======
 Hermes setups vary widely. Some users run a single profile that does everything; some run a small fleet; some run a curated specialist team. There is **no default specialist roster** — the orchestrator skill does not know what profiles exist on this machine.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+```bash
+hermes profile list
+```
+=======
 Before fanning out, you must ground the decomposition in the profiles that actually exist. The dispatcher silently fails to spawn unknown assignee names — it doesn't autocorrect, doesn't suggest, doesn't fall back. A card assigned to a non-existent profile just sits in `ready` forever.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+Or ask the user. Never invent profile names — the dispatcher silently drops unknown assignees.
+=======
 **Step 0: discover available profiles before planning.**
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## When to use the board (vs. just doing the work)
+=======
 - `hermes profile list` — prints the table of profiles configured on this machine
 - `kanban_list(assignee="<some-name>")` — sanity-check a single name (returns empty list for unknown, not an error)
 - **Just ask the user** — "What profiles do you have set up?" is a fine first turn
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+Create Kanban tasks when any of these are true:
+1. **Multiple specialists** are needed
+2. Work should survive a crash or restart
+3. User might want to interject (human-in-the-loop)
+4. Multiple subtasks can run in parallel
+5. Review / iteration is expected
+6. The audit trail matters
+=======
 Cache the result in working memory for the rest of the conversation.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+If none apply, use `delegate_task` instead.
+=======
 ## The anti-temptation rules
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## The Anti-Temptation Rules
+=======
 Your job description says "route, don't execute." The rules that enforce that:
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+- **Do not execute the work yourself.** Create a task for the right specialist.
+=======
 - **Do not execute the work yourself.** If you find yourself "just fixing this quickly" — stop and create a task for the right specialist.
+>>>>>>> REPO (github)
 - **For any concrete task, create a Kanban task and assign it.** Every single time.
+<<<<<<< LOCAL (this PC)
+- **Split multi-lane requests before creating cards.** One card per independent workstream.
+- **Run independent lanes in parallel.** Link only true data dependencies.
+- **Never create dependent work as independent ready cards.** Pass `parents=[]` in the create call.
+- **If no specialist fits, ask the user.** Do not invent profile names.
+=======
 - **Split multi-lane requests before creating cards.** A user prompt can contain several independent workstreams. Extract those lanes first, then create one card per lane.
 - **Run independent lanes in parallel.** If two cards do not need each other's output, leave them unlinked.
 - **Never create dependent work as independent ready cards.** If a card depends on another, pass `parents=[...]` in the original `kanban_create` call.
@@ -47,18 +105,45 @@ Before creating anything, draft the graph:
 5. Create synthesis/review/integration cards with parent links to the lanes they depend on.
 
 Examples of prompts that should fan out:
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Decomposition Playbook
+=======
 - "Build an app" — one card to a design profile, one or two to engineering profiles, plus integration/review.
 - "Fix blockers and check model variants" — one implementation card for blockers + one discovery card for variant check. Review depends on both.
 - "Research docs and implement" — a docs-research card in parallel with a codebase-discovery card; implementation waits only if it truly needs findings.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+### Understand the Goal
+Ask clarifying questions if ambiguous. Cheap to ask; expensive to spawn the wrong fleet.
+=======
 Show the graph to the user before creating cards. Let them correct it.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+### Sketch the Task Graph
+Extract lanes from the request. Map each to a discovered profile. Decide independence vs. gating.
+=======
 ### Step 3 — Create tasks and link
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+### Create Tasks and Link
+=======
 Use the profile names from Step 0. Example with placeholders:
+>>>>>>> REPO (github)
 
 ```python
+<<<<<<< LOCAL (this PC)
+t1 = kanban_create(title="research: cost comparison", assignee="<profile-A>",
+    body="Compare infrastructure costs over 3-year window.")["task_id"]
+t2 = kanban_create(title="research: performance bench", assignee="<profile-A>",
+    body="Compare query latency at 500GB / 10k QPS.")["task_id"]
+t3 = kanban_create(title="synthesize recommendation", assignee="<profile-B>",
+    body="Read T1+T2, produce 1-page recommendation.", parents=[t1, t2])["task_id"]
+=======
 t1 = kanban_create(
     title="research: Postgres cost vs current",
     assignee="<profile-A>",
@@ -78,16 +163,29 @@ t3 = kanban_create(
     body="Read findings from T1 and T2. Produce a recommendation.",
     parents=[t1, t2],
 )["task_id"]
+>>>>>>> REPO (github)
 ```
 
 `parents=[...]` gates promotion — children stay in `todo` until every parent reaches `done`, then auto-promote to `ready`.
 
+<<<<<<< LOCAL (this PC)
+Create parent cards first, capture their IDs, then create children with `parents=[...]`.
+=======
 Create parent cards first, capture their returned ids, and include those ids in the child card's `parents` list during the child `kanban_create` call. Avoid creating all cards in parallel and linking afterward.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+### Complete Your Own Task
+=======
 ### Step 4 — Complete your own task
+>>>>>>> REPO (github)
 
 ```python
 kanban_complete(
+<<<<<<< LOCAL (this PC)
+    summary="decomposed 3 task graph",
+    metadata={"task_graph": {"T1": {"assignee": "profile-A"}, "T2": {"assignee": "profile-A"}, "T3": {"assignee": "profile-B", "parents": ["T1", "T2"]}}}
+=======
     summary="decomposed into T1-T4: 2 research lanes in parallel, 1 synthesis on outputs, 1 prose draft on recommendation",
     metadata={
         "task_graph": {
@@ -96,6 +194,7 @@ kanban_complete(
             "T3": {"assignee": "<profile-B>", "parents": ["T1", "T2"]},
         },
     },
+>>>>>>> REPO (github)
 )
 ```
 
@@ -107,13 +206,32 @@ Tell the user what you created, naming the actual profiles used.
 
 **Fan-out + fan-in:** N research cards (no parents), one synthesis card (parents = all of them).
 
+<<<<<<< LOCAL (this PC)
+### Report to User
+=======
 **Parallel implementation + validation:** One implementer card + one explorer card + optional reviewer card depending on both.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+Tell them what was created and which profiles are working. "The dispatcher will pick up T1 and T2 now."
+=======
 **Pipeline with gates:** `planner -> implementer -> reviewer`. Each stage's `parents=[previous_task]`.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+## Common Patterns
+=======
 **Same-profile queue:** N tasks, same assignee, no dependencies. Dispatcher serializes.
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+- **Fan-out + fan-in**: N research cards, one synthesis card with all parents.
+- **Pipeline with gates**: planner → implementer → reviewer.
+- **Same-profile queue**: N cards, same assignee, no dependencies. Dispatcher serializes.
+- **Human-in-the-loop**: Any task can `kanban_block()`. Operator unblocks via comment.
+=======
 **Human-in-the-loop:** Any task can `kanban_block()` to wait for input. Dispatcher respawns after `/unblock`.
+>>>>>>> REPO (github)
 
 ## Pitfalls
 
@@ -134,4 +252,14 @@ When a worker keeps crashing, hallucinating, or getting blocked by its own mista
 2. **Reassign** (or `hermes kanban reassign <task_id> <new-profile> --reclaim`) — switch to a different profile.
 3. **Change profile model** — dashboard prints a copy-paste hint for `hermes -p <profile> model`; edit config, then Reclaim.
 
+<<<<<<< LOCAL (this PC)
+- **Inventing profile names** — dispatcher silently fails. Always discover first.
+- **Bundling independent lanes** into one card. Two independent outcomes = two cards.
+- **Over-linking due to wording** — "finally check X" may be parallel if X is static.
+- **Forgetting dependency links** — parent links gate children from running too early.
+- **Creating the whole graph if shape depends on findings** — let T3 be a "synthesize findings" task.
+- **Reassignment vs. new task** — reviewer blocks with changes? Create a NEW task for the implementer.
+- **Link argument order** — `kanban_link(parent_id=..., child_id=...)` — parent first.
+=======
 Hallucination warnings appear on tasks where a worker claims phantom card ids (gate blocks completion) or references unresolvable `t_<hex>` ids in prose (advisory scan).
+>>>>>>> REPO (github)

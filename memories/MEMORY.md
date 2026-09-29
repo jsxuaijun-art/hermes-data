@@ -28,6 +28,7 @@ GEO skill 已完整：含门户渠道策略（搜狐/新浪/网易/腾讯，70%�
 文章改写要求:除换措辞还要打乱结构顺序/重组角度与逻辑链,结构层面不雷同;五大事项类可重排/拆分重组/调侧重点。
 Obsidian=第二知识库/永久记忆。D盘=/mnt/d/obsidian-vault主库,WSL=git引擎。脚本hermes_only_snapshot.sh+obsidian_sync.sh。cron每日12:28归档、周一12:28复盘。详obsidian skill。
 公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
+<<<<<<< Updated upstream
 AI生图5风格均备选、全不满意要真绘画质感;高优=生图能力(通义万相/文心/ComfyUI/coze),chudian视觉key脱敏不可用。见wechat-comic-cells。
 模型分工铁律:①一般性工作+爬虫skill搜索→chudian平台deepseek V4 Flash(节约);②公众号写作→KIMI-K3(子代理成稿);③文案创作→doubao;④完成文案创作/公众号写作时必须向用户汇报用的是哪个模型;⑤deepseek V4 Flash干不了的工作→提示建议、由用户拍板用哪个模型(如生图直接用doubao-seedream-5.0-pro-0724)。
 hermes cron CLI:prompt是位置参数`hermes cron create <schedule> <prompt>`;create/remove触发确认门,超时BLOCKED——用户明确授权后写.sh脚本bash执行可成功,勿直接重试,删建分开;查执行`hermes cron runs <id>`;生命周期create→run→runs→remove。`.lazy-refresh-incomplete`警告是噪音,venv健康,验证用import。
@@ -39,3 +40,19 @@ Hermes 本机=上游 git clone 于 /home/dmin/hermes-agent(非混合仓库),venv
 生图铁律:有生图任务一律走doubao-seedream-5.0-pro-0724(经电信中转aigw.telecomjs.com/v1,OpenAI兼容),严禁用deepseek-v4-flash或降级其他模型,整任务跑完再回默认模型。脚本内嵌于image-gen-cn skill的scripts/目录($HOME/.hermes/skills/creative/image-gen-cn/scripts/image_gen_seedream.py),随skill跨机同步;key在每台机的.env配SEEDREAM_API_KEY(.env不同步需手动配)。视觉验收:auxiliary.vision用chudian的deepseek-v4-flash-vision-exp(复用DEEPSEEK_API_KEY),vision_analyze看图查乱码。见image-gen-cn skill。
 跨机同步坑:jsxuaijun-art/hermes-data 的 main 曾被 force-rebuild(现线817/迁移到f4d6965,实为远端重新构建),本机 C:\Users\Admin\hermes-sync 的git历史曾 orphaned(8a3ad2c基于旧eded719)。push前必须先 fetch 看 origin/main 是否与本地分叉,勿盲推/勿 force-push(会毁远端);远端是唯一真相源,叠加改动用 reset --hard origin/main 后只 add 目标文件(勿 add -A 扫入 machine-specific config/skills)。.env 与 config.yaml 是各机独立的,勿共享覆盖。
 为短视频内容做「话题/标题总结」时,勿停留在表面叙事,要'站得更高看得更远'(上帝视角):深度提炼底层主旨。方法论:把一个具体家务/日常现象上抽到-定义本质-再归纳到一个更高维的核心概念(如'托举'→升级为'内耗/家庭能量管理'),金句洞察往往藏在结尾自省句(如'多数家庭更擅长拽下来而非托上去'=内耗是本能的,托举是反本能的)。示例:用户《托举》文案→深层主旨=「家庭兴旺的底层是'不内耗'——能量单向向外输出 vs 内部对消归零(家庭资源配置/人力资本经营)」→标题抓'内耗/能量管理'比抓'托举'更站高。此思想法已写入 short-video 技能「上帝视角·深层主旨提炼」节。
+=======
+§
+文案路由(9.22):短视频默认豆包db,完成后必汇报所用模型(默认豆包,明确指定其他也报);钩子可走数字对比/同行吐槽两风格,钩子不强即废稿(软陈述"我做了XX年…"必被否,用反问冲突→数字资历→反转三拍);交付只出docx一份勿再出txt;爆款长文默认Kimi主动提示·代理=CordC2.8.5
+§
+hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策监控已部署(cron'苏州城市破播'周二五9点投企微内部群'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才自动触发,手动run不投递;细节见short-video-copywriting类型五);政务检索用anysearch抓官文(文号+日期)。pip清华。
+§
+脱敏边界【全局规则,适用所有skill】(2026.9.15定稿):只有用户主动发送的信息/文件才脱敏;agent抓网页/搜索(web_search/web_extract/browser_*)公开数据不脱敏,插件desensitize-read默认目标集已剔除网络类(read_file/search_files/terminal/execute_code/vision_analyze保留)。脱敏铁律(处理任何上传材料自动执行):①公司名除
+§
+技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library,管理器~/skill-library-ops/skilllib.py,cron skill-exchange周日23:00。
+§
+本机Hermes升级=混合目录隔离法勿git reset
+§
+代理=CordC2.8.5(F:\CordC\),AllowLAN在设置→网络;条件脚本~/.hermes/proxy.sh。
+§
+人设锚点(identity-anchor/产品手册)共6副本改必全同步,源CRLF,diff tr -d '\r'
+>>>>>>> Stashed changes

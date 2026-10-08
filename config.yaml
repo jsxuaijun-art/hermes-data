@@ -344,8 +344,8 @@ memory:
   memory_enabled: true
   user_profile_enabled: true
   write_approval: false
-  memory_char_limit: 2200
-  user_char_limit: 1375
+  memory_char_limit: 6000
+  user_char_limit: 3000
   nudge_interval: 10
   provider: ''
   flush_min_turns: 6

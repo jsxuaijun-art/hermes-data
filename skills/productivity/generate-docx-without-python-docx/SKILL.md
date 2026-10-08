@@ -46,20 +46,22 @@ Always use `w:` prefix with explicit namespace declaration:
 ### Building Paragraphs
 
 ```python
-def rPr_tag(font_name='仿宋_GB2312', font_size='16', bold=False):
+def rPr_tag(font_name='仿宋_GB2312', font_size='24', bold=False):  # default 小四 12pt
     parts = ['<w:rPr>']
-    parts.append(f'<w:rFonts w:ascii="{esc(font_name)}" w:hAnsi="{esc(font_name)}" w:eastAsia="{esc(font_name)}"/>')
-    parts.append(f'<w:sz w:val="{esc(font_size)}"/><w:szCs w:val="{esc(font_size)}"/>')
+    parts.append(f'<w:rFonts w:ascii=\"{esc(font_name)}\" w:hAnsi=\"{esc(font_name)}\" w:eastAsia=\"{esc(font_name)}\"/>')
+    parts.append(f'<w:sz w:val=\"{esc(font_size)}\"/><w:szCs w:val=\"{esc(font_size)}\"/>')
     if bold:
-        parts.append('<w:b/>')
+        parts.append('<w:b/><w:bCs/>')  # also bold complex script
     parts.append('</w:rPr>')
     return ''.join(parts)
 
-def r_tag(text, font_name='仿宋_GB2312', font_size='16', bold=False):
-    return f'<w:r>{rPr_tag(font_name, font_size, bold)}<w:t xml:space="preserve">{esc(text)}</w:t></w:r>'
+def r_tag(text, font_name='仿宋_GB2312', font_size='24', bold=False):
+    return f'<w:r>{rPr_tag(font_name, font_size, bold)}<w:t xml:space=\"preserve\">{esc(text)}</w:t></w:r>'
 
-def simple_para(text, font_name='仿宋_GB2312', font_size='16', bold=False, alignment=None, spacing_before=40, spacing_after=40, line=560):
+def simple_para(text, font_name='仿宋_GB2312', font_size='24', bold=False, alignment=None, spacing_before=20, spacing_after=20, line=480, firstLine=420):
     ppr = pPr_tag(alignment, spacing_before, spacing_after, line)
+    if firstLine:
+        ppr = ppr.replace('</w:pPr>', f'<w:ind w:firstLine=\"{firstLine}\"/></w:pPr>')  # simpler: add before closing
     run = r_tag(text, font_name, font_size, bold)
     return f'<w:p>{ppr}{run}</w:p>'
 ```

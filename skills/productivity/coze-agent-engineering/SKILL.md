@@ -166,6 +166,20 @@ print(''.join(texts))
 3. 对比输出质量差异
 ```
 
+## 八、已交付的智能体提示词（Agent Prompts）
+
+以下是在COZE平台上已部署的完整智能体System Prompt，可作为参考模板或直接部署使用：
+
+| 智能体 | 描述 | 文件 |
+|--------|------|------|
+| **江姐财税全案智能体** | 全覆盖财税智能体 — 税务筹划、合规检查、行业研究、财报分析 | `agent-prompts/SKILL.md` |
+
+每个 `agent-prompts/` 下的目录包含：
+- `SKILL.md` — 完整System Prompt（可直接粘贴到COZE）
+- `references/` — 版本演变记录、参考案例
+
+这些提示词是 `coze-agent-engineering` 方法论的实际应用产物，而非独立的工程技能。
+
 ## 七、已知陷阱
 
 - **不要两个路由系统共存** — COZE平台的内置路由与System Prompt中的关键词路由可能冲突，需明确优先级

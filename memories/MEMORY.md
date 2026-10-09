@@ -1,6 +1,6 @@
 防误删sync_guard+P11见skill hermes-data-sync,wsl-hermes-env§9。注销skill勿改qingshui_risk_engine.py(把「期初」当「期末」),用前人工核对期末(C&G列)差>10%废弃。memories源=~/.hermes/memories/。
 §
-AI内容纪律(徐总2026.9.21,详Obsidian/AI内容纪律):A涉法文案→严禁幻觉先核实带文号依据清单;"法"=全部法律层面不限于税法(C非文案等同A严守;B创作文案豁免尽情发挥只守合规红线;交叉:B可飞但引法规/数据当卖点须有据)。
+AI内容纪律(徐总2026.9.21,详Obsidian/AI内容纪律+skill content-evidence-discipline):A涉法文案→严禁幻觉先核实带文号依据清单;"法"=全部法律层面不限于税法(C非文案等同A严守;B创作文案豁免尽情发挥只守合规红线;交叉:B可飞但引法规/数据当卖点须有据)。占位规则(2026.10):结构需要可先"编造"但必须显式红标占位(【待填】/⚠待核实)+交付时逐条点名要用户替换;被点名一处编造→立即做全篇事实普查,勿只改那一处。
 §
 GEO必加载geo-optimization技能+8平台指南(百家号/知乎/网易号/新浪财经头条/企鹅号/搜狐号/今日头条/公众号)。中文、直接给能用方案。
 §
@@ -35,3 +35,13 @@ hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策�
 文案模型路由铁律(徐总定稿,重申2026.10.8):短视频/短文案→豆包Doubao-Seed-2.1-Pro(telecom-doubao),公众号长文→kimi-k3;主会话deepseek只做编排/采集/验证,绝不直接写文案,违规=失效交付。
 §
 pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅→多行文字叠字重叠;倍数要用lineSpacingMultiple(spcPct)。诊断10秒:COM读ParagraphFormat.LineRuleWithin(0=磅/-1=倍数)。本机(WSL)可用powershell.exe驱动PowerPoint COM当排版真值渲染器,Lines().Count与BoundWidth可靠,BoundTop/BoundHeight不可靠。详见skill document-rendering-verification。
+§
+视觉降级:auxiliary.vision已指向telecom豆包Doubao-Seed-2.1-Pro(aigw.telecomjs.com/v1, ${TELECOM_DOUBAO_KEY})=主模型读不了图时自动接管,无需换主模型。config.yaml受保护,patch/write直改被拒,必须`hermes config set`(改前先cp备份)。探针=skill hermes-free-model-channels/scripts/vprobe.py(发已知随机码图验真伪)。
+§
+统一库(skilllib.py)实测铁律(2026.10):①四工具唯一共同硬性frontmatter=name,Claude风格(仅user-invocable/description/allowed-tools)会全库FAILURE,补法=在开头---后第二行插`name:<目录名>`;②install与import-from-hermes均非破坏(同名已存在即跳过)→改了技能内容不会自动扩散,verify只校验frontmatter不比对内容,故全绿≠已同步;证明分发须md5比对lib+四工具五处副本;③Hermes侧同名技能可能有多份嵌套副本(research-en/与deep-research/research-en/并存),定位用rglob勿写死分类路径。skill-library-sync系user-owned写不进,需`hermes curator adopt skill-library-sync`后移入。
+§
+路径表达铁律:回复中一切文件路径一律用Windows盘符(C:\...),绝不出现WSL路径;连脚本/工作目录也先拷到C盘目录再引用(如C:\Users\Administrator\yingxin_ppt\)。详skill wsl-windows-file-delivery。
+§
+对外材料(PPT/方案/公司介绍)事实纪律:具体事实(学历院校届别·评审人数/通过率·行业占比·客户数/转介绍率·成立年份·资质分)无据一律不得编;确需占位时用醒目色(#C00000)+角标注「待核实」并附《待核实清单》+口头提醒用户核对。配图只用装饰图形/原生图表/占位框,禁用暗示「本公司实景·本团队」的网图或AI图。
+§
+盈信公司介绍PPT工程:脚本C:\Users\Administrator\yingxin_ppt\build.js(pptxgenjs,可改文字/配图),成品同目录+桌面同名;逐页预览图C:\Users\Administrator\yingxin_preview\img\slide-01..10.png;校验脚本qa/overlap/pixcheck/final_check.py同目录。

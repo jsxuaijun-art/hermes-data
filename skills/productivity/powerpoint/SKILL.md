@@ -288,6 +288,56 @@ hermes config set auxiliary.vision.api_key '${TELECOM_DOUBAO_KEY}'
 配置完用一张**已知内容**的图验证（例：图里写随机码 `QX7-7271-BLUE`，看模型能否读对），
 探针脚本与渠道选择见 `hermes-free-model-channels` 技能。
 
+## 对外材料的「事实纪律」——无据不得杜撰（2026-10 徐总纪律固化）
+
+做公司介绍/方案/汇报类 PPT 时，凡**具体事实**——学历院校届别、评审通过人数/通过率、
+行业占比、客户数量/转介绍比例、成立年份、资质分数——**没有真实来源就绝不能编**。
+占位可以留（为了版面完整），但必须做到三条：
+
+1. **醒目标记**：把未核实内容用高辨识色渲染（例：`#C00000` 深红），并加"待核实"角标；
+   不要在交付件里让它长得像真数据。
+2. **显式清单**：另附一份《待核实清单》(md/txt)，逐项写清"第几页·哪句话·要填什么·依据从哪来"。
+3. **主动提醒**：在回复里明确点名"此处系占位/待核实，请按真实情况修改"。
+
+实现套路（build.js 里加两个小工具函数，全篇复用）：
+```js
+const TODO = "C00000";                     // 待核实标记色
+function todoTag(slide, x, y, w=1.15, h=0.28, text="待核实") {   // 红底白字角标
+  slide.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w, h, rectRadius: 0.06, fill:{ color: TODO } });
+  slide.addText(text, { x, y, w, h, align:"center", valign:"middle", fontSize: 9, bold: true, color:"FFFFFF", margin: 0 });
+}
+function imgSlot(slide, x, y, w, h, label) { // 图片占位：红色虚线框
+  slide.addShape(pres.shapes.ROUNDED_RECTANGLE,
+    { x, y, w, h, rectRadius: 0.08, fill:{ color:"FFF5F5" }, line:{ color: TODO, width: 1.25, dashType:"dash" } });
+  slide.addText(label, { x, y, w, h, align:"center", valign:"middle", fontSize: 10, color: TODO, margin: 0.12, lineSpacingMultiple: 1.2 });
+}
+```
+数字类用 `color: TODO` 渲染，旁边挂 `todoTag`；标题页眉写一句
+"⚠ 下列数字为占位示例：请替换为……真实数据，并附年份+文号/链接"。
+
+**配图的诚实边界**：装饰性图形（同心圆环、色块、线条）随便用；**原生图表**用
+`slide.addChart(pres.shapes... pres.charts.BAR, [{name, labels, values}], opts)` 生成真图表（可编辑）；
+但**绝不能放暗示"这是本公司实景/本团队成员"的网图或 AI 图**。要放就放**占位框**（`imgSlot`），
+让客户自己填真实照片/证书截图。
+
+- 原生横向条形图要点：`barDir:"bar"`、`showValue:true`、`dataLabelPosition:"outEnd"`、
+  `showLegend:false`、`valGridLine:{style:"none"}`、`catGridLine:{style:"none"}`；生成后
+  pptx 内会多出 `ppt/charts/chart1.xml`（`unzip -l` 可验）。范围要另留一行小字标注数据来源/状态。
+
+## 大字号多行「视觉粘连」——封面标题常见坑（2026-10 实证）
+
+封面/章节页的主标题常写成单段 `"第一行\n第二行"` 且行距压得很紧（如
+`lineSpacingMultiple: 1.05`）。**字号越大，1.05 越致命**：40pt 字下 1.05 只留 ≈2pt 行间空隙，
+两行在像素层面**粘成一体**，肉眼就是"两行糊在一起"，像素行带检测会判出 `1 band`（应为 2）。
+
+- 经验阈值：**≥28pt 的多行标题，行距给到 1.25~1.3**（`lineSpacingMultiple: 1.28`）。
+- 复核方法不是靠肉眼：裁出**纯文字实际区间**（避开装饰图形），逐行统计墨迹像素、归并成行带，
+  N 行文字应得 N 条独立行带。**本技能自带脚本 `scripts/line_bands.py`**：
+  `python3 line_bands.py slide-01.png --box 0.70,1.50,7.60,3.35 --expect 2 --ink light`
+- ⚠ **装饰图形的行带假阳性**：若新加的金环/色块等装饰**落在该文本框的矩形范围内**，
+  装饰笔画会把两行之间的空隙填满 → 检测误判"多行叠印"。**排查：把裁切区缩到文字实际宽高
+  （避开装饰所在 x/y 区间）再测**。别为假阳性去瞎改行距。
+
 ## Dependencies
 
 - `pip install "markitdown[pptx]"` - text extraction

@@ -29,7 +29,7 @@ Then inspect each page with `vision_analyze` (look for broken tables, clipping, 
 
 ## Fallback: no vision model → pdftotext layout check
 
-**When**: the active model rejects image input. `vision_analyze` returns `400 {"... does not accept input types: image"}`. Do NOT keep retrying vision — it will fail identically every time. Drop to text.
+**When**: `vision_analyze` returns `400 {"... does not accept input types: image"}` **and** you cannot re-point `auxiliary.vision` (or must finish this run immediately). Treat that error as a config state to fix — not as a permanent trait of the model. See "Fixing 'no vision model'" below. Without re-pointing the slot, retrying vision fails identically every time; use text until then.
 
 ```bash
 soffice --headless --convert-to pdf "output.docx" --outdir /tmp
@@ -102,6 +102,7 @@ Before hunting coordinates, check the spacing attributes — the usual culprit i
 - `lineSpacing: 1.05` → writes `spcPts val="105"` = **1.05 point** line spacing → every line of a multi-line paragraph renders on top of the previous one. This is what "文字重叠" looks like, and it appears on every page whose multi-line body used the property.
 - `lineSpacingMultiple: 1.05` → writes `spcPct val="105000"` = 1.05× — this is the one you usually mean.
 - Same family: `paraSpaceAfter` IS in points (correct as written); `lineSpacingMultiple` needs an honest re-check of downstream height budgets, because 1.3× multiplies the *font's* default line height (~1.2 em), so multi-line blocks get ~56% taller than a naive `fontSize * 1.3` estimate.
+- **Large display type needs a bigger multiple — the "wrong property" bug has a small-type twin.** A 40pt hero/cover title with `lineSpacingMultiple: 1.05` writes the *correct* percentage yet still looks stacked: 1.05 × 40pt leaves ~2pt of daylight, so the two lines read as one blob and the ink-band check reports `bands=1`. Rule of thumb: type ≥28pt → use ≥1.25; body ≤14pt → 1.05–1.15 is fine. Don't conclude "the fix didn't work" when the unit bug is already gone — the remaining cause is a too-tight multiple for the size. Sweep the whole family, not the one page you noticed: `grep -n 'lineSpacingMultiple:\s*1\.\(0\|1[0-4]\)' build.js` and bump every hit that is ≥28pt or can wrap.
 
 **The COM tell**: `ParagraphFormat.LineRuleWithin` is `-1` (msoTrue) for multiple-based spacing and `0` (msoFalse) for point-based. If only *some* shapes report `0`, those are exactly the shapes you set a line-spacing property on — and exactly the overlapping ones. This is a 10-second diagnosis; run it before any geometry work.
 
@@ -117,14 +118,51 @@ Reading the result:
 - Ink taller than the box = overflow.
 - Bands determined from `background = most-common color in the region` (works for dark text on light AND light text on dark).
 - False positives to expect and ignore: single-line shapes inside bordered/pill shapes can read as 2 bands (the border edges) — only flag `bands < nlines` when `nlines >= 2`, and treat `bands > nlines` as noise, not a defect. Don't let these derail a clean report.
+- **Decoration inside the box's bbox collapses the bands.** If a shape you drew (rings, arcs, dividers, watermark, big icon) crosses the text box's rectangle, its strokes fill the empty rows *between* the lines → `bands` reports 1 and you get a false "text overlapping itself" verdict on a box that renders perfectly. Confirm before fixing: re-crop to just the glyph area and re-count. A genuine stacking bug still reports 1 band on the tight crop; a decoration artifact reports 2. Keep the crop as a script, don't loosen the detector. One-page spot check:
+
+  ```bash
+  venv/bin/python scripts/pptx_ink_bands.py slide-01.png --box 0.70,1.50,7.60,3.35 --light-ink
+  #                                                        x0,y0,x1,y1 in INCHES, LAYOUT_16x9
+  ```
+
+  (`--light-ink` = light glyphs on a dark fill; omit for dark text on light. `--box` is exactly how you exclude the right-hand art: crop to x≤7.60 and the rings at x≥8.15 stop polluting the count.)
 
 Run BOTH layers before declaring a deck fixed: A is exact on geometry, B is model-free on pixels; they catch different failure modes (a wrapped line that A thinks is fine because the estimate fit, an offset box B can't reason about).
 
 Full worked detail, including the pptxgenjs XML mapping and the height arithmetic: `references/pptx-layout-overlap-diagnosis.md`.
 
-## Known environment quirk
+## Fixing "no vision model" (2026-10 — this is a *config state*, not a permanent trait)
 
-Some providers/models (e.g. deepseek-v4-flash) do not accept image inputs, so the normal vision QA chain is unavailable for them. This is an environment trait, not a tool defect — the pdftotext fallback above is the reliable working path, not a refusal.
+The vision QA chain is the best verification path here, so if it is unavailable, **fix it
+before falling back** — do not accept a text-only chain as the standing situation.
+
+`auxiliary.vision` is an independent proxy slot in `config.yaml` and does **not** follow
+`model.default`. Point it at any vision-capable model and `vision_analyze` works again —
+the main model stays exactly as it is:
+
+```bash
+cp ~/.hermes/config.yaml ~/.hermes/config.yaml.bak.$(date +%Y%m%d_%H%M%S)
+hermes config set auxiliary.vision.model    Doubao-Seed-2.1-Pro
+hermes config set auxiliary.vision.base_url https://aigw.telecomjs.com/v1
+hermes config set auxiliary.vision.api_key  '${TELECOM_DOUBAO_KEY}'
+```
+
+- `~/.hermes/config.yaml` is **protected**: `patch` / `write_file` are refused with
+  `Refusing to write to Hermes config file`. `hermes config set` is the only path
+  (it prints `✓ Set auxiliary.vision.model = ...`).
+- Choose the **cheapest** vision-capable channel among the user's existing keys, and do it
+  automatically rather than asking. Honest degradation, never a block.
+- **Verify with a known-answer image.** "It did not error" proves nothing: generate a picture
+  containing a random code, ask the model to read it back, accept only an exact match. A model
+  that returns plausible-sounding content it never actually saw passes every weaker test.
+  Probe script + the live-tested channel matrix live in the `hermes-free-model-channels` skill
+  (`scripts/vprobe.py`).
+- Before trusting any verdict afterwards, confirm the image genuinely reached your context —
+  a "successful" `vision_analyze` call whose image never attached produces confident nonsense.
+
+Once re-pointed, the **primary path above reopens** and is the strongest check available:
+render → `vision_analyze` each page, and cross-check its verdict against the Layer A/B
+measurements rather than taking either alone.
 
 ## Delivery-path discipline (all formats)
 
@@ -136,6 +174,20 @@ in a scratch directory while the Desktop still holds the broken build reads to
 the user as "the fix didn't work", and it is the most expensive possible
 verification failure: correct work, reported as success, that the user cannot
 see.
+
+The same rule governs anything *pushed or mirrored* rather than copied — a tool's success
+message is not evidence, and neither is a local status line:
+
+- **A push:** `## main...origin/main` from local `git status` can be a stale ref. Read the
+  authoritative side back — `git ls-remote origin main` must return a SHA byte-identical to
+  local `git rev-parse HEAD`. Compare the two strings; don't eyeball "the push looked fine".
+- **A sync/mirror tool:** "wrote N files" says nothing about whether an *existing* target was
+  updated — non-destructive syncs skip same-name targets silently. Prove it with a hash
+  comparison of the mirror copies (`md5` of each `SKILL.md`/artifact across source and every
+  destination); a green summary from the tool is not proof.
+
+Generalize: **read the effect back from the place the user will actually look**, and compare
+a value that can only match if the change truly landed.
 
 ## Existing-umbrella note
 

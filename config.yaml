@@ -160,9 +160,9 @@ bedrock:
 auxiliary:
   vision:
     provider: custom
-    model: deepseek-v4-flash
-    base_url: https://llm.chudian.site/v1
-    api_key: ${DEEPSEEK_API_KEY}
+    model: Doubao-Seed-2.1-Pro
+    base_url: https://aigw.telecomjs.com/v1
+    api_key: ${TELECOM_DOUBAO_KEY}
     timeout: 120
     download_timeout: 30
   compression:

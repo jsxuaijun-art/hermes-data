@@ -228,6 +228,66 @@ pdftoppm -jpeg -r 150 -f N -l N output.pdf slide-fixed
 
 ---
 
+## Pitfalls — pptxgenjs 单位陷阱（直接导致「文字重叠/重影」）
+
+**`lineSpacing` 的单位是「磅」，不是倍数。** 想设 1.3 倍行距必须写
+`lineSpacingMultiple: 1.3`（写入 `<a:spcPct>`）；写成 `lineSpacing: 1.3`
+会得到「行距 1.3 磅」——比字还矮，**同一段的多行文字叠印成一坨**，
+肉眼就是文字重叠/重影。
+
+- 症状指纹：多行正文/副标题糊在一起，单行文字却完全正常 → 先查这一条。
+- 核实（解开 pptx 查 XML，10 秒定案）：
+  `unzip -o out.pptx -d /tmp/x && grep -o 'spcPct val="[0-9]*"' /tmp/x/ppt/slides/slideN.xml`
+  正确是 `spcPct val="130000"`（130%），错误是 `spcPts val="130"`。
+  注意 `spcPts` 若出现在 `spcAft`/`spcBef` 里是正常的（那是 paraSpaceAfter/Before，单位本来就是磅）。
+- 修复后必须复算高度：单行高 ≈ 字号 × 1.2 × 倍数；改对后多行正文会**明显变高**，
+  可能撑破卡片 → 重新核对每个正文框的高度是否够。
+
+## 装不了 LibreOffice 时的排版验证（Windows + WSL 无目视闭环）
+
+Linux 侧没有 `soffice`、`sudo apt` 又要密码时，用 **Windows PowerPoint COM 当真值渲染器**
+（渲染结果与用户所见一致）。三步闭环：
+
+```bash
+# 1) COM 导出每页 PNG
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\\path\\export.ps1"
+# 2) COM 导出每个形状的框几何 + 文字边界 → tsv
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\\path\\dshapes.ps1"
+# 3) 像素行带检测 + 文本框相交检测（python + Pillow）
+python3 pixcheck.py && python3 final_check.py
+```
+
+**COM 字段可信度（实测，别踩）：**
+- 可靠：`Shape.Left/Top/Width/Height`；`TextRange.Lines().Count`（真实渲染行数）；
+  逐行 `Lines(i).BoundLeft/BoundWidth`（最宽行宽）；`TextFrame.VerticalAnchor`；
+  `ParagraphFormat.LineRuleWithin`（true=倍数 / false=磅）。
+- **不可靠**：`BoundHeight`、`BoundTop` 对多行文本严重失真（曾对 40pt 行返回 1pt）。
+  判断增高一律用 `行数 × 字号 × 1.2 × 倍数`，不要用 BoundHeight。
+- 多数文本框是垂直居中（`VerticalAnchor=3`），文字矩形 = `框top + (框高 - 文字高)/2`。
+- PowerPoint 导出的 PNG 是中文名（`幻灯片1.PNG`），先重命名成 ASCII 再处理。
+
+**两类不靠肉眼也能抓的缺陷：**
+1. **文本框相交**：用框 rect 做矩形相交（面积>阈值报警）。注意「页面标题框 vs 右上角品牌标签框」
+   常见**框相交但文字不碰**的假阳性 —— 必须再用「标题文字右缘 br」对「品牌标签文字左缘 bl」
+   复核，真正相碰才修。
+2. **文字塌缩/溢出**：把每页 PNG 逐框裁出，按「与背景色差异」统计每行墨迹像素并归并成「行带」。
+   正常 N 行文字应得 N 条独立行带；行带数 < N = 多行叠印；墨迹纵向超出框 = 溢出。
+
+## 会话模型读不了图时的兜底（便宜视觉模型自动降级）
+
+若 `vision_analyze` 报 `does not accept input types: image`，说明 `auxiliary.vision`
+指到了纯文本模型。指到一个**便宜的视觉模型**即可自动降级，无需更换主模型：
+
+```bash
+hermes config set auxiliary.vision.model Doubao-Seed-2.1-Pro
+hermes config set auxiliary.vision.base_url https://aigw.telecomjs.com/v1
+hermes config set auxiliary.vision.api_key '${TELECOM_DOUBAO_KEY}'
+```
+
+（`~/.hermes/config.yaml` 受保护，agent 不能用 patch/write 直接改，必须走 `hermes config set`。）
+配置完用一张**已知内容**的图验证（例：图里写随机码 `QX7-7271-BLUE`，看模型能否读对），
+探针脚本与渠道选择见 `hermes-free-model-channels` 技能。
+
 ## Dependencies
 
 - `pip install "markitdown[pptx]"` - text extraction

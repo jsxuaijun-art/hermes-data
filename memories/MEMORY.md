@@ -45,3 +45,5 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 对外材料(PPT/方案/公司介绍)事实纪律:具体事实(学历院校届别·评审人数/通过率·行业占比·客户数/转介绍率·成立年份·资质分)无据一律不得编;确需占位时用醒目色(#C00000)+角标注「待核实」并附《待核实清单》+口头提醒用户核对。配图只用装饰图形/原生图表/占位框,禁用暗示「本公司实景·本团队」的网图或AI图。
 §
 盈信公司介绍PPT工程:脚本C:\Users\Administrator\yingxin_ppt\build.js(pptxgenjs,可改文字/配图),成品同目录+桌面同名;逐页预览图C:\Users\Administrator\yingxin_preview\img\slide-01..10.png;校验脚本qa/overlap/pixcheck/final_check.py同目录。
+§
+自动化脚本踩坑两则(实证):①write_file 生成的 .ps1 是 UTF-8 无 BOM,Windows PowerShell 5.1 按 ANSI 读→脚本内中文路径必乱码,COM 报「找不到文件」但文件明明在(报错文本本身也是乱码,别追它)。对策:.ps1 只留 ASCII+param() 传参,或中文名文件先 cp 成 ASCII 名再喂 COM;.docx 版校验脚本见 skill document-rendering-verification/scripts/docx_com_metrics.ps1。②脚本直读 config.yaml 的 api_key 常拿到 ${VAR} 字面量→401,须先由 os.environ 展开环境变量。

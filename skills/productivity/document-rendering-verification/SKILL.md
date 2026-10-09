@@ -131,6 +131,62 @@ Run BOTH layers before declaring a deck fixed: A is exact on geometry, B is mode
 
 Full worked detail, including the pptxgenjs XML mapping and the height arithmetic: `references/pptx-layout-overlap-diagnosis.md`.
 
+## Best path for .docx on Windows (WSL host): Word COM as render oracle
+
+Same rationale as the .pptx COM section — the real renderer beats a `soffice`
+approximation, and a Windows user opens the .docx in Word. Verified from WSL via
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\...\docx_com_metrics.ps1" "<src.docx>" "<out.pdf>"`:
+
+```powershell
+$word = New-Object -ComObject Word.Application
+$word.Visible = $false; $word.DisplayAlerts = 0
+$doc = $word.Documents.Open($Src, $false, $true)      # (path, ConfirmConversions, ReadOnly)
+Write-Output ("PAGES {0}" -f $doc.ComputeStatistics(2))   # 2 = wdStatisticPages
+foreach ($t in $doc.Tables) { $t.Rows.Count; $t.Columns.Count; sum of $t.Columns.Width }
+$doc.ExportAsFixedFormat($Pdf, 17)                    # 17 = wdExportFormatPDF
+```
+
+Run `scripts/docx_com_metrics.ps1` — it prints page count, per-table row/column counts, and each
+table's summed column width versus the usable text-column width, then exports the PDF.
+
+What each number proves:
+- `ComputeStatistics(2)` → page count; cross-check it against the page images you render.
+- **Table width vs text width is the docx analogue of the pptx geometry check and needs no render.**
+  Compare the sum of your column widths with `PageSetup.PageWidth - LeftMargin - RightMargin`.
+  Equal is the design target; **over** means Word silently re-fits and your carefully chosen widths
+  are fiction. A row of `Cms` summing to exactly the text width (e.g. 21 − 1.6 − 1.6 = 17.8cm) is
+  the number to aim for.
+- Then export the PDF → page images → run the Layer B visual pass above.
+
+**PITFALL — PowerShell 5.1 decodes a BOM-less `.ps1` as ANSI.** A script authored from Linux/WSL
+(any `write_file`) is UTF-8 *without* BOM; `powershell.exe` then reads every non-ASCII byte as ANSI,
+so a Chinese literal path turns to mojibake and `Documents.Open` fails with
+"找不到指定文件 / cannot find the file" **for a file that plainly exists**. The COM error text itself
+comes back mojibake in the WSL console too, so do not chase the message — suspect the script's own
+encoding first. Two fixes, both cheap:
+1. Keep the `.ps1` **all-ASCII** — no Chinese literals, comments, or paths; take paths through
+   `param([string]$Src, [string]$Pdf)` and pass them as arguments.
+2. Or write the `.ps1` with a UTF-8 BOM (`\ufeff`) so PS 5.1 decodes it as UTF-8.
+
+Belt-and-braces for a Chinese-named deliverable: `cp` it to an ASCII name in a scratch dir, convert
+*that*, and hand the user the Chinese-named result. The rendered content keeps its Chinese text —
+only the filename fed to COM needs to be ASCII.
+
+**PITFALL — python-docx cell tuples are fixed-length.** `table.add_row().cells` returns a tuple of
+exactly the table's column count, so `for ci, val in enumerate(row)` over a longer row raises
+`IndexError: tuple index out of range`. Assert the shape (`assert len(row) == len(headers)`) before
+filling, or route every table through one helper that derives `cols=len(headers)`.
+
+**Pulling brand/template assets out of a source .docx**: do it in Python, not by shelling out —
+`zipfile.ZipFile(p).read('word/media/image1.png')`. And before reusing an extracted image as a logo,
+actually *look* at it: a decorative motif (an abstract pattern) is not the company mark. Check the
+image for the company name/text before assuming `image1` is the logo, or you ship a decoration as
+brand identity.
+
+Full worked detail — the mojibake transcript, the ASCII-copy recipe, the table-width arithmetic, and
+the source-provenance discipline for client-facing generated documents:
+`references/docx-word-com-verification.md`.
+
 ## Fixing "no vision model" (2026-10 — this is a *config state*, not a permanent trait)
 
 The vision QA chain is the best verification path here, so if it is unavailable, **fix it

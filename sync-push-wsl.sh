@@ -51,18 +51,20 @@ fi
 
 git commit -m "sync WSL端 $(date '+%a %Y/%m/%d %H:%M')"
 
-# 3. 尝试 git pull --rebase（超时就跳过）
-echo ">>> 尝试拉取远程变更（非阻塞）..."
-timeout 15 git pull --rebase origin main 2>&1 || echo "   ⚠️ 拉取超时，直接推送"
+# 3. 尝试 git pull --rebase（实测此仓库 fetch 需 3 分钟，给足超时）
+echo ">>> 尝试拉取远程变更（可等几分钟）..."
+timeout 300 git pull --rebase origin main 2>&1 || echo "   ⚠️ 拉取未完成，先中止，别强推！"
 
-# 4. 推送
+# 4. 推送（严禁 force push —— 会覆盖远端其他电脑的提交）
 echo ">>> 推送到 GitHub ..."
 if git push origin main 2>&1; then
     echo "   ✅ 推送成功"
 else
-    echo "   ⚠️ 推送被拒绝，尝试 force push..."
-    git push --force origin main 2>&1
-    echo "   ✅ Force push 成功"
+    echo "   ❌ 推送被拒（远端有新提交）。禁止强推！请手动合并后重推："
+    echo "      cd /mnt/c/Users/Admin/hermes-sync"
+    echo "      git fetch origin main && git merge origin/main"
+    echo "      git push origin main"
+    exit 1
 fi
 
 echo "============================================"

@@ -12,7 +12,9 @@ agent_created: true
 > **2026-10-10 更新（Hermes/WSL 环境，实测有效）**
 > - 奇云API `https://qyapi.ipaybuy.cn/api/video` 实际解析端点也含 `/api/sph_parse`；`code=200` 解析成功，居然 `video_url`（finder.video.qq.com 直链）可直接下。凭据(QIYUN_APP_ID/QIYUN_APP_KEY)已配在本机 Hermes 密钥文件(~/.hermes/.env 内)，`set -a; source ~/.hermes/.env; set +a` 后跑 `scripts/parse_download_qiyun.py <链接> <输出.mp4>` 即可，下载到 `C:\Users\Administrator\Desktop\视频号\`。
 > - **ASR 模型源变更**：ModelScope `AI-ModelScope/faster-whisper-medium` 已 404，改用 `hf-mirror.com/Systran/faster-whisper-medium`（`scripts/dl_model_hfmirror.sh` 断点续传拉取，装到 `~/.cache/faster-whisper/medium`）。
-> - 一键「提音频+转写」用 `scripts/asr.py <视频.mp4> [输出.txt]`（输出按时间轴+纯净全文）。Hermes venv 已装 faster-whisper+imageio-ffmpeg。
+> - 一键「提音频+转写」用 `scripts/asr.py <视频.mp4> [输出.txt]`（**默认只出纯净全文、无时间轴**；要逐句时间轴加 `--timeline`）。Hermes venv 已装 faster-whisper+imageio-ffmpeg。
+> - **计费事实**：一次「下载+文案」只扣奇云 **1 次**（解析）；视频下载为无凭据的直链 HTTP，不算 API 调用；文案为本地 ASR，0 次奇云。文案必须基于视频，故视频不能省。
+> - **已知坑**：PyAV>=19 移除了 `metadata_errors` 参数，faster-whisper 会报 `TypeError` —— asr.py 已改为自行读取 wav 成拍数组喂模型，彻底绕开 av 版本问题，勿改回。
 
 ---
 

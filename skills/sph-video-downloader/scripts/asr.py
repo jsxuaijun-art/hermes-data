@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 """视频/音频 → 中文口播文案（自动提音频 + faster-whisper 转写）
 用法:
-  python3 asr.py <视频.mp4> [输出.txt] [模型目录]
+  python3 asr.py <视频.mp4> [输出.txt] [模型目录] [--timeline]
+默认（无特殊指令）：只输出**纯净全文**，无时间轴——徐总规约，勿加秒数。
+加 --timeline 才输出带时间轴的逐句版 + 纯净全文。
 默认模型目录: 环境变量 FW_MODEL_DIR → 否则 ~/.cache/faster-whisper/medium
 (Hermes venv 已装 faster-whisper + imageio-ffmpeg; 模型用 dl_model_hfmirror.sh 拉)
 """
@@ -11,9 +13,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-video = sys.argv[1]
-out = sys.argv[2] if len(sys.argv) > 2 else str(Path(video).stem) + "_文案.txt"
-model_dir = sys.argv[3] if len(sys.argv) > 3 else os.environ.get("FW_MODEL_DIR")
+_argv = [a for a in sys.argv[1:] if a != "--timeline"]
+want_timeline = "--timeline" in sys.argv
+video = _argv[0]
+out = _argv[1] if len(_argv) > 1 else str(Path(video).stem) + "_文案.txt"
+model_dir = _argv[2] if len(_argv) > 2 else os.environ.get("FW_MODEL_DIR")
 default_model = Path("/home/administrator/.cache/faster-whisper/medium")
 if not model_dir:
     model_dir = str(default_model) if Path(default_model, "model.bin").exists() else None
@@ -50,7 +54,11 @@ for s in segments:
     t = s.text.strip()
     lines.append(f"[{mm:02d}:{ss:02d}] {t}")
     full.append(t)
-text = "\n".join(lines) + "\n\n===== 纯净全文（去时间轴） =====\n" + "".join(full)
+# 默认只输出纯净全文（徐总规约 2026-10-10：无特殊指令不要时间轴）；--timeline 才带逐句时间轴
+if want_timeline:
+    text = "\n".join(lines) + "\n\n===== 纯净全文 =====\n" + "".join(full)
+else:
+    text = "".join(full)
 Path(out).write_text(text, encoding="utf-8")
-print(f"已保存: {out}  ({len(lines)} 段)", flush=True)
+print(f"已保存: {out}  ({len(lines)} 段{'，含时间轴' if want_timeline else '，纯净全文无时间轴'})", flush=True)
 Path(wav).unlink(missing_ok=True)

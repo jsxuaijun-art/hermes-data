@@ -18,7 +18,9 @@ tags: [短视频, 文案创作, 抖音, 视频号, 新媒体运营, 财税获客
 1. **下载视频**
    - 视频号链接（`weixin.qq.com/sph/...`）→ 走 `sph-video-downloader` skill（奇云API，凭据已配在本机密钥文件）。下到 `C:\Users\Administrator\Desktop\视频号\`
    - 抖音/小红书/B站/微博/西瓜/腾讯视频 → 走 `yt-dlp`（Hermes venv，WSL侧；合并用 `--ffmpeg-location /home/administrator/.local/bin`）。下到 `C:\Users\Administrator\Desktop\短视频素材\`
-2. **转文字提取口播文案**：用 `faster-whisper-medium`（int8, CPU，经 hf-mirror 下载到 `~/.cache/faster-whisper/medium`）转写，输出「按时间轴逐句 + 纯净全文」两个版本到与视频同目录的 `_文案.txt`
+2. **转文字提取口播文案**：用 `faster-whisper-medium`（int8, CPU，经 hf-mirror 下载到 `~/.cache/faster-whisper/medium`）转写 → **默认只输出纯净全文（文字连在一起、不分行、无时间轴）**——徐总规约 2026-10-10：无特殊指令不要秒数；只有明确要时间轴才加 `--timeline`。存到与视频同目录的 `_文案.txt`
+   - **成本口径（2026-10-10 核实）**：奇云**只扣 1 次**（解析拿无水印直链）；视频下载是拿直链做普通 HTTP 下载、**不带凭据、不算 API 调用**；文案转写是本地 ASR、**0 次奇云**。所以「下载+文案」**不等于**两次计费。
+   - 但**文案必须基于视频**（ASR 要读视频音频），所以视频这一步省不掉——好在它不额外花钱。
 3. **创作**：把转写出来的文案当作**竞品口播蒸馏素材**（详见 `references/video-production-forensics.md` 与 `账号蒸馏-RIA-TV五步萃取法.md`），按本 skill 标准流程（黄金三秒钩子→结构→CTA→话题标签）出**改写/仿写/新文案**
 4. 交付：脚本放桌面 `.docx`（+`.txt` 备用），按「脚本速览表 + 标题三件套 + 话题标签 + 完整文案 + 拍摄速查表」格式
 

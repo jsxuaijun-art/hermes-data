@@ -9,6 +9,11 @@ agent_created: true
 > 适用：WorkBuddy / 任意能跑 Python 的环境。目的：把一条微信视频号链接，变成「无水印 mp4」+「口播原文案」。
 > 作者实战验证于 Windows + WorkBuddy。已成功下载多条视频号并做中文语音转写。
 
+> **2026-10-10 更新（Hermes/WSL 环境，实测有效）**
+> - 奇云API `https://qyapi.ipaybuy.cn/api/video` 实际解析端点也含 `/api/sph_parse`；`code=200` 解析成功，居然 `video_url`（finder.video.qq.com 直链）可直接下。凭据(QIYUN_APP_ID/QIYUN_APP_KEY)已配在本机 Hermes 密钥文件(~/.hermes/.env 内)，`set -a; source ~/.hermes/.env; set +a` 后跑 `scripts/parse_download_qiyun.py <链接> <输出.mp4>` 即可，下载到 `C:\Users\Administrator\Desktop\视频号\`。
+> - **ASR 模型源变更**：ModelScope `AI-ModelScope/faster-whisper-medium` 已 404，改用 `hf-mirror.com/Systran/faster-whisper-medium`（`scripts/dl_model_hfmirror.sh` 断点续传拉取，装到 `~/.cache/faster-whisper/medium`）。
+> - 一键「提音频+转写」用 `scripts/asr.py <视频.mp4> [输出.txt]`（输出按时间轴+纯净全文）。Hermes venv 已装 faster-whisper+imageio-ffmpeg。
+
 ---
 
 ## 一、原理（先讲清楚为什么这么干）

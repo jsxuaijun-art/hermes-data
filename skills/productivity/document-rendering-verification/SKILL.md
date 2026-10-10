@@ -158,6 +158,42 @@ What each number proves:
   the number to aim for.
 - Then export the PDF → page images → run the Layer B visual pass above.
 
+**Rasterizing the PDF when poppler is absent.** The primary path's `pdftoppm` needs poppler-utils,
+which is frequently not installed on a WSL box and not worth a system-level install. PyMuPDF does
+the same job from pure Python and is a one-line pip:
+
+```bash
+venv/bin/pip install -q pymupdf -i https://pypi.tuna.tsinghua.edu.cn/simple
+venv/bin/python scripts/pdf_to_png.py /path/quote.pdf /tmp/pg 110   # → pg-01.png, pg-02.png, …
+```
+
+Use `import pymupdf as fitz` with a fallback to `import fitz` — the old module name still resolves
+but prints a deprecation warning. At `dpi=110` an A4 page comes out ~910×1287px, which is enough for
+a vision model to read table cells and spot clipping. The script prints one line per page plus a
+final `pages: N` — **cross-check that N against the COM `ComputeStatistics(2)` page count**; a
+mismatch means the export silently truncated and the visual pass covered only part of the document.
+
+**When `vision_analyze` returns no description for some pages** (an empty verdict, not an error),
+don't skip that page and don't retry blindly — call the *configured* vision channel directly. Read
+`auxiliary.vision` from `config.yaml`, expanding `'${VAR}'` against `os.environ` plus
+`~/.hermes/.env`, then POST an OpenAI-shaped `chat/completions` request with the page as a base64
+`data:image/png;base64,…` content part and print the reply verbatim. Never print or log the key.
+The answer usually opens with the model name (`MODEL: Doubao-Seed-2.1-Pro`) — that is your proof the
+request reached a real model rather than an empty cache.
+
+Keep the prompt a fixed three-point checklist plus a content read-back, so the verdict is checkable
+against your generator's constants instead of a vague "looks fine":
+
+```
+1) 有没有文字溢出页面边缘、被裁切、或相互重叠？
+2) 表格有没有串行、错位、列宽异常？
+3) 逐行罗列你看到的主要标题和表格内容。
+```
+
+Point 3 is the high-value one: read the rows back and diff them against the price/content constants
+in your build script. That catches a wrong number in the document itself, which no amount of
+overflow/clipping checking will ever surface.
+
 **PITFALL — PowerShell 5.1 decodes a BOM-less `.ps1` as ANSI.** A script authored from Linux/WSL
 (any `write_file`) is UTF-8 *without* BOM; `powershell.exe` then reads every non-ASCII byte as ANSI,
 so a Chinese literal path turns to mojibake and `Documents.Open` fails with

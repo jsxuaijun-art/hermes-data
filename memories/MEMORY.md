@@ -38,7 +38,7 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 §
 视觉降级:auxiliary.vision已指向telecom豆包Doubao-Seed-2.1-Pro(aigw.telecomjs.com/v1, ${TELECOM_DOUBAO_KEY})=主模型读不了图时自动接管,无需换主模型。config.yaml受保护,patch/write直改被拒,必须`hermes config set`(改前先cp备份)。探针=skill hermes-free-model-channels/scripts/vprobe.py(发已知随机码图验真伪)。
 §
-统一库(skilllib.py)实测铁律(2026.10):①四工具唯一共同硬性frontmatter=name,Claude风格(仅user-invocable/description/allowed-tools)会全库FAILURE,补法=在开头---后第二行插`name:<目录名>`;②install与import-from-hermes均非破坏(同名已存在即跳过)→改了技能内容不会自动扩散,verify只校验frontmatter不比对内容,故全绿≠已同步;证明分发须md5比对lib+四工具五处副本;③Hermes侧同名技能可能有多份嵌套副本(research-en/与deep-research/research-en/并存),定位用rglob勿写死分类路径。skill-library-sync系user-owned写不进,需`hermes curator adopt skill-library-sync`后移入。
+user-owned技能不可自动改(实测created_by=None:skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access),需先`hermes curator adopt <name>`;可自动改的是agent建过的(powerpoint、compliant-accounting)。
 §
 路径表达铁律:回复中一切文件路径一律用Windows盘符(C:\...),绝不出现WSL路径;连脚本/工作目录也先拷到C盘目录再引用(如C:\Users\Administrator\yingxin_ppt\)。详skill wsl-windows-file-delivery。
 §
@@ -47,3 +47,11 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 盈信公司介绍PPT工程:脚本C:\Users\Administrator\yingxin_ppt\build.js(pptxgenjs,可改文字/配图),成品同目录+桌面同名;逐页预览图C:\Users\Administrator\yingxin_preview\img\slide-01..10.png;校验脚本qa/overlap/pixcheck/final_check.py同目录。
 §
 自动化脚本踩坑两则(实证):①write_file 生成的 .ps1 是 UTF-8 无 BOM,Windows PowerShell 5.1 按 ANSI 读→脚本内中文路径必乱码,COM 报「找不到文件」但文件明明在(报错文本本身也是乱码,别追它)。对策:.ps1 只留 ASCII+param() 传参,或中文名文件先 cp 成 ASCII 名再喂 COM;.docx 版校验脚本见 skill document-rendering-verification/scripts/docx_com_metrics.ps1。②脚本直读 config.yaml 的 api_key 常拿到 ${VAR} 字面量→401,须先由 os.environ 展开环境变量。
+§
+合规账报价表已入skill compliant-accounting:refs/13-合规账报价表与定价口径.md(4档12行官方阶梯)+templates/合规账报价表模板.docx+scripts/gen_quote.py(改价改顶部常量)。定价唯一源=13-参考;03-产品手册§八年费区间是旧口径勿混用。该skill有顶层与skills/skills/嵌套两份副本,内容已一致。
+§
+yt-dlp已装在Hermes venv(2026.08.19)。WSL侧ffmpeg=imageio-ffmpeg静态版(johnvansickle 7.0.2)，已symlink为~/.local/bin/ffmpeg(yt-dlp只认名字叫ffmpeg的二进制)。自动合并用法:venv/bin/yt-dlp --ffmpeg-location /home/administrator/.local/bin -f "bv*[height<=480]+ba/b[height<=480]" <url>。Windows侧ffmpeg 8.1(Winget,含ffprobe)可从WSL调用,但跨系统合并会因路径不通失败→下载+合并必须同系统。GitHub直连不稳,yt-dlp.exe易半途断(可用curl -C -续传或镜像)。B站视频国内直连约3-4MB/s。
+§
+视频号(weixin.qq.com/sph/)下载=徐总刚需"必须成功使用"，经常用。sph-video-downloader skill是user-owned(curator未接管,改需先`hermes curator adopt sph-video-downloader`)。解析凭据(奇云QIYUN_APP_ID/KEY 或 redfox REDFOX_API_KEY)截至2026-10均未配置，用户提供后先跑通全链路再交付。
+§
+微信视频号下载:走skill sph-video-downloader(奇云API首选,code=200,mediaUrl/video_url直链可达finder.video.qq.com)。奇云凭据(QIYUN_APP_ID/QIYUN_APP_KEY)已配置在本机密钥文件,须OCR史勿把值写进记忆/推送(会被同步到GitHub)。跑法:先加载本机密钥后执行skill的scripts/parse_download_qiyun.py <链接> <输出.mp4>。下载到桌面\视频号\目录。已实测成功(Arx1Bbahf5,29s竖屏)。要口播文案再交faster-whisper转写。

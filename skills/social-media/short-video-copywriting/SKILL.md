@@ -11,6 +11,23 @@ tags: [短视频, 文案创作, 抖音, 视频号, 新媒体运营, 财税获客
 
 > **用户触发词约定（2026.8.3 徐总确认）：** 当用户说「调用短视频skill」时，必须**同时**自动调用爬虫skill（`python-web-scraping-setup` / 实际用 `anysearch` CLI 最快），按用户给的主题实时搜索相关信息，然后以**超前、超脱的上帝视角**输出——提出不同观点并分析得头头是道（放到结构层，不是空喊）。
 
+### ⚡ 视频链接 → 自动提取文案 → 创作（2026-10-10 徐总确认·默认动作，勿再询问）
+
+**当徐总给出一条视频链接（视频号/抖音/小红书/B站等）并提到短视频skill（或直接说「下这个/分析这条/看这条出文案」），默认全程自动执行，不要问「要不要转文字」：**
+
+1. **下载视频**
+   - 视频号链接（`weixin.qq.com/sph/...`）→ 走 `sph-video-downloader` skill（奇云API，凭据已配在本机密钥文件）。下到 `C:\Users\Administrator\Desktop\视频号\`
+   - 抖音/小红书/B站/微博/西瓜/腾讯视频 → 走 `yt-dlp`（Hermes venv，WSL侧；合并用 `--ffmpeg-location /home/administrator/.local/bin`）。下到 `C:\Users\Administrator\Desktop\短视频素材\`
+2. **转文字提取口播文案**：用 `faster-whisper-medium`（int8, CPU，经 hf-mirror 下载到 `~/.cache/faster-whisper/medium`）转写，输出「按时间轴逐句 + 纯净全文」两个版本到与视频同目录的 `_文案.txt`
+3. **创作**：把转写出来的文案当作**竞品口播蒸馏素材**（详见 `references/video-production-forensics.md` 与 `账号蒸馏-RIA-TV五步萃取法.md`），按本 skill 标准流程（黄金三秒钩子→结构→CTA→话题标签）出**改写/仿写/新文案**
+4. 交付：脚本放桌面 `.docx`（+`.txt` 备用），按「脚本速览表 + 标题三件套 + 话题标签 + 完整文案 + 拍摄速查表」格式
+
+**产物规约：视频 → `C:\Users\Administrator\Desktop\视频号\` 或 `...\短视频素材\`；文案txt与视频同名同目录；创作稿放桌面。**
+
+**转写工具就绪检查：** `ffmpeg`(imageio_ffmpeg) 与 `faster-whisper` 已在 Hermes venv；模型在 `~/.cache/faster-whisper/medium`（model.bin 1.5GB，一次性）。若某链接解析失败 → 奇云不成功不计费，换 yt-dlp(若支持) 或如实说明，不硬编。
+
+> 依赖技能：`sph-video-downloader`（下载+转写脚本）、`yt-dlp`（其它平台）、`software-development/github-tool-vetting`（工具核实用）。
+
 以下子技能包含了独立封装的文案风格/行业专家模型。当任务匹配时，优先加载子技能而不是从零生成：
 
 | 技能名 | 用途 | 调用方式 |

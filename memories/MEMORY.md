@@ -18,7 +18,7 @@ hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策�
 §
 脱敏边界【全局规则,适用所有skill】(2026.9.15定稿):只有用户主动发送的信息/文件才脱敏;agent抓网页/搜索(web_search/web_extract/browser_*)公开数据不脱敏,插件desensitize-read默认目标集已剔除网络类(read_file/search_files/terminal/execute_code/vision_analyze保留)。脱敏铁律(处理任何上传材料自动执行):①公司名除
 §
-技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library,管理器~/skill-library-ops/skilllib.py,cron skill-exchange周日23:00。
+技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平 skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;Hermes/~/.codex/~/.claude/.workbuddy 侧是嵌套 skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按上述已知路径定点查
 §
 本机Hermes升级=混合目录隔离法勿git reset
 §
@@ -55,3 +55,5 @@ yt-dlp已装在Hermes venv(2026.08.19)。WSL侧ffmpeg=imageio-ffmpeg静态版(jo
 视频号(weixin.qq.com/sph/)下载=徐总刚需"必须成功使用"，经常用。sph-video-downloader skill是user-owned(curator未接管,改需先`hermes curator adopt sph-video-downloader`)。解析凭据(奇云QIYUN_APP_ID/KEY 或 redfox REDFOX_API_KEY)截至2026-10均未配置，用户提供后先跑通全链路再交付。
 §
 微信视频号下载:走skill sph-video-downloader(奇云API首选,code=200,mediaUrl/video_url直链可达finder.video.qq.com)。奇云凭据(QIYUN_APP_ID/QIYUN_APP_KEY)已配置在本机密钥文件,须OCR史勿把值写进记忆/推送(会被同步到GitHub)。跑法:先加载本机密钥后执行skill的scripts/parse_download_qiyun.py <链接> <输出.mp4>。下载到桌面\视频号\目录。已实测成功(Arx1Bbahf5,29s竖屏)。要口播文案再交faster-whisper转写。
+§
+长文出稿铁律:第三方网关(telecom aigw)非流式调用有~90s响应上限,长稿会中途断/整单超时→必须stream=true流式直连。delegate_task走非流式,委派写长稿(文案/文章)易整体失败,失败要如实说+改流式重试。通用调用器=skill llm-longform-generation/scripts/stream_chat.py(密钥走环境变量名传入,勿内联)。

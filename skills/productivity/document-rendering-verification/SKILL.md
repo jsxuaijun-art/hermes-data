@@ -281,6 +281,28 @@ message is not evidence, and neither is a local status line:
 Generalize: **read the effect back from the place the user will actually look**, and compare
 a value that can only match if the change truly landed.
 
+## Web-page evidence screenshots (video overlay / illustration / evidence page)
+
+Same rule as above, applied to **images**: when the deliverable is a screenshot cropped
+from a web page, "the png was written" proves nothing — a **full-page** capture looks
+fine at full size and becomes **unreadable at the size it will actually be seen**
+(a phone-width video overlay is ~1/4 of the frame). Verified recipe:
+
+- Capture the **element** (locate the paragraph by keyword → `locator.screenshot()`),
+  not the page.
+- Render at **2x**: `new_page(viewport={"width":1180,"height":1000}, device_scale_factor=2)`.
+- `wait_for_selector` first — gov/portal/news pages are JS-rendered and a bare `goto`
+  captures an empty shell.
+- **Read the image back** with `vision_analyze` and confirm the key figures are legible
+  before delivering (this caught a real case: verified 「17.53万件，同比上升51.07%」 was
+  crisp before shipping).
+- Ship the **openable source URL** with the image so the user can re-check it; if the page
+  can't be captured (login/CAPTCHA/WAF), hand over link + keyword + location instead of
+  retrying.
+- Official sources only; annotate freely but **never alter a number**.
+
+Detail, code, and pitfalls: `references/web-evidence-screenshot.md`.
+
 ## Existing-umbrella note
 
 This skill's content is a standalone class-level verification workflow. It complements (does not replace) the creation-side knowledge in the `word-documents` / `docx` skills — those cover HOW to build the file, this covers HOW to prove it rendered right.

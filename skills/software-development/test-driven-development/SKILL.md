@@ -1,10 +1,6 @@
 ---
 name: test-driven-development
-<<<<<<< LOCAL (this PC)
 description: Use when implementing any feature or bugfix, before writing implementation code. Enforces RED-GREEN-REFACTOR cycle with test-first approach.
-=======
-description: "TDD: enforce RED-GREEN-REFACTOR, tests before code."
->>>>>>> REPO (github)
 version: 1.1.0
 author: Hermes Agent (adapted from obra/superpowers)
 license: MIT

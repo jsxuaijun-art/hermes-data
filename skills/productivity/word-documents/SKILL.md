@@ -1,13 +1,8 @@
 ---
 name: word-documents
 title: Word Documents
-<<<<<<< LOCAL (this PC)
-description: Create, format, and convert rich Word (.docx) documents — python-docx for rich formatting, pure-stdlib fallback for minimal environments, and markdown-to-docx conversion for large Chinese-government-style reports.
-trigger: user asks to create a Word document, convert to .docx, save as Word format, or generate a formatted document for print/sharing.
-=======
 description: Create, format, and convert rich Word (.docx) documents using python-docx — tables, styling, Chinese fonts, shading, headers, and page layout.
 trigger: user asks to create a Word document, convert to .docx, save as Word format, or generate a formatted document for print/sharing. Also triggers on any request to "生成报告" or "发报告" without explicitly saying Word — user prefers .docx delivery for all research reports.
->>>>>>> REPO (github)
 category: productivity
 ---
 
@@ -132,59 +127,27 @@ def add_table(headers, rows, col_widths=None):
     doc.add_paragraph()  # spacing after table
 ```
 
-<<<<<<< LOCAL (this PC)
-## File Paths on Windows via WSL
-=======
 ## Report Delivery Workflow
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-Windows paths in WSL: `/mnt/c/Users/<username>/Desktop/filename.docx`
-=======
 When the user asks to generate a report/research summary/analysis document (without specifying format), the default delivery is **Word .docx** saved to the **Windows desktop**. This is the user's explicit preference.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-To discover the Windows username: `ls /mnt/c/Users/` (ignore `All Users`, `Default`, `Public`, `desktop.ini`)
-=======
 ### Target Path (WSL)
->>>>>>> REPO (github)
 
-Save the document:
 ```python
-<<<<<<< LOCAL (this PC)
-doc.save('/mnt/c/Users/jiangmin/Desktop/文件名.docx')
-=======
 # Discover Windows username
 import os
 users = [u for u in os.listdir('/mnt/c/Users/') 
          if u not in ('All Users', 'Default', 'Default User', 'Public', 'desktop.ini')]
 username = users[0]  # the real human user
 desktop = f'/mnt/c/Users/{username}/Desktop/'
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
-## Pitfalls
-=======
 For this user: `/mnt/c/Users/Administrator/Desktop/`
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-1. **Chinese font encoding**: Every `Run` that contains Chinese text MUST call `.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')`. Without this, Word on non-Chinese systems may substitute a font that garbles Chinese text. This applies even if you set `run.font.name`.
-=======
 ### Standard Report Structure
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-2. **`.doc` vs `.docx`**: Legacy `.doc` files may actually be RAR archives in disguise (e.g., from shijuan1.com). Run `file filename.doc` to check — if it says "RAR archive data", extract with `unrar x filename.doc` to get the real `.docx`.
-=======
 When generating a research report as .docx, follow this structure:
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-3. **Table fonts**: python-docx's `table.style` (e.g., 'Table Grid') may override run-level font settings. Always set font explicitly on each cell's run after setting cell text.
-=======
 1. **Cover page** — centered title (22pt bold, dark blue), subtitle with scope (12pt gray), date + author attribution (11pt gray)
 2. **Page break** before body content
 3. **Numbered sections** (一、八...) with headings at level 1-3
@@ -196,45 +159,137 @@ When generating a research report as .docx, follow this structure:
    - 🟠 ORANGE = 需关注/警告 (RGBColor(0xCC, 0x66, 0x00))
    - ⚪ GRAY = 免责声明/页脚 (RGBColor(0x66, 0x66, 0x66))
 6. **Closing** — divider + attribution line + disclaimer
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-4. **Save path validation**: Before saving, verify the target directory exists. WSL's `/mnt/c/` mounts can have case-sensitive paths.
-
-5. **Avoid `w:shd` color string parsing errors**: Use `parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color}"/>')` — `nsdecls("w")` is critical for the XML namespace.
-
-## Verification
-=======
 ### Save and Verify
->>>>>>> REPO (github)
 
 ```bash
-<<<<<<< LOCAL (this PC)
-# Check file type and size
-file /mnt/c/Users/jiangmin/Desktop/输出文件.docx
-ls -lh /mnt/c/Users/jiangmin/Desktop/输出文件.docx
-=======
 # Check file size (should be > 10 KB)
 ls -lh /mnt/c/Users/Administrator/Desktop/文件名.docx
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
-## User Delivery Preferences (江姐专属)
-=======
 ### Naming Convention
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-**核心规则：Word (.docx) 是默认交付格式，不是备选。**
-=======
 Use descriptive Chinese filenames: `{主题核心词}{报告类型}.docx`
 - ✅ `高新技术企业税务合规研究报告.docx`
 - ✅ `Python爬虫工具全景报告.docx`
 - ❌ `report.docx` (too generic, won't be findable on desktop)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
+## File Paths on Windows via WSL
+
+Windows paths in WSL: `/mnt/c/Users/<username>/Desktop/filename.docx`
+
+To discover the Windows username: `ls /mnt/c/Users/` (ignore `All Users`, `Default`, `Public`, `desktop.ini`)
+
+Save the document:
+
+```python
+doc.save('/mnt/c/Users/jiangmin/Desktop/文件名.docx')
+```
+
+## Alternative Approaches
+
+Depending on your environment and dependencies, there are two alternative approaches to .docx generation:
+
+### Fallback: Pure Stdlib OOXML (without python-docx)
+
+When `python-docx` is unavailable (WSL, containers, blocked pip), construct .docx files using only Python stdlib (`xml.sax.saxutils`, `zipfile`). The key insight: .docx is a ZIP of XML files. Build the XML as strings (avoid ElementTree namespace issues) and wrap in a ZIP.
+
+```python
+doc.save('/mnt/c/Users/jiangmin/Desktop/文件名.docx')
+```
+
+import xml.sax.saxutils as saxutils, zipfile
+def esc(text): return saxutils.escape(str(text))
+```
+
+**Key differences from python-docx:**
+- Font sizes in half-points (`w:sz val="24"` = 12pt)
+- Line spacing in twips (1/20 point)
+- Chinese font names specified via `w:rFonts` with `w:eastAsia` attribute
+- Table cells need manual `<w:tcPr>` with widths
+
+See `references/stdlib-ooxml.md` for complete implementation patterns including:
+- Document structure (5 required files in the ZIP)
+- Paragraph/run builders with font, size, bold, alignment
+- Simple table construction with borders and cell shading
+- Chinese government-document formatting conventions (仿宋 body, 黑体 headings)
+- Verified working font size table (半角pt×2)
+- Confirmed working line spacing (28pt fixed = 560 twips)
+
+### Workflow: Markdown to .docx Conversion
+
+Parse a Markdown document, detect structure (headings, tables, code blocks, lists, blockquotes), and render each element as OOXML. Useful when users provide reports in Markdown but need .docx output.
+
+**Strategy:**
+- Line-by-line parsing with state tracking (in_code_block, list counters)
+- Headings map to Chinese government heading styles (黑体/楷体 at appropriate sizes)
+- Tables rendered as inline pipe-separated text (simpler than `<w:tbl>` XML)
+- Code blocks rendered monospace with compact line spacing
+- Emoji and special characters sanitized (✅ → ✓, etc.)
+
+See `references/markdown-to-docx.md` for the complete converter pattern.
+
+### Approach Comparison
+
+| Feature | python-docx (primary) | Stdlib OOXML (fallback) | MD→docx (workflow) |
+|---------|----------------------|------------------------|-------------------|
+| Deps | python-docx | Python stdlib only | Python stdlib only |
+| Formatting | Rich (shading, styles) | Manual XML | Manual XML |
+| MD input | No | No | Yes (parses MD) |
+| Chinese fonts | `rFonts.set(qn('w:eastAsia'), ...)` | `w:eastAsia` in XML | Same as stdlib |
+| Tables | Real `<w:tbl>` | Real `<w:tbl>` | Pipe-separated inline |
+
+Choose the approach based on your dependency availability and input format.
+
+## Pitfalls
+
+1. **Chinese font encoding**: Every `Run` that contains Chinese text MUST call `.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')`. Without this, Word on non-Chinese systems may substitute a font that garbles Chinese text. This applies even if you set `run.font.name`.
+
+2. **`.doc` vs `.docx`**: Legacy `.doc` files may actually be RAR archives in disguise (e.g., from shijuan1.com). Run `file filename.doc` to check — if it says "RAR archive data", extract with `unrar x filename.doc` to get the real `.docx`.
+
+3. **Table fonts**: python-docx's `table.style` (e.g., 'Table Grid') may override run-level font settings. Always set font explicitly on each cell's run after setting cell text.
+
+4. **Save path validation**: Before saving, verify the target directory exists. WSL's `/mnt/c/` mounts can have case-sensitive paths.
+
+5. **Avoid `w:shd` color string parsing errors**: Use `parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color}"/>')` — `nsdecls("w")` is critical for the XML namespace.
+
+
+6. **PermissionError when overwriting .docx open in Windows Word**: If the target .docx file is currently open in Word on Windows, `doc.save()` raises `PermissionError: [Errno 13] Permission denied`. The file is locked by the Windows file-sharing system. Solutions: (a) save to a **new filename** (e.g., `-完整版.docx` suffix) to avoid the collision, or (b) ask the user to close the file in Word first. Check if this is the issue before debugging other causes — the file permissions (`rwxrwxrwx`) will look fine in `ls -la`.
+
+7. **Missing imports in standalone scripts**: When writing a standalone script (not using the skill's helper functions), it's easy to miss imports. Two common omissions:
+   - `WD_TABLE_ALIGNMENT` comes from `docx.enum.table`, **not** `docx.enum.text`. `from docx.enum.text import WD_ALIGN_PARAGRAPH` does NOT include it.
+   - `nsdecls` is in `docx.oxml.ns`, **not** `docx.oxml`. Use `from docx.oxml.ns import nsdecls` — `from docx.oxml import nsdecls` raises `ImportError`.
+   Always start with the full import block shown in [Core Setup](#core-setup) above.
+
+8. **`add_bullet()` doesn't support `bold=` and `color=` together**: The function passes these as kwargs via `style='List Bullet'`, but mixing custom styling with bullet style can cause issues. For styled bullet items, use raw `doc.add_paragraph()` calls instead
+
+## Terminal Grid Table Formatting
+
+See `references/terminal-tables.md` for the `mt()` (make_table) function that generates Unicode grid tables for CLI output. This was absorbed from the standalone `table-formatter` skill.
+
+When displaying structured data in terminal output (not Word documents), use:
+```python
+# Paste the mt(), dw(), pc() functions from references/terminal-tables.md
+print(mt(headers, data_rows))
+```
+
+The function handles:
+- Full fine-line grid style with Unicode box-drawing characters
+- Correct CJK character double-width alignment
+- 2-6 column tables for best terminal display
+
+## Verification
+
+```bash
+# Check file type and size
+file /mnt/c/Users/jiangmin/Desktop/输出文件.docx
+ls -lh /mnt/c/Users/jiangmin/Desktop/输出文件.docx
+```
+
+## User Delivery Preferences (江姐专属)
+
+**核心规则：Word (.docx) 是默认交付格式，不是备选。**
+
 - ⚡ 所有文档类产出，**默认先出 .docx 版本**。.md 版本可以做辅助，但不是主交付物。
 - 🚫 生成的文档**不发企业微信群给团队看**。文件直接放桌面 `D:\\360MoveData\\Users\\Admin\\Desktop\\`。
 - ✅ 交付格式：.docx 格式化版本（含正规排版、字体、表格）为最终交付标准。
@@ -242,26 +297,14 @@ Use descriptive Chinese filenames: `{主题核心词}{报告类型}.docx`
 - 📊 **数据模板类产出（需填写计算的表格）→ 默认追加 .xlsx 版本**。用户明确说过"输出为Excel格式"，对于需勾稽校验的财务模板，Excel 天然对齐 + 自动计算，比 Word 表格更适合。参见下方 `Excel Workbook Alternative` 章节及 `references/excel-financial-workbook-patterns.md`。
   - 生成路径：先出 .xlsx（用 openpyxl），让用户确认可打开
   - 再补 .docx 版本（用 python-docx），供正式存档/打印使用
-=======
-## File Paths on Windows via WSL
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Windows 路径速查
-=======
-Windows paths in WSL: `/mnt/c/Users/<username>/Desktop/filename.docx`
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 用户桌面路径（WSL映射）：
 ```
 /mnt/d/360MoveData/Users/Admin/Desktop/
 ```
-=======
-To discover the Windows username: `ls /mnt/c/Users/` (ignore `All Users`, `Default`, `Public`, `desktop.ini`)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### 操作流程
 
 1. 确认用户要生成的文档类型和内容
@@ -281,11 +324,7 @@ To discover the Windows username: `ls /mnt/c/Users/` (ignore `All Users`, `Defau
 
 When `python-docx` is unavailable (WSL, minimal containers, no pip), generate .docx files using pure Python stdlib with string-based OOXML construction:
 
-=======
-Save the document:
->>>>>>> REPO (github)
 ```python
-<<<<<<< LOCAL (this PC)
 import zipfile, xml.parsers.expat, xml.sax.saxutils
 
 def make_docx(path, html_body):
@@ -305,39 +344,19 @@ def make_docx(path, html_body):
         z.writestr('word/document.xml', document_xml)
         z.writestr('[Content_Types].xml', content_types_xml)
         # etc.
-=======
-doc.save('/mnt/c/Users/jiangmin/Desktop/文件名.docx')
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 ### When to use
 - WSL/minimal environment where `pip install python-docx` fails
 - No network access to install packages
 - Simple documents with basic formatting (fonts, sizes, paragraphs)
-=======
-## Alternative Approaches
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 See `references/generate-docx-without-python-docx.md` for the full implementation.
-=======
-Depending on your environment and dependencies, there are two alternative approaches to .docx generation:
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ## Categorized Multi-Section Document Pattern
-=======
-### Fallback: Pure Stdlib OOXML (without python-docx)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 For generating **catalog-style documents** organized by categories (skill inventories, product catalogs, regulatory compilations, policy handbooks). Each category gets a bold section header followed by a styled grid table with alternating row colors.
-=======
-When `python-docx` is unavailable (WSL, containers, blocked pip), construct .docx files using only Python stdlib (`xml.sax.saxutils`, `zipfile`). The key insight: .docx is a ZIP of XML files. Build the XML as strings (avoid ElementTree namespace issues) and wrap in a ZIP.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 Key pattern: data → group by category → render section header + per-category table → verify with zipfile+regex content check.
 
 See `references/categorized-document-pattern.md` for:
@@ -352,128 +371,49 @@ For Chinese government-document-style financial/accounting templates (税务合�
 
 ```
 Title → Applicability → Formula Flowchart → Main Table → Detail Schedules → Journal Entries → Operational Checklist
-=======
-```python
-import xml.sax.saxutils as saxutils, zipfile
-def esc(text): return saxutils.escape(str(text))
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 See `references/chinese-financial-template-patterns.md` for the full structural pattern, font/size/table conventions, and per-scenario adaptations.
-=======
-**Key differences from python-docx:**
-- Font sizes in half-points (`w:sz val="24"` = 12pt)
-- Line spacing in twips (1/20 point)
-- Chinese font names specified via `w:rFonts` with `w:eastAsia` attribute
-- Table cells need manual `<w:tcPr>` with widths
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Excel Workbook Alternative
-=======
-See `references/stdlib-ooxml.md` for complete implementation patterns including:
-- Document structure (5 required files in the ZIP)
-- Paragraph/run builders with font, size, bold, alignment
-- Simple table construction with borders and cell shading
-- Chinese government-document formatting conventions (仿宋 body, 黑体 headings)
-- Verified working font size table (半角pt×2)
-- Confirmed working line spacing (28pt fixed = 560 twips)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 When the user needs a fillable data template with automatic calculations instead of a narrative Word document, offer .xlsx format. See `references/excel-financial-workbook-patterns.md` for:
-=======
-### Workflow: Markdown to .docx Conversion
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 - When to choose Excel vs Word
 - Multi-sheet structure for financial adjustment workbooks
 - Color code convention (yellow=input, green=formula, red=check)
 - Formula injection patterns (SUM, IF+N, 倒轧, cross-sheet references)
 - Merged cells handling pitfall
 - Multi-category section layout pattern
-=======
-Parse a Markdown document, detect structure (headings, tables, code blocks, lists, blockquotes), and render each element as OOXML. Useful when users provide reports in Markdown but need .docx output.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 Key signal: user requests reformatting of structured data and you're struggling with ASCII compliance → offer .xlsx as a native-grid alternative that avoids the alignment problem entirely.
-=======
-**Strategy:**
-- Line-by-line parsing with state tracking (in_code_block, list counters)
-- Headings map to Chinese government heading styles (黑体/楷体 at appropriate sizes)
-- Tables rendered as inline pipe-separated text (simpler than `<w:tbl>` XML)
-- Code blocks rendered monospace with compact line spacing
-- Emoji and special characters sanitized (✅ → ✓, etc.)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Pure Stdlib .xlsx (No openpyxl)
-=======
-See `references/markdown-to-docx.md` for the complete converter pattern.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 When openpyxl is unavailable (pip blocked by PEP 668, network timeout), generate .xlsx files using pure Python stdlib with string-based OOXML construction. The approach mirrors the pure stdlib .docx fallback — zipfile + XML string building.
-=======
-### Approach Comparison
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 - Header row with deep blue (`FF1A3C6E`) background + white bold text
 - Shared string table for all cell values
 - Works in any Python 3 environment with no external dependencies
 - Cell type: shared string (`t="s"`) for text, direct value for numbers
-=======
-| Feature | python-docx (primary) | Stdlib OOXML (fallback) | MD→docx (workflow) |
-|---------|----------------------|------------------------|-------------------|
-| Deps | python-docx | Python stdlib only | Python stdlib only |
-| Formatting | Rich (shading, styles) | Manual XML | Manual XML |
-| MD input | No | No | Yes (parses MD) |
-| Chinese fonts | `rFonts.set(qn('w:eastAsia'), ...)` | `w:eastAsia` in XML | Same as stdlib |
-| Tables | Real `<w:tbl>` | Real `<w:tbl>` | Pipe-separated inline |
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 See `references/generate-xlsx-without-openpyxl.md` for the full implementation with a reusable `make_xlsx()` function template.
-=======
-Choose the approach based on your dependency availability and input format.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 **When to use this instead of Excel Workbook Alternative (openpyxl):**
 - No pip access / PEP 668 restriction
 - Need to generate a simple structured .xlsx quickly
 - Data is static (no formulas, no merged cells, no conditional formatting)
-=======
-## Pitfalls
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ## Fallback: Markdown to .docx Conversion
-=======
-1. **Chinese font encoding**: Every `Run` that contains Chinese text MUST call `.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')`. Without this, Word on non-Chinese systems may substitute a font that garbles Chinese text. This applies even if you set `run.font.name`.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 Convert large Markdown documents (500-1000+ lines) to .docx with proper Chinese government-document formatting:
-=======
-2. **`.doc` vs `.docx`**: Legacy `.doc` files may actually be RAR archives in disguise (e.g., from shijuan1.com). Run `file filename.doc` to check — if it says "RAR archive data", extract with `unrar x filename.doc` to get the real `.docx`.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 - 仿宋 (FangSong) body text
 - 黑体 (SimHei) main headings  
 - 楷体 (KaiTi) sub-headings
 - Automatic table conversion with shading
 - Page number and header/footer support
-=======
-3. **Table fonts**: python-docx's `table.style` (e.g., 'Table Grid') may override run-level font settings. Always set font explicitly on each cell's run after setting cell text.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ```bash
 python3 -c "
 import re, zipfile, xml.sax.saxutils
@@ -482,51 +422,20 @@ import re, zipfile, xml.sax.saxutils
 # Output: output.docx
 "
 ```
-=======
-4. **Save path validation**: Before saving, verify the target directory exists. WSL's `/mnt/c/` mounts can have case-sensitive paths.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### When to use
 You have a large Markdown report and need both .md and .docx deliverables in a minimal environment without python-docx.
-=======
-5. **Avoid `w:shd` color string parsing errors**: Use `parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color}"/>')` — `nsdecls("w")` is critical for the XML namespace.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 See `references/markdown-to-word-converter.md` for the full implementation.
-=======
-6. **PermissionError when overwriting .docx open in Windows Word**: If the target .docx file is currently open in Word on Windows, `doc.save()` raises `PermissionError: [Errno 13] Permission denied`. The file is locked by the Windows file-sharing system. Solutions: (a) save to a **new filename** (e.g., `-完整版.docx` suffix) to avoid the collision, or (b) ask the user to close the file in Word first. Check if this is the issue before debugging other causes — the file permissions (`rwxrwxrwx`) will look fine in `ls -la`.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ---
-=======
-7. **Missing imports in standalone scripts**: When writing a standalone script (not using the skill's helper functions), it's easy to miss imports. Two common omissions:
-   - `WD_TABLE_ALIGNMENT` comes from `docx.enum.table`, **not** `docx.enum.text`. `from docx.enum.text import WD_ALIGN_PARAGRAPH` does NOT include it.
-   - `nsdecls` is in `docx.oxml.ns`, **not** `docx.oxml`. Use `from docx.oxml.ns import nsdecls` — `from docx.oxml import nsdecls` raises `ImportError`.
-   Always start with the full import block shown in [Core Setup](#core-setup) above.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ## Advanced: Replace Markdown Pseudo-Tables with Real Word Grid Tables in Existing .docx
-=======
-8. **`add_bullet()` doesn't support `bold=` and `color=` together**: The function passes these as kwargs via `style='List Bullet'`, but mixing custom styling with bullet style can cause issues. For styled bullet items, use raw `doc.add_paragraph()` calls instead
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 When an existing .docx file contains text-based pseudo-tables (Markdown `|---|` pipe tables, ASCII art grids like `┌┬┐│├┼┤`, or any text rendered as monospaced columns), replace them with proper Word grid tables using pure Python stdlib (no python-docx required).
-=======
-## Terminal Grid Table Formatting
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Why this is needed
-=======
-See `references/terminal-tables.md` for the `mt()` (make_table) function that generates Unicode grid tables for CLI output. This was absorbed from the standalone `table-formatter` skill.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 - The user's `.docx` files were **originally generated from Markdown** and still contain embedded Markdown pipe tables as literal text
 - Word does not render these as tables — they appear as ugly monospaced text blocks
 - python-docx may not be available in the environment (PEP 668, no network, WSL)
@@ -534,11 +443,7 @@ See `references/terminal-tables.md` for the `mt()` (make_table) function that ge
 
 ### Core Technique
 
-=======
-When displaying structured data in terminal output (not Word documents), use:
->>>>>>> REPO (github)
 ```python
-<<<<<<< LOCAL (this PC)
 import zipfile, re, copy
 from xml.sax.saxutils import escape
 
@@ -689,22 +594,10 @@ def replace_markdown_tables_in_docx(in_path, out_path):
                 if item.filename == 'word/document.xml':
                     data = new_doc_xml.encode('utf-8')
                 zout.writestr(item, data)
-=======
-# Paste the mt(), dw(), pc() functions from references/terminal-tables.md
-print(mt(headers, data_rows))
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 ### Known Issues & Debugging Guide
-=======
-The function handles:
-- Full fine-line grid style with Unicode box-drawing characters
-- Correct CJK character double-width alignment
-- 2-6 column tables for best terminal display
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 #### Problem A: Namespace prefix injection (ns0:)
 **Symptom**: Word shows raw XML tags like `<w:tc><w:p>...</w:p></w:tc>` as literal text. Inspecting the XML reveals `ns0:` prefix on some tags.
 
@@ -767,12 +660,8 @@ table_xml = f'<w:tc><w:p><w:r><w:t>{cell_text}</w:t></w:r></w:p></w:tc>'  # XML 
 - You need to preserve the original document's formatting (fonts, margins, headers) outside the table regions
 
 ### Verification
-=======
-## Verification
->>>>>>> REPO (github)
 
 ```bash
-<<<<<<< LOCAL (this PC)
 # Check table XML is well-formed
 python3 -c "
 import zipfile
@@ -794,9 +683,6 @@ print(body.group(1)[:1000])
 # Check file opens correctly
 ls -lh output.docx
 file output.docx  # should say 'Microsoft Word 2007+'
-=======
-# Check file type and size
-file /mnt/c/Users/jiangmin/Desktop/输出文件.docx
+```
 ls -lh /mnt/c/Users/jiangmin/Desktop/输出文件.docx
->>>>>>> REPO (github)
 ```

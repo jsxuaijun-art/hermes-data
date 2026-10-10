@@ -1,10 +1,6 @@
 ---
 name: apple-notes
-<<<<<<< LOCAL (this PC)
-description: Manage Apple Notes via the memo CLI on macOS (create, view, search, edit).
-=======
 description: "Manage Apple Notes via memo CLI: create, search, edit."
->>>>>>> REPO (github)
 version: 1.0.0
 author: Hermes Agent
 license: MIT

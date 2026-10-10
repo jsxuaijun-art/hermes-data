@@ -1,12 +1,7 @@
 ---
 name: ocr-and-documents
-<<<<<<< LOCAL (this PC)
 description: Extract text from PDFs and scanned documents. Use web_extract for remote URLs, pymupdf for local text-based PDFs, marker-pdf for OCR/scanned docs. For DOCX use python-docx, for PPTX see the powerpoint skill.
 version: 2.3.0
-=======
-description: "Extract text from PDFs/scans (pymupdf, marker-pdf)."
-version: 2.4.0
->>>>>>> REPO (github)
 author: Hermes Agent
 license: MIT
 metadata:
@@ -17,18 +12,9 @@ metadata:
 
 # PDF & Document Extraction
 
-<<<<<<< LOCAL (this PC)
 For DOCX: use `python-docx` (parses actual document structure, far better than OCR). See the **DOCX Table Extraction** section below for examples.
-=======
-For DOCX: use `python-docx` (parses actual document structure, far better than OCR).
->>>>>>> REPO (github)
 For PPTX: see the `powerpoint` skill (uses `python-pptx` with full slide/notes support).
-<<<<<<< LOCAL (this PC)
 This skill covers **PDFs, scanned documents, and DOCX data extraction**.
-=======
-This skill covers **PDFs and scanned documents**.
-For **multi-format → Markdown** (Word/Excel/PPT/PDF), `markitdown` (Microsoft) is a first-choice lightweight option — see below.
->>>>>>> REPO (github)
 
 ## Step 1: Remote URL Available?
 
@@ -208,55 +194,24 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 
 ---
 
-<<<<<<< LOCAL (this PC)
 ---
-=======
-## Notes
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ## PDF Sanitization (Watermark & Logo Removal)
-=======
-- `web_extract` is always first choice for URLs
-- pymupdf is the safe default — instant, no models, works everywhere
-- marker-pdf is for OCR, scanned docs, equations, complex layouts — install only when needed
-- Both helper scripts accept `--help` for full usage
-- marker-pdf downloads ~2.5GB of models to `~/.cache/huggingface/` on first use
-- For Word docs: `pip install python-docx` (better than OCR — parses actual structure)
-- For PowerPoint: see the `powerpoint` skill (uses python-pptx)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 Remove text watermarks and header/footer logo images from PDFs using pymupdf. No extra dependencies beyond pymupdf itself.
-=======
-## PDF Generation with Chinese Text
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Step 1: Analyze PDF Structure
-=======
-When creating PDFs with reportlab and Chinese content, font selection is critical.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ```python
 import pymupdf
 doc = pymupdf.open("document.pdf")
-=======
-### Font Pitfall: DroidSansFallbackFull Lacks ASCII Number Glyphs
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 for i, page in enumerate(doc):
     # Find text watermarks (grid-like repeating text)
     text_blocks = page.get_text("text")
     print(f"\n--- Page {i+1} ---")
     print(text_blocks[:2000])  # preview first 2000 chars
-=======
-The default Chinese font on Ubuntu WSL (`/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf`) contains CJK ideographs but **does NOT contain ASCII digits (0-9), commas, periods, or parentheses**. PDFs generated with this font will have invisible numbers — `pdftotext` and `pymupdf` extract shows `\0` (null bytes) where numbers should be.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
     # Find image objects
     for img in page.get_images():
         xref = img[0]
@@ -264,34 +219,15 @@ The default Chinese font on Ubuntu WSL (`/usr/share/fonts/truetype/droid/DroidSa
         pix = pymupdf.Pixmap(doc, xref)
         print(f"  Image xref={xref}, size={pix.width}x{pix.height}, bbox={bbox}")
 ```
-=======
-**Do NOT use** `DroidSansFallbackFull` for PDF generation with reportlab or fpdf2.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Step 2: Remove Text Watermarks
-=======
-### Recommended Fonts
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 Use `search_for()` + redact annotations. **Critical: only apply to short text matches (<10 chars)** to avoid removing legitimate content that happens to contain the same string.
-=======
-| Font | Install | Format | Notes |
-|------|---------|--------|-------|
-| **WenQuanYi Micro Hei** | `apt-get install fonts-wqy-microhei` | TrueType (.ttc) | Has CJK + ASCII digits. Extract subfont for reportlab. |
-| Noto Sans CJK SC | `apt-get install fonts-noto-cjk` | CFF outlines (.ttc) | Not supported by reportlab (CFF/PostScript). Use fpdf2 instead. |
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ```python
 import pymupdf
 doc = pymupdf.open("document.pdf")
-=======
-### WQY Micro Hei: Extract from .ttc for reportlab
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 watermark_text = "安信伯君"  # replace with actual watermark string
 for page in doc:
     instances = page.search_for(watermark_text)
@@ -302,23 +238,10 @@ for page in doc:
         if len(nearby_text) < 10:
             page.add_redact_annot(inst, fill=None)  # fill=None = transparent
     page.apply_redactions()
-=======
-reportlab's TTFont does not support .ttc (TrueType Collection) files. Extract the first subfont:
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 doc.save("cleaned.pdf")
-=======
-```bash
-python3 -c "
-from fontTools.ttLib import TTCollection
-ttc = TTCollection('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
-ttc.fonts[0].save('/usr/share/fonts/truetype/wqy/wqy-microhei-regular.ttf')
-"
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 **Pitfall — content vs watermark**: If the watermark text appears in a legitimate sentence (e.g., "安信伯君专家团队深耕财税咨询..."), `search_for()` will find it. Always verify with the <10 char filter, and use `page.get_text("text", clip=inst)` to inspect context.
 
 ### Step 3: Remove Logo Images (Header/Footer)
@@ -332,11 +255,7 @@ Two approaches:
 
 **Recommended: white block overlay** (safer for shared images):
 
-=======
-Then register and use:
->>>>>>> REPO (github)
 ```python
-<<<<<<< LOCAL (this PC)
 for page in doc:
     for img in page.get_images():
         xref = img[0]
@@ -346,20 +265,10 @@ for page in doc:
         if bbox.y0 < 100 or bbox.y0 > page_height - 100:
             # Draw white rectangle over the logo
             page.draw_rect(bbox, color=(1,1,1), fill=(1,1,1), width=0)
-=======
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-pdfmetrics.registerFont(TTFont('WQY', '/usr/share/fonts/truetype/wqy/wqy-microhei-regular.ttf'))
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 **Clean removal** (use when you want file size reduction, but verify shared xrefs):
-=======
-This font renders both Chinese text and formatted numbers (e.g. `1,234,567.89` and `(305,000.00)`) correctly, verified with `pdftotext` and `pymupdf` text extraction.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ```python
 for page in doc:
     for img in page.get_images():
@@ -370,68 +279,27 @@ for page in doc:
             page.draw_rect(bbox, color=(1,1,1), fill=(1,1,1), width=0)
             page.delete_image(xref)
 ```
-=======
-### Alternative: fpdf2 with .ttc Directly
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 **Pitfall — shared images**: If all pages share the same logo via xref (common in PDFs), `delete_image` on one page removes it from all pages. Verify with: `page.get_images(full=True)` lists all images with their page-specific bbox.
 
 ### Step 4: Save with Optimization
-=======
-fpdf2 supports .ttc subfont selection natively but also hits the same glyph issue with DroidSansFallbackFull. Install WQY Micro Hei and register by family name:
->>>>>>> REPO (github)
 
 ```python
-<<<<<<< LOCAL (this PC)
 doc.save("output.pdf", garbage=4, deflate=True, clean=True)
-=======
-from fpdf import FPDF
-pdf = FPDF()
-pdf.add_font('WQY', '', '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 - `garbage=4` — maximum garbage collection of unused objects
 - `deflate=True` — compress streams
 - `clean=True` — remove redundant structures
-=======
-### Verify Font Has Required Glyphs
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 File size may still increase vs original (redaction adds annotations). Expected: 1.5-3x original. If that's a problem, test `garbage=3` or run the file through a PDF optimizer.
-=======
-Before generating, check for missing glyphs:
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Advanced Watermark Removal (Complex PDFs)
-=======
-```bash
-python3 -c "
-from fontTools.ttLib import TTCollection, TTFont
-path = '/path/to/font.ttc'
-try:
-    f = TTCollection(path).fonts[0]
-except:
-    f = TTFont(path)
-cmap = f.getBestCmap()
-for ch in '0123456789,.()-':
-    print(f'{repr(ch)}: {\"OK\" if ord(ch) in cmap else \"MISSING\"}' )
-"
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 When the basic `search_for()` + redact approach fails — watermarks live in shared XObject
 forms, body text shares the same font as the watermark, or the user requires true
 transparency (no white blocks) — use the content-stream approach.
-=======
-## Images → Text: RapidOCR (lightweight Chinese/onscreen OCR)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 **Key differences from basic approach:**
 
 | Aspect | Basic (redact) | Advanced (3Tr / XObject) |
@@ -492,23 +360,114 @@ For complex PDFs (XObject/3Tr approach), see `references/pdf-watermark-advanced.
 When a user provides an existing .docx file with tables and asks you to extract/read/analyze the data, use python-docx to programmatically read the tables:
 
 ### Install
-=======
-For **plain images** (comics, screenshots, long-platform images like 公众号 or 小红书 image-narratives) use **RapidOCR** (`rapidocr_onnxruntime`). It is far lighter than marker-pdf, handles Chinese well, and is the reliable path when the active model has NO vision capability (vision_analyze 400) — it beats both `web_extract` (no URL) and subagent vision (slow/timeouts).
->>>>>>> REPO (github)
+
+
+## PDF Generation with Chinese Text
+
+When creating PDFs with reportlab and Chinese content, font selection is critical.
+
+### Font Pitfall: DroidSansFallbackFull Lacks ASCII Number Glyphs
+
+The default Chinese font on Ubuntu WSL (`/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf`) contains CJK ideographs but **does NOT contain ASCII digits (0-9), commas, periods, or parentheses**. PDFs generated with this font will have invisible numbers — `pdftotext` and `pymupdf` extract shows `\0` (null bytes) where numbers should be.
+
+**Do NOT use** `DroidSansFallbackFull` for PDF generation with reportlab or fpdf2.
+
+### Recommended Fonts
+
+| Font | Install | Format | Notes |
+|------|---------|--------|-------|
+| **WenQuanYi Micro Hei** | `apt-get install fonts-wqy-microhei` | TrueType (.ttc) | Has CJK + ASCII digits. Extract subfont for reportlab. |
+| Noto Sans CJK SC | `apt-get install fonts-noto-cjk` | CFF outlines (.ttc) | Not supported by reportlab (CFF/PostScript). Use fpdf2 instead. |
+
+### WQY Micro Hei: Extract from .ttc for reportlab
+
+reportlab's TTFont does not support .ttc (TrueType Collection) files. Extract the first subfont:
 
 ```bash
-<<<<<<< LOCAL (this PC)
-pip install python-docx
-=======
+python3 -c "
+from fontTools.ttLib import TTCollection
+ttc = TTCollection('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
+ttc.fonts[0].save('/usr/share/fonts/truetype/wqy/wqy-microhei-regular.ttf')
+"
+```
+
+Then register and use:
+```python
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+pdfmetrics.registerFont(TTFont('WQY', '/usr/share/fonts/truetype/wqy/wqy-microhei-regular.ttf'))
+```
+
+This font renders both Chinese text and formatted numbers (e.g. `1,234,567.89` and `(305,000.00)`) correctly, verified with `pdftotext` and `pymupdf` text extraction.
+
+### Alternative: fpdf2 with .ttc Directly
+
+fpdf2 supports .ttc subfont selection natively but also hits the same glyph issue with DroidSansFallbackFull. Install WQY Micro Hei and register by family name:
+
+```python
+from fpdf import FPDF
+pdf = FPDF()
+pdf.add_font('WQY', '', '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc')
+```
+
+### Verify Font Has Required Glyphs
+
+Before generating, check for missing glyphs:
+
+```bash
+python3 -c "
+from fontTools.ttLib import TTCollection, TTFont
+path = '/path/to/font.ttc'
+try:
+    f = TTCollection(path).fonts[0]
+except:
+    f = TTFont(path)
+cmap = f.getBestCmap()
+for ch in '0123456789,.()-':
+    print(f'{repr(ch)}: {\"OK\" if ord(ch) in cmap else \"MISSING\"}' )
+"
+
+## Images → Text: RapidOCR (lightweight Chinese/onscreen OCR)
+
+For **plain images** (comics, screenshots, long-platform images like 公众号 or 小红书 image-narratives) use **RapidOCR** (`rapidocr_onnxruntime`). It is far lighter than marker-pdf, handles Chinese well, and is the reliable path when the active model has NO vision capability (vision_analyze 400) — it beats both `web_extract` (no URL) and subagent vision (slow/timeouts).
+
+```bash
 # Install (WSL, no sudo — venv or system with --break-system-packages; pip via 清华源)
 PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple python3 -m pip install --break-system-packages -q rapidocr_onnxruntime onnxruntime
->>>>>>> REPO (github)
+```
+```python
+from rapidocr_onnxruntime import RapidOCR
+ocr = RapidOCR()
+res, _ = ocr('path.png')          # res = [box, text, conf] list
+print([t for _, t, _ in res])
+```
+
+**Workflow for very long images** (e.g. a WeChat 漫画 long-image 928×16383):
+1. Cut the long image into ~1600px strips with PIL (`Image.open(...)`, `crop`), OCR each strip, concatenate line order.
+2. Record the **storyline/sequence** of each strip (strip index → key beats) so the narrative timeline survives the transcription and can be re-ordered later.
+3. ⚠️ Chinese OCR produces a few recognition errors (e.g. 「产业园A座301」→「产业田A遮301」). Fix by semantic correction. **Never quote policy/legal text from OCR alone** — verify against the official source before publishing.
+
+## Non-Standard Documents: Music Scores
+
+**Standard OCR pipelines (Tesseract, pytesseract) cannot read Chinese numbered musical notation (jianpu/简谱).** See `references/music-score-ocr.md` for a complete breakdown of approaches tried and their results.
+
+TL;DR: If `vision_analyze` is available (model supports image input), use it. Otherwise, OCR can recover only title/tempo/performance instruction text from the margins — the actual notation numbers (1–7) are unrecoverable via Tesseract. Fall back to human-assisted transcription: ask the user to read the numbers.
+
+### After Transcription: Generate Audio
+
+Once the user provides the jianpu numbers (even approximately), use `scripts/jianpu2midi.py` to:
+
+- Generate MIDI audio (GM#22 Harmonica ≈ 口风琴)
+- Print right-hand fingering annotations
+- Print a structured practice guide (phased tempo, breath control tips, difficulty assessment)
+
+```bash
+pip install python-docx
 ```
 
 ### Basic: Read All Tables
 
 ```python
-<<<<<<< LOCAL (this PC)
 from docx import Document
 
 doc = Document("/path/to/file.docx")
@@ -526,24 +485,10 @@ for t_idx, table in enumerate(tables):
     for r_idx, row in enumerate(table.rows):
         cells = [cell.text.strip() for cell in row.cells]
         print(f"  Row {r_idx}: {' | '.join(cells)}")
-=======
-from rapidocr_onnxruntime import RapidOCR
-ocr = RapidOCR()
-res, _ = ocr('path.png')          # res = [box, text, conf] list
-print([t for _, t, _ in res])
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 ### Common Patterns
-=======
-**Workflow for very long images** (e.g. a WeChat 漫画 long-image 928×16383):
-1. Cut the long image into ~1600px strips with PIL (`Image.open(...)`, `crop`), OCR each strip, concatenate line order.
-2. Record the **storyline/sequence** of each strip (strip index → key beats) so the narrative timeline survives the transcription and can be re-ordered later.
-3. ⚠️ Chinese OCR produces a few recognition errors (e.g. 「产业园A座301」→「产业田A遮301」). Fix by semantic correction. **Never quote policy/legal text from OCR alone** — verify against the official source before publishing.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 | Pattern | Code |
 |---------|------|
 | **Count tables** | `len(doc.tables)` |
@@ -555,17 +500,9 @@ print([t for _, t, _ in res])
 | **Map header→column index** | `{h: i for i, h in enumerate(headers)}` then access by name |
 | **Detect merged cells** | Check if `cell._tc.get_or_add_tcPr()` has `<w:gridSpan>` |
 | **Find all text outside tables** | `[p.text for p in doc.paragraphs]` |
-=======
-## Non-Standard Documents: Music Scores
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Advanced: Extract as Dict (by Header Name)
-=======
-**Standard OCR pipelines (Tesseract, pytesseract) cannot read Chinese numbered musical notation (jianpu/简谱).** See `references/music-score-ocr.md` for a complete breakdown of approaches tried and their results.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ```python
 def tables_to_dicts(path):
     """Convert all docx tables to list of dicts (header→value)."""
@@ -580,23 +517,11 @@ def tables_to_dicts(path):
         result.append({"headers": headers, "rows": data})
     return result
 ```
-=======
-TL;DR: If `vision_analyze` is available (model supports image input), use it. Otherwise, OCR can recover only title/tempo/performance instruction text from the margins — the actual notation numbers (1–7) are unrecoverable via Tesseract. Fall back to human-assisted transcription: ask the user to read the numbers.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Handle Large Files (Pagination)
-=======
-### After Transcription: Generate Audio
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 For tables with 50+ rows, print a preview first, then let the user decide:
-=======
-Once the user provides the jianpu numbers (even approximately), use `scripts/jianpu2midi.py` to:
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ```python
 table = doc.tables[0]
 n = min(5, len(table.rows))
@@ -604,13 +529,7 @@ for r in range(n):
     print(' | '.join(c.text.strip()[:40] for c in table.rows[r].cells))
 print(f"... ({len(table.rows)} rows total)")
 ```
-=======
-- Generate MIDI audio (GM#22 Harmonica ≈ 口风琴)
-- Print right-hand fingering annotations
-- Print a structured practice guide (phased tempo, breath control tips, difficulty assessment)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ### Pitfalls
 
 1. **Empty cells**: `.text.strip()` may return `""`. Filter or replace with `"(empty)"`.
@@ -627,26 +546,20 @@ print(f"... ({len(table.rows)} rows total)")
 win_path = r"D:\360MoveData\Users\Admin\Desktop\file.docx"
 wsl_path = win_path.replace("D:", "/mnt/d").replace("\\", "/")
 # Result: /mnt/d/360MoveData/Users/Admin/Desktop/file.docx
-=======
-```bash
-# Example: user provides notes, you generate audio + guide
-python scripts/jianpu2midi.py --guide --fingering --bpm 80 \
-  "5 5 6 5 | 3 2 1 — | 5 5 6 5 | 3 2 1 — |"
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
 ### Typical Use Cases
-=======
-See `references/jianpu-to-audio.md` for the full workflow, input format table, instrument numbering, and melodica fingering rules.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 - **Read a skill inventory** from a docx table → extract mapping as dict/memory entry
 - **Read financial data** from client-provided docx → import to analysis script
 - **Read license/permit registry** → extract for comparison/dedup
 - **Read org chart or process flow** represented in a Word table
 - **Batch extract** tables from multiple .docx files in a folder
-=======
+# Example: user provides notes, you generate audio + guide
+python scripts/jianpu2midi.py --guide --fingering --bpm 80 \
+  "5 5 6 5 | 3 2 1 — | 5 5 6 5 | 3 2 1 — |"
+```
+
+See `references/jianpu-to-audio.md` for the full workflow, input format table, instrument numbering, and melodica fingering rules.
+
 This applies to any document with mixed notation + text (sheet music, lead sheets, tablature) — not just Chinese jianpu.
->>>>>>> REPO (github)

@@ -1,12 +1,7 @@
 ---
 name: google-workspace
-<<<<<<< LOCAL (this PC)
 description: Gmail, Calendar, Drive, Contacts, Sheets, and Docs integration for Hermes. Uses Hermes-managed OAuth2 setup, prefers the Google Workspace CLI (`gws`) when available for broader API coverage, and falls back to the Python client libraries otherwise.
 version: 1.0.0
-=======
-description: "Gmail, Calendar, Drive, Docs, Sheets via gws CLI or Python."
-version: 1.1.0
->>>>>>> REPO (github)
 author: Nous Research
 license: MIT
 platforms: [linux, macos, windows]
@@ -315,11 +310,7 @@ All commands return JSON. Parse with `jq` or read directly. Key fields:
 
 ## Rules
 
-<<<<<<< LOCAL (this PC)
 1. **Never send email or create/delete events without confirming with the user first.** Show the draft content and ask for approval.
-=======
-1. **Never send email, create/delete calendar events, delete Drive files, share files, or modify Docs/Sheets without confirming with the user first.** Show what will be done (recipients, file IDs, content, share role) and ask for approval. For `drive delete`, prefer the default trash (reversible) over `--permanent`.
->>>>>>> REPO (github)
 2. **Check auth before first use** — run `setup.py --check`. If it fails, guide the user through setup.
 3. **Use the Gmail search syntax reference** for complex queries — load it with `skill_view("google-workspace", file_path="references/gmail-search-syntax.md")`.
 4. **Calendar times must include timezone** — always use ISO 8601 with offset (e.g., `2026-03-01T10:00:00-06:00`) or UTC (`Z`).

@@ -10,13 +10,8 @@ trigger: >-
   "财税全案"、"架构分析"、"筹划方案"、"合规体检"。
 metadata:
   hermes:
-<<<<<<< LOCAL (this PC)
     tags: [tax-planning, corporate-structure, compliance, entity-restructuring, case-methodology, equity-transfer, capital-increase]
     related_skills: [coze-tax-agent-prompt, reference-material-integration, compliant-accounting, enterprise-diagnostic, tax-planning/holding-company-firewall, tax-planning/equity-architecture-guide, tax-planning/tax-incentive-policy, suzhou-equity-transfer-guide]
-=======
-    tags: [tax-planning, corporate-structure, compliance, entity-restructuring, case-methodology]
-    related_skills: [coze-tax-agent-prompt, reference-material-integration, compliant-accounting]
->>>>>>> REPO (github)
 ---
 
 # 企业架构重组·税务筹划·合规方案 方法论

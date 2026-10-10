@@ -1,10 +1,6 @@
 ---
 name: teams-meeting-pipeline
-<<<<<<< LOCAL (this PC)
 description: "Operate the Teams meeting summary pipeline via Hermes CLI — summarize meetings, inspect pipeline status, replay jobs, manage Microsoft Graph subscriptions."
-=======
-description: Teams meeting summaries, job replay, Graph subscriptions.
->>>>>>> REPO (github)
 version: 1.1.0
 author: Hermes Agent + Teknium
 license: MIT
@@ -44,11 +40,7 @@ Multilingual trigger examples (not exhaustive):
 
 ## Prerequisites
 
-<<<<<<< LOCAL (this PC)
 Before using the pipeline, verify these are set in `~/.hermes/.env`:
-=======
-Before using the pipeline, verify these are set in `${HERMES_HOME:-~/.hermes}/.env`:
->>>>>>> REPO (github)
 
 ```bash
 MSGRAPH_TENANT_ID=...

@@ -1,23 +1,14 @@
 ---
 name: hermes-agent-skill-authoring
-<<<<<<< LOCAL (this PC)
 description: "Author in-repo SKILL.md: frontmatter, validator, structure."
 version: 1.0.0
-=======
-description: "Author in-repo SKILL.md: frontmatter, validator, structure, and writing-quality principles."
-version: 1.1.0
->>>>>>> REPO (github)
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [skills, authoring, hermes-agent, conventions, skill-md]
-<<<<<<< LOCAL (this PC)
     related_skills: [writing-plans, requesting-code-review]
-=======
-    related_skills: [plan, requesting-code-review]
->>>>>>> REPO (github)
 ---
 
 # Authoring Hermes-Agent Skills (in-repo)
@@ -52,11 +43,7 @@ Peer-matched shape used by every skill under `skills/software-development/`:
 ---
 name: my-skill-name               # lowercase, hyphens, ≤64 chars (MAX_NAME_LENGTH)
 description: Use when <trigger>. <one-line behavior>.
-<<<<<<< LOCAL (this PC)
 version: 1.0.0
-=======
-version: 1.1.0
->>>>>>> REPO (github)
 author: Hermes Agent
 license: MIT
 metadata:
@@ -186,23 +173,11 @@ Pick the closest existing category. Don't invent new top-level categories casual
 
 6. **Expecting the current session to see the new skill.** It won't. The skill loader is initialized at session start. Verify in a fresh session or via `skill_view` using the exact path.
 
-<<<<<<< LOCAL (this PC)
 8. **Expecting the current session to see the new skill.** It won't. The skill loader is initialized at session start. Verify in a fresh session or via `skill_view` using the exact path.
-=======
-7. **Letting skills accumulate sediment.** A skill should get shorter or sharper over time. When adding a rule, remove the old wording it replaces; don't layer advice forever.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 9. **Interpreting `category` in YAML frontmatter as a filesystem subdirectory.** The `category` field is **metadata only** — it tags the skill for organizational purposes but does NOT dictate filesystem placement. A skill with `category: marketing` should still go in `~/.hermes/skills/geo-optimization/SKILL.md`, NOT `~/.hermes/skills/marketing/geo-optimization/SKILL.md`. Creating the latter creates a duplicate that loads simultaneously, causing nondeterministic behavior (whichever `skill_view()` finds first wins). **Rule:** `skill_manage(action='create')` always uses `<skill-dir>/<name>/`, never `<skill-dir>/<category>/<name>/`. If you want category-based grouping, consider symlinks or a separate index; don't duplicate the SKILL.md.
-=======
-8. **Writing no-op prose.** "Be careful," "be thorough," and "use best practices" rarely change model behavior. Replace with a checkable completion criterion or a stronger leading word.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 7. **Linking to skills that don't exist in-repo.** `related_skills: [some-user-local-skill]` works for you but breaks for other clones. Prefer only in-repo links.
-=======
-9. **Linking to skills that don't exist in-repo.** `related_skills: [some-user-local-skill]` works for you but breaks for other clones. Prefer only in-repo links.
->>>>>>> REPO (github)
 
 ## Verification Checklist
 

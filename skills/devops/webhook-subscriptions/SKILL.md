@@ -1,19 +1,10 @@
 ---
 name: webhook-subscriptions
-<<<<<<< LOCAL (this PC)
 description: Create and manage webhook subscriptions for event-driven agent activation. Use when the user wants external services to trigger agent runs automatically.
 version: 1.0.0
-=======
-description: "Webhook subscriptions: event-driven agent runs."
-version: 1.1.0
->>>>>>> REPO (github)
 metadata:
   hermes:
-<<<<<<< LOCAL (this PC)
     tags: [webhook, events, automation, integrations]
-=======
-    tags: [webhook, events, automation, integrations, notifications, push]
->>>>>>> REPO (github)
 ---
 
 # Webhook Subscriptions

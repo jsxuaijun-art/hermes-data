@@ -9,6 +9,14 @@ agent_created: true
 > 适用：WorkBuddy / 任意能跑 Python 的环境。目的：把一条微信视频号链接，变成「无水印 mp4」+「口播原文案」。
 > 作者实战验证于 Windows + WorkBuddy。已成功下载多条视频号并做中文语音转写。
 
+> **2026-10-10 更新（Hermes/WSL 环境，实测有效）**
+> - 奇云API `https://qyapi.ipaybuy.cn/api/video` 实际解析端点也含 `/api/sph_parse`；`code=200` 解析成功，居然 `video_url`（finder.video.qq.com 直链）可直接下。凭据(QIYUN_APP_ID/QIYUN_APP_KEY)已配在本机 Hermes 密钥文件(~/.hermes/.env 内)，`set -a; source ~/.hermes/.env; set +a` 后跑 `scripts/parse_download_qiyun.py <链接> <输出.mp4>` 即可，下载到 `C:\Users\Administrator\Desktop\视频号\`。
+> - **奇云接口同时支持抖音**（不止视频号）：同一 `/api/video` 接口对 `v.douyin.com/...` 也返回 code=200。**坑**：抖音直链（*.douyinvod.com）对 Referer 敏感，带微信 Referer 会 **403 Forbidden**，须改用 `https://www.douyin.com/`。已封装自动重试：`scripts/download_any_qiyun.py <链接> <输出.mp4>`。另：`yt-dlp` 下抖音需 `--cookies-from-browser`，否则报 `403 / Fresh cookies (not necessarily logged in) are needed`。
+> - **ASR 模型源变更**：ModelScope `AI-ModelScope/faster-whisper-medium` 已 404，改用 `hf-mirror.com/Systran/faster-whisper-medium`（`scripts/dl_model_hfmirror.sh` 断点续传拉取，装到 `~/.cache/faster-whisper/medium`）。
+> - 一键「提音频+转写」用 `scripts/asr.py <视频.mp4> [输出.txt]`（**默认只出纯净全文、无时间轴**；要逐句时间轴加 `--timeline`）。Hermes venv 已装 faster-whisper+imageio-ffmpeg。
+> - **计费事实**：一次「下载+文案」只扣奇云 **1 次**（解析）；视频下载为无凭据的直链 HTTP，不算 API 调用；文案为本地 ASR，0 次奇云。文案必须基于视频，故视频不能省。
+> - **已知坑**：PyAV>=19 移除了 `metadata_errors` 参数，faster-whisper 会报 `TypeError` —— asr.py 已改为自行读取 wav 成拍数组喂模型，彻底绕开 av 版本问题，勿改回。
+
 ---
 
 ## 一、原理（先讲清楚为什么这么干）

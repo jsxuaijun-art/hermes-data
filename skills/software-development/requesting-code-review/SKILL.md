@@ -1,13 +1,9 @@
 ---
 name: requesting-code-review
-<<<<<<< LOCAL (this PC)
 description: >
   Pre-commit verification pipeline — static security scan, baseline-aware
   quality gates, independent reviewer subagent, and auto-fix loop. Use after
   code changes and before committing, pushing, or opening a PR.
-=======
-description: "Pre-commit review: security scan, quality gates, auto-fix."
->>>>>>> REPO (github)
 version: 2.0.0
 author: Hermes Agent (adapted from obra/superpowers + MorAlekss)
 license: MIT

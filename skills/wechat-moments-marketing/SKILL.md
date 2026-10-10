@@ -341,11 +341,7 @@ cp /tmp/img_xxx.jpg "/mnt/c/Users/Administrator/Desktop/<主题>_01_<场景>.jpg
 企业微信凭证（已验证可用）：
 - CorpID: `wwc7fc356cf7297e7f`
 - AgentId: `1000037`
-<<<<<<< LOCAL (this PC)
 - Secret: `${WECOM_CORP_SECRET}`
-=======
-- Secret: `c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM`
->>>>>>> REPO (github)
 - 用户ID: `XuAiJun`（徐爱军）
 
 流程：
@@ -368,11 +364,7 @@ cp /tmp/img_xxx.jpg "/mnt/c/Users/Administrator/Desktop/<主题>_01_<场景>.jpg
 **现成回调基础设施（复用，别重搭）**：
 - 域名 `callback.yingxinkuaiji.com`（Let's Encrypt HTTPS，nginx 443）
 - 后端 `wecom-bridge.service`（hermes_bridge.py，监听 127.0.0.1:8800）
-<<<<<<< LOCAL (this PC)
 - URL=`https://callback.yingxinkuaiji.com/wecom/callback`，Token=`${WECOM_CALLBACK_TOKEN}`，EncodingAESKey=`${WECOM_ENCODING_AESKEY}`（**安全模式**）
-=======
-- URL=`https://callback.yingxinkuaiji.com/wecom/callback`，Token=`e23hCHGJGmTmFyAxswEb4G`，EncodingAESKey=`ELNEV9LRSaAERI88WQru5wGrB7IDhgcQHTbpSi7yOIH`（**安全模式**）
->>>>>>> REPO (github)
 - 新 Agent 填同一套 URL/Token/AESKey 即可通过验证
 
 **三个必踩的坑（本会话已排掉）**：
@@ -389,11 +381,7 @@ import json, urllib.request, os
 
 def upload_and_send(image_paths, text_content, touser="XuAiJun"):
     token = json.loads(urllib.request.urlopen(
-<<<<<<< LOCAL (this PC)
         f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=${WECOM_CORP_SECRET}   # 去企微后台拿，勿写明文"
-=======
-        f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM"
->>>>>>> REPO (github)
     ).read())["access_token"]
     
     text_payload = {"touser": touser, "msgtype": "text", "agentid": 1000037,
@@ -459,11 +447,7 @@ def upload_and_send(image_paths, text_content, touser="XuAiJun"):
 
 **路径二：企业微信推送（企微营销号）**
 每次出图后，通过企微API发送给徐总：
-<<<<<<< LOCAL (this PC)
 1. 获取token：`POST qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=${WECOM_CORP_SECRET}   # 去企微后台拿，勿写明文`
-=======
-1. 获取token：`POST qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM`
->>>>>>> REPO (github)
 2. 上传图片文件获得media_id（multipart/form-data上传）
 3. 先发一条text消息（含完整文案+发布说明）
 4. 再发3条image消息（每张图一条）
@@ -475,11 +459,7 @@ def upload_and_send(image_paths, text_content, touser="XuAiJun"):
 ```python
 # 获取token
 import json, urllib.request
-<<<<<<< LOCAL (this PC)
 url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=${WECOM_CORP_SECRET}   # 去企微后台拿，勿写明文"
-=======
-url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=wwc7fc356cf7297e7f&corpsecret=c6teBnmoKTxqI1h1VhetNqkBtRHJyuv-bnr6JX-YHvM"
->>>>>>> REPO (github)
 token = json.loads(urllib.request.urlopen(url).read())["access_token"]
 
 # 上传图片

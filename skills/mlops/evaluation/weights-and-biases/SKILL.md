@@ -1,10 +1,6 @@
 ---
 name: weights-and-biases
-<<<<<<< LOCAL (this PC)
 description: Track ML experiments with automatic logging, visualize training in real-time, optimize hyperparameters with sweeps, and manage model registry with W&B - collaborative MLOps platform
-=======
-description: "W&B: log ML experiments, sweeps, model registry, dashboards."
->>>>>>> REPO (github)
 version: 1.0.0
 author: Orchestra Research
 license: MIT

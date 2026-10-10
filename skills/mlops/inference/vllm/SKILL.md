@@ -1,10 +1,6 @@
 ---
 name: serving-llms-vllm
-<<<<<<< LOCAL (this PC)
 description: Serves LLMs with high throughput using vLLM's PagedAttention and continuous batching. Use when deploying production LLM APIs, optimizing inference latency/throughput, or serving models with limited GPU memory. Supports OpenAI-compatible endpoints, quantization (GPTQ/AWQ/FP8), and tensor parallelism.
-=======
-description: "vLLM: high-throughput LLM serving, OpenAI API, quantization."
->>>>>>> REPO (github)
 version: 1.0.0
 author: Orchestra Research
 license: MIT

@@ -1,91 +1,8 @@
-<<<<<<< LOCAL (this PC)
 # Claude Code — Detailed CLI Reference
-=======
----
-name: claude-code
-description: "Delegate coding to Claude Code CLI (features, PRs)."
-version: 2.3.0
-author: Hermes Agent + Teknium
-license: MIT
-metadata:
-  hermes:
-    tags: [Coding-Agent, Claude, Anthropic, Code-Review, Refactoring, PTY, Automation]
-    related_skills: [codex, hermes-agent, opencode]
----
 
-# Claude Code — Hermes Orchestration Guide
-
-**Support files:**
-- `references/wsl-installation-recipe.md` — Proven WSL install steps, proxy setup, DeepSeek workaround notes (recorded 2026-05-22)
-
-Delegate coding tasks to [Claude Code](https://code.claude.com/docs/en/cli-reference) (Anthropic's autonomous coding agent CLI) via the Hermes terminal. Claude Code v2.x can read files, write code, run shell commands, spawn subagents, and manage git workflows autonomously.
-
-## Installation
-
-### Prerequisites
-
-- **Node.js v18+** required (v24 LTS recommended). Use `nvm` to manage Node versions.
-- **npm** bundled with Node.js.
-
-### Install Claude Code
-
-```bash
-npm install -g @anthropic-ai/claude-code
-```
-
-Verify installation:
-
-```bash
-claude --version     # Expected output: 2.x.x (Claude Code)
-which claude         # Should show a path under your nvm directory or /usr/local
-```
-
-### WSL / Linux Installation via nvm (Recommended for controlled environments)
-
-On WSL/Linux, use nvm for Node.js version management to avoid version conflicts:
-
-```bash
-# 1. Check proxy (if behind corporate firewall):
-#    Test proxy first; common proxy: http://172.23.96.1:7890
-curl -s --max-time 5 -x http://<proxy-ip>:<port> https://raw.githubusercontent.com/...
-
-# 2. Install nvm:
-#    Option A — via install script (requires proxy for raw.githubusercontent.com):
-export http_proxy="http://<proxy>:<port>"
-export https_proxy="http://<proxy>:<port>"
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
-
-#    Option B — git clone (alternative if raw.githubusercontent.com is slow):
-git clone --depth=1 https://github.com/nvm-sh/nvm.git ~/.nvm
-
-# 3. Load nvm and install Node:
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-nvm install 24       # Installs latest LTS (v24.x as of 2026)
-
-# 4. Install Claude Code:
-npm install -g @anthropic-ai/claude-code
-
-# 5. Verify:
-nvm use 24 && claude --version
-```
->>>>>>> REPO (github)
-
-<<<<<<< LOCAL (this PC)
 All the detailed CLI flags, subcommands, and patterns for Claude Code orchestration.
-=======
-**Proxy tips for restricted environments:**
-- Always set `http_proxy`/`https_proxy` environment variables before npm/git operations
-- npm has its own proxy setting: `npm config set proxy http://<proxy>:<port>`
-- For curl: use `-x` flag or env variables
-- After initial setup, node/npm/claude commands usually do NOT need the proxy for normal operation
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ## Installation & Auth
-=======
-### Windows / macOS
->>>>>>> REPO (github)
 
 ```bash
 # macOS (Homebrew):
@@ -96,124 +13,52 @@ npm install -g @anthropic-ai/claude-code
 
 # Windows: install via nvm-windows or download Node installer directly from nodejs.org
 npm install -g @anthropic-ai/claude-code
-<<<<<<< LOCAL (this PC)
 claude auth login --console          # API key billing
 claude auth login --sso              # Enterprise SSO
 claude doctor                         # health check
-=======
+
+# 5. Verify:
+nvm use 24 && claude --version
 ```
 
-### Interactive Mode vs Print Mode Discrepancy (CRITICAL)
+**Proxy tips for restricted environments:**
+- Always set `http_proxy`/`https_proxy` environment variables before npm/git operations
+- npm has its own proxy setting: `npm config set proxy http://<proxy>:<port>`
+- For curl: use `-x` flag or env variables
+- After initial setup, node/npm/claude commands usually do NOT need the proxy for normal operation
 
-Claude Code's **interactive mode** (`claude` with no `-p` flag) performs additional startup checks that `-p` mode skips. This causes a **split failure mode** when using a proxy:
-
-| Mode | Startup checks | Works with proxy? |
-|------|---------------|-------------------|
-| `-p "task"` | POST /v1/messages only | ✅ Always works |
-| Interactive (`claude`) | HEAD / + POST /v1/messages | ❌ Fails without HEAD route |
-
-**Symptom:** `claude -p "hello"` works perfectly, but `claude` (interactive) gives "Unable to connect to Anthropic services / ERR_BAD_REQUEST - Failed to connect to api.anthropic.com"
-
-**Root Cause:** The interactive TUI sends a `HEAD /` health-check request before any message API calls. The proxy (anthropic-proxy) doesn't handle this route natively, so it falls through to the real `api.anthropic.com` and fails.
-
-**Fix:** Add `HEAD /` and `GET /` routes to the proxy (see "Patch 3: HEAD / + GET / routes" below).
-
-### Auth Setup
-
-- **OAuth (default):** run `claude` once — opens browser login for Pro/Max subscriptions
-- **API key:** set `ANTHROPIC_API_KEY=sk-ant-...` in environment
-- **Console auth:** `claude auth login --console` (API key billing)
-- **SSO auth:** `claude auth login --sso` (Enterprise)
-- **Check status:** `claude auth status` (JSON) or `claude auth status --text`
-- **Health check:** `claude doctor` — checks auto-updater and installation health
-- **Version check:** `claude --version` (requires v2.x+)
-- **Update:** `claude update` or `claude upgrade`
-
-### Cross-Platform Detection
-
-When orchestrating Claude Code, detect the environment to avoid proxy/auth surprises:
+### Windows / macOS
 
 ```bash
-uname -a        # Check if running in WSL
-env | grep -i proxy   # Check proxy env vars
-claude --version      # Confirm installed
-claude auth status --text  # Check auth state
+# macOS (Homebrew):
+brew install nvm
+nvm install 24
+nvm use 24
+npm install -g @anthropic-ai/claude-code
+
+# Windows: install via nvm-windows or download Node installer directly from nodejs.org
+npm install -g @anthropic-ai/claude-code
 ```
 
-## Model Provider Limitations (CRITICAL)
-
-### What Claude Code Supports Natively
-
-| Provider | Status | How |
-|----------|--------|-----|
-| **Anthropic API** | ✅ Native | Default, uses ANTHROPIC_API_KEY or OAuth |
-| **AWS Bedrock** | ✅ Supported | Via `--bare` mode, uses AWS credentials |
-| **GCP Vertex AI** | ✅ Supported | Via `--bare` mode, uses GCP credentials |
-| **Anthropic Foundry** | ✅ Supported | Via `--bare` mode, enterprise offering |
-| **OpenAI-compatible (DeepSeek, etc.)** | ❌ NOT supported | No native provider flag for OpenAI-compatible APIs |
-
-### Why DeepSeek / OpenAI-Compatible APIs Won't Work Directly (Without a Proxy)
-
-Claude Code communicates with Anthropic's **Messages API** (a proprietary format with tool-use and extended thinking baked in). DeepSeek (and other OpenAI-compatible providers) speak the **OpenAI Chat Completions API** format. These two protocols are structurally different.
-
-**Signs of this limitation:**
-- `claude --model` only accepts Claude model names (`sonnet`, `opus`, `haiku`, `claude-sonnet-4-6`, etc.)
-- No `--provider` or `--endpoint` flag exists in the CLI (confirmed via `claude --help`)
-- `--bare` mode help confirms: "3P providers (Bedrock/Vertex/Foundry) use their own credentials" — no mention of OpenAI-compatible providers
-
-### Workaround: anthropic-proxy Translation Layer (RECOMMENDED — PROVEN TO WORK)
-
-Use `maxnowack/anthropic-proxy` — a lightweight Node.js proxy that translates Anthropic Messages API ↔ OpenAI Chat API format, then point Claude Code at it via `ANTHROPIC_BASE_URL`.
-
-**Key findings (verified 2026-05-22):**
-- `ANTHROPIC_BASE_URL` **IS recognized** by Claude Code when combined with `--settings '{"provider":"openai"}'`
-- Works in both interactive mode and `--bare` mode
-- `--bare` mode requires `--settings '{"provider":"openai"}'` and `--model "deepseek-chat"` flags
-- Interactive mode needs only `ANTHROPIC_BASE_URL` env var
+## Print Mode (`-p`) — Non-Interactive (PREFERRED)
 
 ```bash
-# 1. Install (npx auto-caches after first run)
-npx anthropic-proxy  # First download, then exits because no ANTHROPIC_PROXY_BASE_URL set
-
-# 2. Patch: add ANTHROPIC_PROXY_API_KEY env var support (see references)
-#    Edit ~/.npm/_npx/<hash>/node_modules/anthropic-proxy/index.js
-#    Line 7:  key = ANTHROPIC_PROXY_API_KEY || (requiresApiKey ? OPENROUTER_API_KEY : null)
-#    Line 162: if (key) { headers['Authorization'] = ... }
-
-# 3. Start proxy
-ANTHROPIC_PROXY_BASE_URL=https://api.deepseek.com \
-ANTHROPIC_PROXY_API_KEY=sk-xxx \
-COMPLETION_MODEL=deepseek-chat \
-PORT=3000 \
-npx anthropic-proxy
-
-# 4. Use Claude Code pointing at proxy
-ANTHROPIC_BASE_URL=http://localhost:3000 claude
-
-# Or for single-command mode:
-ANTHROPIC_BASE_URL=http://localhost:3000 claude --bare -p "task" \
-  --settings '{"provider":"openai"}' --model "deepseek-chat"
+claude -p "Add error handling to all API calls in src/" --allowedTools "Read,Edit" --max-turns 10
 ```
 
-**Important caveats:**
-- The proxy source needs a 2-line patch to add `ANTHROPIC_PROXY_API_KEY` env var support (upstream PR pending)
-- **Patch 3 also required for interactive mode:** The proxy needs `HEAD /` and `GET /` route handlers (see `references/wsl-installation-recipe.md` for exact code)
-- `ANTHROPIC_PROXY_BASE_URL` must NOT include `/v1` (proxy appends `/v1/chat/completions` internally)
-- Tool-use (file editing, bash) in `--bare` mode may have degraded translation — test before production use
-- Extended thinking / chain-of-thought may not work correctly
-- Some Claude Code features (MCP, subagents, hooks) are untested with this setup
-- Not officially supported by Anthropic — use at your own risk
+Or using the startup script:
 
-**Detailed setup guide:** See `devops/claude-code-deepseek-proxy` skill.
-**Proxy patch notes:** `devops/claude-code-deepseek-proxy → references/proxy-patch-notes.md`
-
-### Proxy Lifecycle Management
-
-#### Start proxy with npx (first time or after npx cache clear)
-
-When `npx anthropic-proxy` runs, it re-downloads the package if not cached, which **loses all patches**. Always check and re-patch after first run:
-
+### Structured JSON Output
 ```bash
+claude -p "Analyze auth.py" --output-format json --max-turns 5
+```
+
+Returns: `session_id`, `num_turns`, `total_cost_usd`, `subtype` (success/error).
+
+### Piped Input
+```bash
+cat src/auth.py | claude -p "Review this code for bugs" --max-turns 1
+git diff HEAD~3 | claude -p "Summarize these changes" --max-turns 1
 # 1. Let npx download/cache the package
 npx anthropic-proxy --help
 # 2. Verify it was cached
@@ -235,55 +80,31 @@ Wait 3-4 seconds, then verify:
 ```python
 terminal(command="sleep 4 && curl -s --max-time 3 -o /dev/null -w '%{http_code}' http://localhost:3000/", timeout=10)
 # → Expected: 200
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
-## Print Mode (`-p`) — Non-Interactive (PREFERRED)
-=======
 #### Start proxy (manual — user terminal)
->>>>>>> REPO (github)
 
 ```bash
-<<<<<<< LOCAL (this PC)
-claude -p "Add error handling to all API calls in src/" --allowedTools "Read,Edit" --max-turns 10
-=======
 source ~/.hermes/.env && \
 ANTHROPIC_PROXY_BASE_URL=https://api.deepseek.com \
 ANTHROPIC_PROXY_API_KEY="$DEEPSEEK_API_KEY" \
 COMPLETION_MODEL=deepseek-chat \
 PORT=3000 \
 npx anthropic-proxy
->>>>>>> REPO (github)
 ```
 
 Or using the startup script:
 
-### Structured JSON Output
 ```bash
-<<<<<<< LOCAL (this PC)
-claude -p "Analyze auth.py" --output-format json --max-turns 5
-=======
 ~/start-deepseek-proxy.sh
 # Or in background:
 nohup ~/start-deepseek-proxy.sh &
->>>>>>> REPO (github)
 ```
 
-<<<<<<< LOCAL (this PC)
-Returns: `session_id`, `num_turns`, `total_cost_usd`, `subtype` (success/error).
-=======
 #### Stop proxy
->>>>>>> REPO (github)
 
-### Piped Input
 ```bash
-<<<<<<< LOCAL (this PC)
-cat src/auth.py | claude -p "Review this code for bugs" --max-turns 1
-git diff HEAD~3 | claude -p "Summarize these changes" --max-turns 1
-=======
 kill $(ps aux | grep "anthropic-proxy" | grep -v grep | awk '{print $2}')
->>>>>>> REPO (github)
 ```
 
 ### Shell Function Approach (MOST RELIABLE for nvm setups)
@@ -292,15 +113,9 @@ kill $(ps aux | grep "anthropic-proxy" | grep -v grep | awk '{print $2}')
 
 **Solution:** Shell function in `.bashrc` — overrides PATH unconditionally, immune to hash caching:
 
-### JSON Schema
 ```bash
-<<<<<<< LOCAL (this PC)
-claude -p "List all functions" --output-format json \
-  --json-schema '{"type":"object","properties":{"functions":{"type":"array","items":{"type":"string"}}},"required":["functions"]}'
-=======
 # Add to ~/.bashrc (single line):
 claude() { ANTHROPIC_API_KEY=sk-placeholder ANTHROPIC_BASE_URL=http://localhost:3000 /home/dmin/.nvm/versions/node/v24.16.0/bin/claude "$@"; }
->>>>>>> REPO (github)
 ```
 
 **How it works:**
@@ -319,12 +134,7 @@ claude() { ANTHROPIC_API_KEY=sk-placeholder ANTHROPIC_BASE_URL=http://localhost:
 
 ### Moving from Wrapper Script to Shell Function (if you already set up the wrapper)
 
-### Session Continuation
 ```bash
-<<<<<<< LOCAL (this PC)
-claude -p "Continue" --resume <session-id> --max-turns 5
-claude -p "Resume last" --continue --max-turns 1
-=======
 # 1. Remove the wrapper's PATH addition from .bashrc
 sed -i '/PATH.*local.bin.*PATH/d' ~/.bashrc
 
@@ -335,16 +145,11 @@ echo 'claude() { ANTHROPIC_API_KEY=sk-placeholder ANTHROPIC_BASE_URL=http://loca
 
 # 4. Reload
 source ~/.bashrc
->>>>>>> REPO (github)
 ```
 
 For full third-party model support without a proxy, use [OpenCode](https://opencode.ai) — a provider-agnostic open-source fork with native OpenAI-compatible API support:
 
-### Bare Mode (CI/Scripting)
 ```bash
-<<<<<<< LOCAL (this PC)
-claude --bare -p "Run all tests" --allowedTools "Read,Bash" --max-turns 10
-=======
 npm install -g opencode-ai@latest
 opencode run 'Your task' --model deepseek/deepseek-chat
 ```
@@ -489,82 +294,54 @@ Returns a JSON object with:
 }
 ```
 
-**Key fields:** `session_id` for resumption, `num_turns` for agentic loop count, `total_cost_usd` for spend tracking, `subtype` for success/error detection (`success`, `error_max_turns`, `error_budget`).
+### Shell Function Approach (MOST RELIABLE for nvm setups)
 
-### Streaming JSON Output
-For real-time token streaming, use `stream-json` with `--verbose`:
-```
-terminal(command="claude -p 'Write a summary' --output-format stream-json --verbose --include-partial-messages", timeout=60)
-```
+**Problem:** Wrapper scripts at `~/.local/bin/claude` are shadowed by nvm's bin directory in PATH. Aliases break when paste splits across lines. Neither are reliable.
 
-Returns newline-delimited JSON events. Filter with jq for live text:
-```
-claude -p "Explain X" --output-format stream-json --verbose --include-partial-messages | \
-  jq -rj 'select(.type == "stream_event" and .event.delta.type? == "text_delta") | .event.delta.text'
+**Solution:** Shell function in `.bashrc` — overrides PATH unconditionally, immune to hash caching:
+
+### JSON Schema
+```bash
+claude -p "List all functions" --output-format json \
+  --json-schema '{"type":"object","properties":{"functions":{"type":"array","items":{"type":"string"}}},"required":["functions"]}'
 ```
 
-Stream events include `system/api_retry` with `attempt`, `max_retries`, and `error` fields (e.g., `rate_limit`, `billing_error`).
+**How it works:**
+- Shell functions take priority over PATH lookups in bash
+- `ANTHROPIC_API_KEY` and `ANTHROPIC_BASE_URL` are set as command-prefix env vars, overriding any inherited values
+- The function body executes with `exec`, replacing the current shell context with the raw Claude Code binary
+- After reloading `.bashrc`, `type claude` shows `claude is a function` rather than a path
 
-### Bidirectional Streaming
-For real-time input AND output streaming:
-```
-claude -p "task" --input-format stream-json --output-format stream-json --replay-user-messages
-```
-`--replay-user-messages` re-emits user messages on stdout for acknowledgment.
+**Comparison:**
 
-### Piped Input
-```
-# Pipe a file for analysis
-terminal(command="cat src/auth.py | claude -p 'Review this code for bugs' --max-turns 1", timeout=60)
+| Method | Reliability | nvm-safe | Paste-safe | Notes |
+|--------|-------------|----------|------------|-------|
+| Wrapper script (`~/.local/bin/claude`) | ❌ | ❌ | ✅ | Shadowed by nvm PATH |
+| Alias (`alias claude=...`) | ⚠️ | ✅ | ❌ | Breaks on multiline paste |
+| **Shell function** (`claude() { ... }`) | ✅ | ✅ | ✅ | Recommended |
 
-# Pipe multiple files
-terminal(command="cat src/*.py | claude -p 'Find all TODO comments' --max-turns 1", timeout=60)
-
-# Pipe command output
-terminal(command="git diff HEAD~3 | claude -p 'Summarize these changes' --max-turns 1", timeout=60)
-```
-
-### JSON Schema for Structured Extraction
-```
-terminal(command="claude -p 'List all functions in src/' --output-format json --json-schema '{\"type\":\"object\",\"properties\":{\"functions\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"required\":[\"functions\"]}' --max-turns 5", workdir="/project", timeout=90)
-```
-
-Parse `structured_output` from the JSON result. Claude validates output against the schema before returning.
+### Moving from Wrapper Script to Shell Function (if you already set up the wrapper)
 
 ### Session Continuation
-```
-# Start a task
-terminal(command="claude -p 'Start refactoring the database layer' --output-format json --max-turns 10 > /tmp/session.json", workdir="/project", timeout=180)
-
-# Resume with session ID
-terminal(command="claude -p 'Continue and add connection pooling' --resume $(cat /tmp/session.json | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"session_id\"])') --max-turns 5", workdir="/project", timeout=120)
-
-# Or resume the most recent session in the same directory
-terminal(command="claude -p 'What did you do last time?' --continue --max-turns 1", workdir="/project", timeout=30)
-
-# Fork a session (new ID, keeps history)
-terminal(command="claude -p 'Try a different approach' --resume <id> --fork-session --max-turns 10", workdir="/project", timeout=120)
+```bash
+claude -p "Continue" --resume <session-id> --max-turns 5
+claude -p "Resume last" --continue --max-turns 1
 ```
 
-### Bare Mode for CI/Scripting
+For full third-party model support without a proxy, use [OpenCode](https://opencode.ai) — a provider-agnostic open-source fork with native OpenAI-compatible API support:
+
+### Bare Mode (CI/Scripting)
+```bash
+claude --bare -p "Run all tests" --allowedTools "Read,Bash" --max-turns 10
 ```
-terminal(command="claude --bare -p 'Run all tests and report failures' --allowedTools 'Read,Bash' --max-turns 10", workdir="/project", timeout=180)
-```
+Automatically falls back to the specified model when the default is overloaded (print mode only).
 
-`--bare` skips hooks, plugins, MCP discovery, and CLAUDE.md loading. Fastest startup. Requires `ANTHROPIC_API_KEY` (skips OAuth).
+## Complete CLI Flags Reference
 
-To selectively load context in bare mode:
-| To load | Flag |
-|---------|------|
-| System prompt additions | `--append-system-prompt "text"` or `--append-system-prompt-file path` |
-| Settings | `--settings <file-or-json>` |
-| MCP servers | `--mcp-config <file-or-json>` |
-| Custom agents | `--agents '<json>'` |
-
+### Session & Environment
 ### Fallback Model for Overload
 ```
 terminal(command="claude -p 'task' --fallback-model haiku --max-turns 5", timeout=90)
->>>>>>> REPO (github)
 ```
 Automatically falls back to the specified model when the default is overloaded (print mode only).
 
@@ -633,53 +410,20 @@ Automatically falls back to the specified model when the default is overloaded (
 | `--plugin-dir <paths...>` | Load plugins from directories for this session only |
 | `--disable-slash-commands` | Disable all skills/slash commands |
 
-<<<<<<< LOCAL (this PC)
-## Key CLI Flags
-=======
 ### Debugging
 | Flag | Effect |
 |------|--------|
 | `-d, --debug [filter]` | Enable debug logging with optional category filter (e.g., `"api,hooks"`, `"!1p,!file"`) |
 | `--debug-file <path>` | Write debug logs to file (implicitly enables debug mode) |
->>>>>>> REPO (github)
 
 ### Agent Teams
 | Flag | Effect |
 |------|--------|
-<<<<<<< LOCAL (this PC)
-| `-p, --print` | Non-interactive one-shot |
-| `-c, --continue` | Resume most recent session |
-| `-r, --resume <id>` | Resume specific session |
-| `--fork-session` | Create new session ID when resuming |
-| `--model sonnet\|opus\|haiku` | Model selection |
-| `--effort low\|medium\|high\|max\|auto` | Reasoning depth |
-| `--max-turns <n>` | Cap agentic loops (print mode only) |
-| `--max-budget-usd <n>` | Cap API spend (print mode) |
-| `--dangerously-skip-permissions` | Auto-approve ALL tool use |
-| `--allowedTools "Read,Edit"` | Whitelist specific tools |
-| `--output-format text\|json\|stream-json` | Output format |
-| `--bare` | Skip hooks, plugns, MCP, OAuth |
-| `--from-pr <number>` | Resume linked to a PR |
-| `--worktree [name]` | Isolated git worktree |
-=======
 | `--teammate-mode <mode>` | How agent teams display: `auto`, `in-process`, or `tmux` |
 | `--brief` | Enable `SendUserMessage` tool for agent-to-user communication |
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-## Allowed Tools Syntax
-=======
 ### Tool Name Syntax for --allowedTools / --disallowedTools
->>>>>>> REPO (github)
 ```
-<<<<<<< LOCAL (this PC)
-Read                     # All file reading
-Edit                     # File editing (existing files)
-Write                    # File creation (new files)
-Bash                     # All shell commands
-Bash(git *)              # Only git commands
-WebSearch                # Web search capability
-=======
 Read                    # All file reading
 Edit                    # File editing (existing files)
 Write                   # File creation (new files)
@@ -690,7 +434,6 @@ Bash(npm run lint:*)    # Pattern matching with wildcards
 WebSearch               # Web search capability
 WebFetch                # Web page fetching
 mcp__<server>__<tool>   # Specific MCP tool
->>>>>>> REPO (github)
 ```
 
 ## Settings & Configuration
@@ -701,9 +444,6 @@ mcp__<server>__<tool>   # Specific MCP tool
 3. **Project:** `.claude/settings.json` (shared, git-tracked)
 4. **User:** `~/.claude/settings.json` (global)
 
-<<<<<<< LOCAL (this PC)
-## Interactive Mode (via tmux)
-=======
 ### Permissions in Settings
 ```json
 {
@@ -714,39 +454,16 @@ mcp__<server>__<tool>   # Specific MCP tool
   }
 }
 ```
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-```bash
-# Start session
-tmux new-session -d -s claude-work -x 140 -y 40
-tmux send-keys -t claude-work 'cd /project && claude' Enter
-=======
 ### Memory Files (CLAUDE.md) Hierarchy
 1. **Global:** `~/.claude/CLAUDE.md` — applies to all projects
 2. **Project:** `./CLAUDE.md` — project-specific context (git-tracked)
 3. **Local:** `.claude/CLAUDE.local.md` — personal project overrides (gitignored)
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# Dialog handling: trust (Enter), permissions (Down+Enter)
-sleep 5 && tmux send-keys -t claude-work Enter
-sleep 3 && tmux send-keys -t claude-work Down && sleep 0.3 && tmux send-keys -t claude-work Enter
-=======
 Use the `#` prefix in interactive mode to quickly add to memory: `# Always use 2-space indentation`.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# Send task
-tmux send-keys -t claude-work 'Refactor the auth module to use JWT tokens' Enter
-=======
 ## Interactive Session: Slash Commands
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# Monitor
-tmux capture-pane -t claude-work -p -S -50
-=======
 ### Session & Context
 | Command | Purpose |
 |---------|---------|
@@ -761,13 +478,7 @@ tmux capture-pane -t claude-work -p -S -50
 | `/status` | Show version, connectivity, and session info |
 | `/todos` | List tracked action items from the conversation |
 | `/exit` or `Ctrl+D` | End session |
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# Clean up
-tmux kill-session -t claude-work
-```
-=======
 ### Development & Review
 | Command | Purpose |
 |---------|---------|
@@ -776,26 +487,10 @@ tmux kill-session -t claude-work
 | `/plan [description]` | Enter Plan mode with auto-start for task planning |
 | `/loop [interval]` | Schedule recurring tasks within the session |
 | `/batch` | Auto-create worktrees for large parallel changes (5-30 worktrees) |
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-## Key Interactive Slash Commands
-=======
 ### Configuration & Tools
->>>>>>> REPO (github)
 | Command | Purpose |
 |---------|---------|
-<<<<<<< LOCAL (this PC)
-| `/compact [focus]` | Compress context to save tokens |
-| `/clear` | Wipe conversation history |
-| `/cost` | View token usage |
-| `/review` | Request code review |
-| `/plan` | Enter plan mode |
-| `/model [model]` | Switch models |
-| `/effort [level]` | Set reasoning effort |
-| `/memory` | Open CLAUDE.md editing |
-| `/exit` or Ctrl+D | End session |
-=======
 | `/model [model]` | Switch models mid-session (use arrow keys to adjust effort) |
 | `/effort [level]` | Set reasoning effort: `low`, `medium`, `high`, `max`, or `auto` |
 | `/init` | Create a CLAUDE.md file for project memory |
@@ -1013,68 +708,46 @@ Configure in `.claude/settings.json` (project) or `~/.claude/settings.json` (glo
 }
 ```
 
-### All 8 Hook Types
-| Hook | When it fires | Common use |
-|------|--------------|------------|
-| `UserPromptSubmit` | Before Claude processes a user prompt | Input validation, logging |
-| `PreToolUse` | Before tool execution | Security gates, block dangerous commands (exit 2 = block) |
-| `PostToolUse` | After a tool finishes | Auto-format code, run linters |
-| `Notification` | On permission requests or input waits | Desktop notifications, alerts |
-| `Stop` | When Claude finishes a response | Completion logging, status updates |
-| `SubagentStop` | When a subagent completes | Agent orchestration |
-| `PreCompact` | Before context memory is cleared | Backup session transcripts |
-| `SessionStart` | When a session begins | Load dev context (e.g., `git status`) |
+```bash
+# Start session
+tmux new-session -d -s claude-work -x 140 -y 40
+tmux send-keys -t claude-work 'cd /project && claude' Enter
 
-### Hook Environment Variables
-| Variable | Content |
-|----------|---------|
-| `CLAUDE_PROJECT_DIR` | Current project path |
-| `CLAUDE_FILE_PATHS` | Files being modified |
-| `CLAUDE_TOOL_INPUT` | Tool parameters as JSON |
+# Dialog handling: trust (Enter), permissions (Down+Enter)
+sleep 5 && tmux send-keys -t claude-work Enter
+sleep 3 && tmux send-keys -t claude-work Down && sleep 0.3 && tmux send-keys -t claude-work Enter
+## MCP Integration
 
-### Security Hook Examples
-```json
-{
-  "PreToolUse": [{
-    "matcher": "Bash",
-    "hooks": [{"type": "command", "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE 'rm -rf|git push.*--force|:(){ :|:& };:'; then echo 'Dangerous command blocked!' && exit 2; fi"}]
-  }]
-}
+Add external tool servers for databases, APIs, and services:
+
+# Send task
+tmux send-keys -t claude-work 'Refactor the auth module to use JWT tokens' Enter
+
+# Monitor
+tmux capture-pane -t claude-work -p -S -50
+
+# Clean up
+tmux kill-session -t claude-work
 ```
->>>>>>> REPO (github)
+
+## Key Interactive Slash Commands
+| Command | Purpose |
+|---------|---------|
+| `/compact [focus]` | Compress context to save tokens |
+| `/clear` | Wipe conversation history |
+| `/cost` | View token usage |
+| `/review` | Request code review |
+| `/plan` | Enter plan mode |
+| `/model [model]` | Switch models |
+| `/effort [level]` | Set reasoning effort |
+| `/memory` | Open CLAUDE.md editing |
+| `/exit` or Ctrl+D | End session |
 
 ## MCP Integration
-<<<<<<< LOCAL (this PC)
 ```bash
 claude mcp add -s user github -- npx @modelcontextprotocol/server-github
 claude mcp add postgres -- npx @anthropic-ai/server-postgres --connection-string ...
 claude mcp list
-=======
-
-Add external tool servers for databases, APIs, and services:
-
-```
-# GitHub integration
-terminal(command="claude mcp add -s user github -- npx @modelcontextprotocol/server-github", timeout=30)
-
-# PostgreSQL queries
-terminal(command="claude mcp add -s local postgres -- npx @anthropic-ai/server-postgres --connection-string postgresql://localhost/mydb", timeout=30)
-
-# Puppeteer for web testing
-terminal(command="claude mcp add puppeteer -- npx @anthropic-ai/server-puppeteer", timeout=30)
-```
-
-### MCP Scopes
-| Flag | Scope | Storage |
-|------|-------|---------|
-| `-s user` | Global (all projects) | `~/.claude.json` |
-| `-s local` | This project (personal) | `.claude/settings.local.json` (gitignored) |
-| `-s project` | This project (team-shared) | `.claude/settings.json` (git-tracked) |
-
-### MCP in Print/CI Mode
-```
-terminal(command="claude --bare -p 'Query database' --mcp-config mcp-servers.json --strict-mcp-config", timeout=60)
->>>>>>> REPO (github)
 ```
 `--strict-mcp-config` ignores all MCP servers except those from `--mcp-config`.
 
@@ -1086,32 +759,132 @@ Reference MCP resources in chat: `@github:issue://123`
 - **Output tokens:** `export MAX_MCP_OUTPUT_TOKENS=50000` — cap output from MCP servers to prevent context flooding
 - **Transports:** `stdio` (local process), `http` (remote), `sse` (server-sent events)
 
-<<<<<<< LOCAL (this PC)
 ## Settings Hierarchy
 1. CLI flags (highest)
 2. `.claude/settings.local.json` (personal, gitignored)
 3. `.claude/settings.json` (shared, git-tracked)
 4. `~/.claude/settings.json` (global)
-=======
-## Monitoring Interactive Sessions
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
 ## CLAUDE.md
 Auto-loaded from project root. Use for persistent project context.
-=======
-### Reading the TUI Status
->>>>>>> REPO (github)
 ```
-<<<<<<< LOCAL (this PC)
 ~/.claude/CLAUDE.md                          # global, all projects
 ./CLAUDE.md                                   # project-specific
 .claude/CLAUDE.local.md                       # personal overrides
 .claude/rules/*.md                            # modular rules
-=======
+```
+
+Look for these indicators:
+- `❯` at bottom = waiting for your input (Claude is done or asking a question)
+- `●` lines = Claude is actively using tools (reading, writing, running commands)
+- `⏵⏵ bypass permissions on` = status bar showing permissions mode
+- `◐ medium · /effort` = current effort level in status bar
+- `ctrl+o to expand` = tool output was truncated (can be expanded interactively)
+
+### Context Window Health
+Use `/context` in interactive mode to see a colored grid of context usage. Key thresholds:
+- **< 70%** — Normal operation, full precision
+- **70-85%** — Precision starts dropping, consider `/compact`
+- **> 85%** — Hallucination risk spikes significantly, use `/compact` or `/clear`
+
+## Environment Variables
+
+| Variable | Effect |
+|----------|--------|
+| `ANTHROPIC_API_KEY` | API key for authentication (alternative to OAuth) |
+| `CLAUDE_CODE_EFFORT_LEVEL` | Default effort: `low`, `medium`, `high`, `max`, or `auto` |
+| `MAX_THINKING_TOKENS` | Cap thinking tokens (set to `0` to disable thinking entirely) |
+| `MAX_MCP_OUTPUT_TOKENS` | Cap output from MCP servers (default varies; set e.g., `50000`) |
+| `CLAUDE_CODE_NO_FLICKER=1` | Enable alt-screen rendering to eliminate terminal flicker |
+| `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` | Strip credentials from sub-processes for security |
+
+## Cost & Performance Tips
+
+1. **Use `--max-turns`** in print mode to prevent runaway loops. Start with 5-10 for most tasks.
+2. **Use `--max-budget-usd`** for cost caps. Note: minimum ~$0.05 for system prompt cache creation.
+3. **Use `--effort low`** for simple tasks (faster, cheaper). `high` or `max` for complex reasoning.
+4. **Use `--bare`** for CI/scripting to skip plugin/hook discovery overhead.
+5. **Use `--allowedTools`** to restrict to only what's needed (e.g., `Read` only for reviews).
+6. **Use `/compact`** in interactive sessions when context gets large.
+7. **Pipe input** instead of having Claude read files when you just need analysis of known content.
+8. **Use `--model haiku`** for simple tasks (cheaper) and `--model opus` for complex multi-step work.
+9. **Use `--fallback-model haiku`** in print mode to gracefully handle model overload.
+10. **Start new sessions for distinct tasks** — sessions last 5 hours; fresh context is more efficient.
+11. **Use `--no-session-persistence`** in CI to avoid accumulating saved sessions on disk.
+
+## Pitfalls & Gotchas
+
+1. **Interactive mode REQUIRES tmux** — Claude Code is a full TUI app. Using `pty=true` alone in Hermes terminal works but tmux gives you `capture-pane` for monitoring and `send-keys` for input, which is essential for orchestration.
+2. **`--dangerously-skip-permissions` dialog defaults to "No, exit"** — you must send Down then Enter to accept. Print mode (`-p`) skips this entirely.
+3. **`--max-budget-usd` minimum is ~$0.05** — system prompt cache creation alone costs this much. Setting lower will error immediately.
+4. **`--max-turns` is print-mode only** — ignored in interactive sessions.
+5. **Claude may use `python` instead of `python3`** — on systems without a `python` symlink, Claude's bash commands will fail on first try but it self-corrects.
+6. **Session resumption requires same directory** — `--continue` finds the most recent session for the current working directory.
+7. **`--json-schema` needs enough `--max-turns`** — Claude must read files before producing structured output, which takes multiple turns.
+8. **Trust dialog only appears once per directory** — first-time only, then cached.
+9. **Background tmux sessions persist** — always clean up with `tmux kill-session -t <name>` when done.
+10. **Slash commands (like `/commit`) only work in interactive mode** — in `-p` mode, describe the task in natural language instead.
+11. **`--bare` skips OAuth** — requires `ANTHROPIC_API_KEY` env var or an `apiKeyHelper` in settings.
+13. **Model provider limitation is a hard constraint** — Claude Code only supports Anthropic's API (plus Bedrock/Vertex/Foundry as cloud providers). It does NOT support OpenAI-compatible APIs (DeepSeek, Groq, Together, etc.) natively. There is no `--provider` or `--endpoint` flag. Workaround exists via `anthropic-proxy` (see "Workaround: anthropic-proxy" section above) but has feature limitations. For full third-party model support, use OpenCode instead.
+14. **`ANTHROPIC_BASE_URL` IS supported with `--settings '{"provider":"openai"}'`** — though commonly claimed otherwise, `ANTHROPIC_BASE_URL` is recognized by Claude Code when combined with `provider: openai` in settings. Tested 2026-05-22: `ANTHROPIC_BASE_URL=http://localhost:3000 claude --bare -p "hi" --settings '{"provider":"openai"}' --model "deepseek-chat"` worked. Without `provider:openai`, `ANTHROPIC_BASE_URL` is ignored.
+15. **Auth is required even in `--bare` mode** — `--bare` says it "skips OAuth" but still requires `ANTHROPIC_API_KEY` or `apiKeyHelper` in settings. Without valid auth, Claude Code returns "Not logged in" and exits. **Exception:** With a proxy that ignores the key (like anthropic-proxy), a fake placeholder works: `ANTHROPIC_API_KEY=sk-placeholder` — the env var just needs to exist.
+16. **PATH ordering shadows wrapper scripts** — When using nvm, `$NVM_DIR/versions/node/*/bin/` is added to the **front** of PATH. This means any wrapper script at `~/.local/bin/claude` is ALWAYS shadowed by nvm's bin dir. `which claude` returns the nvm binary, NOT the wrapper. **Don't rely on wrapper scripts at `~/.local/bin/` with nvm.** Use a shell function instead (see "Shell Function Approach" below).
+
+17. **Shell functions beat wrapper scripts for nvm setups** — A shell function defined in `.bashrc` overrides PATH lookups unconditionally, with no hash caching issues. The correct pattern:
+    ```bash
+    claude() { ANTHROPIC_API_KEY=sk-placeholder ANTHROPIC_BASE_URL=http://localhost:3000 /full/path/to/nvm/bin/claude "$@"; }
+    ```
+    This is the MOST RELIABLE method tested (verified 2026-05-22). Shell functions are immune to `hash` caching, PATH ordering, and typo-based issues.
+
+18. **Terminal paste breaks multiline commands with quotes** — When users copy-paste multi-line commands with double quotes, the terminal may split at line breaks (even if the command visually appears as one line in the output). Broken alias fragments get written to `.bashrc` and corrupt the file. **Fix:** Write changes directly via the terminal tool instead of asking users to paste. If users must paste, use single-line commands with single quotes only — never multi-line or double-quote-heavy commands.
+
+19. **Hermes `.venv-hermes` environment variable conflict** — Hermes Agent's virtual environment sets `ANTHROPIC_BASE_URL=http://localhost:4000/v1` (its own proxy for DeepSeek). If you run `claude` inside a terminal where `.venv-hermes` is active, this variable OVERRIDES any wrapper script's `ANTHROPIC_BASE_URL` setting, because shell env vars inherited into `exec` take precedence. **Symptoms:** `which claude` points correctly, but Claude Code still tries to reach `api.anthropic.com`. `env | grep ANTHROPIC` reveals the 4000 port. **Fix:** `deactivate` the venv, open a terminal without `.venv-hermes`, or `unset ANTHROPIC_BASE_URL` before running `claude`.
+
+20. **Interactive mode vs print mode: split failure** — If `claude -p "hi"` works but `claude` (interactive) fails, the proxy likely lacks a `HEAD /` endpoint. This is the #1 differentiator — the interactive TUI does a health check that `-p` mode skips. Add `fastify.head("/", ...)` and `fastify.get("/", ...)` routes to the proxy.
+
+21. **Proxy restart loses patches** — When `npx anthropic-proxy` runs, it checks `~/.npm/_npx/` for a cached version. If the cache was cleared (e.g., npm cache clean, node version change, or first install), npx re-downloads the package from npm. All source patches are lost on re-download. **Workflow:** Check that patches are still in place each time the proxy restarts unexpectedly. Use `grep -c "fastify.head"` on the proxy index.js to verify.
+
+22. **Proxy must be running before Claude Code starts** — Claude Code does NOT retry the initial health check. If the proxy isn't ready when Claude Code sends its startup requests, it fails immediately. Always start the proxy 3-4 seconds before launching `claude`.
+
+## Rules for Hermes Agents
+
+1. **Prefer print mode (`-p`) for single tasks** — cleaner, no dialog handling, structured output
+2. **Use tmux for multi-turn interactive work** — the only reliable way to orchestrate the TUI
+3. **Always set `workdir`** — keep Claude focused on the right project directory
+4. **Set `--max-turns` in print mode** — prevents infinite loops and runaway costs
+5. **Monitor tmux sessions** — use `tmux capture-pane -t <session> -p -S -50` to check progress
+6. **Look for the `❯` prompt** — indicates Claude is waiting for input (done or asking a question)
+7. **Clean up tmux sessions** — kill them when done to avoid resource leaks
+8. **Report results to user** — after completion, summarize what Claude did and what changed
+9. **Don't kill slow sessions** — Claude may be doing multi-step work; check progress instead
+10. **Use `--allowedTools`** — restrict capabilities to what the task actually needs
+### MCP Scopes
+| Flag | Scope | Storage |
+|------|-------|---------|
+| `-s user` | Global (all projects) | `~/.claude.json` |
+| `-s local` | This project (personal) | `.claude/settings.local.json` (gitignored) |
+| `-s project` | This project (team-shared) | `.claude/settings.json` (git-tracked) |
+
+### MCP in Print/CI Mode
+```
+terminal(command="claude --bare -p 'Query database' --mcp-config mcp-servers.json --strict-mcp-config", timeout=60)
+```
+`--strict-mcp-config` ignores all MCP servers except those from `--mcp-config`.
+
+Reference MCP resources in chat: `@github:issue://123`
+
+### MCP Limits & Tuning
+- **Tool descriptions:** 2KB cap per server for tool descriptions and server instructions
+- **Result size:** Default capped; use `maxResultSizeChars` annotation to allow up to **500K** characters for large outputs
+- **Output tokens:** `export MAX_MCP_OUTPUT_TOKENS=50000` — cap output from MCP servers to prevent context flooding
+- **Transports:** `stdio` (local process), `http` (remote), `sse` (server-sent events)
+
+## Monitoring Interactive Sessions
+
+### Reading the TUI Status
+```
 # Periodic capture to check if Claude is still working or waiting for input
 terminal(command="tmux capture-pane -t dev -p -S -10")
->>>>>>> REPO (github)
 ```
 
 Look for these indicators:

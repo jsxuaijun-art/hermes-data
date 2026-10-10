@@ -1,10 +1,6 @@
 ---
 name: minecraft-modpack-server
-<<<<<<< LOCAL (this PC)
 description: Set up a modded Minecraft server from a CurseForge/Modrinth server pack zip. Covers NeoForge/Forge install, Java version, JVM tuning, firewall, LAN config, backups, and launch scripts.
-=======
-description: "Host modded Minecraft servers (CurseForge, Modrinth)."
->>>>>>> REPO (github)
 tags: [minecraft, gaming, server, neoforge, forge, modpack]
 platforms: [linux, macos]
 ---

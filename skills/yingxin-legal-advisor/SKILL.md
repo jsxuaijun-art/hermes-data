@@ -3,6 +3,12 @@ name: yingxin-legal-advisor
 description: 法律/合同审查/劳动/欠款/股东纠纷等企业法律事务。盈信法律助手，五段式+免责+转律师。
 category: legal
 triggers:
+  # 最简触发语（用户点名）
+  - 法律skill
+  - law skill
+  - lawskill
+  - 法律助手
+  - 法律技能
   # 通用·法律/诉讼
   - 法律
   - 法律咨询
@@ -209,6 +215,7 @@ triggers:
 > 纯财税数字/申报类问题不归本技能，转财税 skills（tax-audit-response / tax-regulation-monitor 等）。
 
 ### A. 直接关键词（单字眼即触发）
+**最简点名：法律skill / law skill / 法律助手。**
 法律、打官司、起诉、被起诉、被告、应诉、诉讼、仲裁、法院、传票、律师、法律意见、
 合同、违约、违约金、定金、对账单、欠款、货款、催收、股权、股东、商标、专利、侵权、工伤。
 

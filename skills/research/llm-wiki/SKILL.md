@@ -1,12 +1,7 @@
 ---
 name: llm-wiki
-<<<<<<< LOCAL (this PC)
-description: "Karpathy's LLM Wiki — build and maintain a persistent, interlinked markdown knowledge base. Ingest sources, query compiled knowledge, and lint for consistency."
-version: 2.0.0
-=======
 description: "Karpathy's LLM Wiki: build/query interlinked markdown KB."
 version: 2.1.0
->>>>>>> REPO (github)
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -14,16 +9,7 @@ metadata:
   hermes:
     tags: [wiki, knowledge-base, research, notes, markdown, rag-alternative]
     category: research
-<<<<<<< LOCAL (this PC)
-    related_skills: [obsidian, arxiv, agentic-research-ideas]
-    config:
-      - key: wiki.path
-        description: Path to the LLM Wiki knowledge base directory
-        default: "~/wiki"
-        prompt: Wiki directory path
-=======
     related_skills: [obsidian, arxiv]
->>>>>>> REPO (github)
 ---
 
 # Karpathy's LLM Wiki
@@ -51,27 +37,11 @@ Use this skill when the user:
 
 **Location:** Set via `WIKI_PATH` environment variable (e.g. in `${HERMES_HOME:-~/.hermes}/.env`).
 
-<<<<<<< LOCAL (this PC)
-Configured via `skills.config.wiki.path` in `~/.hermes/config.yaml` (prompted
-during `hermes config migrate` or `hermes setup`):
-=======
 If unset, defaults to `~/wiki`.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-```yaml
-skills:
-  config:
-    wiki:
-      path: ~/wiki
-=======
 ```bash
 WIKI="${WIKI_PATH:-$HOME/wiki}"
->>>>>>> REPO (github)
 ```
-
-Falls back to `~/wiki` default. The resolved path is injected when this
-skill loads — check the `[Skill config: ...]` block above for the active value.
 
 The wiki is just a directory of markdown files — open it in Obsidian, VS Code, or
 any editor. No database, no special tooling required.
@@ -108,11 +78,7 @@ When the user has an existing wiki, **always orient yourself before doing anythi
 ③ **Scan recent `log.md`** — read the last 20-30 entries to understand recent activity.
 
 ```bash
-<<<<<<< LOCAL (this PC)
-WIKI="${wiki_path:-$HOME/wiki}"
-=======
 WIKI="${WIKI_PATH:-$HOME/wiki}"
->>>>>>> REPO (github)
 # Orientation reads at session start
 read_file "$WIKI/SCHEMA.md"
 read_file "$WIKI/index.md"
@@ -132,11 +98,7 @@ at hand before creating anything new.
 
 When the user asks to create or start a wiki:
 
-<<<<<<< LOCAL (this PC)
-1. Determine the wiki path (from config, env var, or ask the user; default `~/wiki`)
-=======
 1. Determine the wiki path (from `$WIKI_PATH` env var, or ask the user; default `~/wiki`)
->>>>>>> REPO (github)
 2. Create the directory structure above
 3. Ask the user what domain the wiki covers — be specific
 4. Write `SCHEMA.md` customized to the domain (see template below)
@@ -380,9 +342,6 @@ wiki = "<WIKI_PATH>"
    recent source that mentions the same entities.
 
 ⑥ **Contradictions:** Pages on the same topic with conflicting claims. Look for
-<<<<<<< LOCAL (this PC)
-   pages that share tags/entities but state different facts.
-=======
    pages that share tags/entities but state different facts. Surface all pages
    with `contested: true` or `contradictions:` frontmatter for user review.
 
@@ -394,39 +353,17 @@ wiki = "<WIKI_PATH>"
    the hash and flag mismatches. Mismatches indicate the raw file was edited
    (shouldn't happen — raw/ is immutable) or ingested from a URL that has since
    changed. Not a hard error, but worth reporting.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-⑦ **Page size:** Flag pages over 200 lines — candidates for splitting.
-=======
 ⑨ **Page size:** Flag pages over 200 lines — candidates for splitting.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-⑧ **Tag audit:** List all tags in use, flag any not in the SCHEMA.md taxonomy.
-=======
 ⑩ **Tag audit:** List all tags in use, flag any not in the SCHEMA.md taxonomy.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-⑨ **Log rotation:** If log.md exceeds 500 entries, rotate it.
-=======
 ⑪ **Log rotation:** If log.md exceeds 500 entries, rotate it.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-⑩ **Report findings** with specific file paths and suggested actions, grouped by
-   severity (broken links > orphans > stale content > style issues).
-=======
 ⑫ **Report findings** with specific file paths and suggested actions, grouped by
    severity (broken links > orphans > source drift > contested pages > stale content > style issues).
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-⑪ **Append to log.md:** `## [YYYY-MM-DD] lint | N issues found`
-=======
 ⑬ **Append to log.md:** `## [YYYY-MM-DD] lint | N issues found`
->>>>>>> REPO (github)
 
 ## Working with the Wiki
 

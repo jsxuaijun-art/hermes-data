@@ -39,20 +39,11 @@ Use the Hub page first, and only fall back to the generic heuristics below when 
 
 ## Converting Models
 
-<<<<<<< LOCAL (this PC)
-### HuggingFace to GGUF
-=======
 ### Hugging Face to GGUF
->>>>>>> REPO (github)
 
 ```bash
-<<<<<<< LOCAL (this PC)
-# 1. Download HuggingFace model
-huggingface-cli download meta-llama/Llama-2-7b-chat-hf \
-=======
 # 1. Download Hugging Face model
 hf download meta-llama/Llama-2-7b-chat-hf \
->>>>>>> REPO (github)
     --local-dir models/llama-2-7b-chat/
 
 # 2. Convert to FP16 GGUF
@@ -199,26 +190,10 @@ llama-cli -hf <repo>:Q4_K_M
 llama-server -hf <repo>:Q4_K_M
 ```
 
-<<<<<<< LOCAL (this PC)
-**TheBloke** on HuggingFace:
-- https://huggingface.co/TheBloke
-- Most models available in all GGUF formats
-- No conversion needed
-=======
 If you need the exact file name from the tree API:
->>>>>>> REPO (github)
 
-**Example**:
 ```bash
-<<<<<<< LOCAL (this PC)
-# Download pre-quantized Llama 2-7B
-huggingface-cli download \
-    TheBloke/Llama-2-7B-Chat-GGUF \
-    llama-2-7b-chat.Q4_K_M.gguf \
-    --local-dir models/
-=======
 llama-server --hf-repo <repo> --hf-file <filename.gguf>
->>>>>>> REPO (github)
 ```
 
 ## Importance Matrices (imatrix)

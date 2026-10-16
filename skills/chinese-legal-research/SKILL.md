@@ -52,16 +52,12 @@ Use this when the user asks about legal issues, court cases, or needs legal docu
 
 #### 案例可信度分级原则（法税案例尤其重要）
 
-<<<<<<< LOCAL (this PC)
-#### Fallback Chain: When Primary Case Search Fails
-=======
 法税"被追缴个税"类案件多为税务稽查/行政处理决定，**极少进公开裁判文书网**。检索到的案例要分级标注并向客户如实说明：
 - **① 监管通报案例**（稽查局/税务系统官方披露）——可信度最高
 - **② 律所/财税机构披露的实操案例**（有金额、地名、情节，但**无公开案号**）——可用作话术，但不得编造案号
 - **③ 政策逻辑上必然追缴的情形**（未备案/评估虚高/减资不消税/递延条件丧失）——作风险框架
 - 有公开案号的**已判决**判例（如非货币出资个税对赌案沪03行终133号）往往围绕对赌/退税争议，与非货币出资被追缴**不完全同类**——引用时须说明差异，不可混为一谈。
 - **绝不编造案号**：明确区分"机构披露但无案号" vs "可引用的已判决判例"。
->>>>>>> REPO (github)
 
 Even with specific court name + defendant name, you may not find direct precedents on wenshu. Do NOT give up — use this fallback chain instead:
 

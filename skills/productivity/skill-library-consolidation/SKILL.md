@@ -37,11 +37,28 @@ metadata:
 
 详细步骤与速查表见 `references/skill-consolidation-procedure.md`。
 
+## 外部素材整合：通用模块模式
+
+把外部素材（客户发来的话术 docx/pdf、第三方培训材料）融进母skill 时：**若内容横跨多个阶段、不属于任何单一阶段，不要硬塞进某个阶段**——单独立一个「通用模块/通用话术模块」目录，SKILL.md 里专节声明「跨阶段 · 任何场景可调用」。定位区分：通用模块=现成脚本，阶段=战略打法；先定阶段策略，再从通用模块挑话术填空。
+
+**去品牌化铁律**：外部培训材料（如"起业云"代账培训）里的产品名/系统名/广告/联系方式一律剥离，话术适配成自己的公司口径（身份锚点/资质/年限），核心方法论保留。读者会顺着材料里的品牌名找到别家，等于给竞品导流。
+
+## 整合结果跨设备同步（GitHub）
+
+整合后要推到 GitHub 让其它电脑用。要点（详细命令见 `references/cross-device-sync-after-consolidation.md`）：
+
+1. 同步夹 skills 的 rsync **去 --delete**——被整合删除的源 skill 目录在同步夹里原样保留，git 不认为被删。**必须先手动 `rm -rf` 同步夹里的这些目录**，git 才会记录删除；新母skill 由 rsync 自动加入。
+2. sync_guard 的「缺失阻断」会因「git 有、本机缺被整合 skill」中止推送——这是**故意的删除**，按脚本提示 `export SYNC_GUARD_BYPASS=1` 放行（脚本明文支持故意删除场景）。
+3. git 会把内容相同的搬迁识别成 **rename**（旧 SKILL.md → 母skill references/xx），`git show --stat` 看到 rename 属正常。
+4. 验证删除是否真进 HEAD：**勿用 `git ls-files <路径>`**（对不存在路径也返回退出码 0，空输出照样成功，会误判"仍在"）。用 `git cat-file -e HEAD:<路径>`（存在才退出 0）。
+5. 验证远端：`git ls-remote origin main` 的 sha == 本地 HEAD sha，再告诉用户"已上 GitHub"；目标机跑「拉取.bat」即可获得整合结果（旧 skill 一并消失，正是想要的效果）。
+
 ## 坑
 
 - **并行执行读过期状态**：rm -rf 后在同一批并行调用里跑存在性检查，可能读到删除前的旧状态，误以为"文件被神秘恢复"（本次 3 个已删 skill 显示"仍存在"且 mtime 是旧时间戳 = 从未真删，是并行竞态）。**破坏性操作的存在性验证必须放独立的串行后续命令**，等几秒单独查一次。
 - **引用断链**：删源 skill 后，其它 skill 里指向它的引用会断。合并完全局 grep 旧 skill 名，把指向改到母skill。
 - **删源前务必保底**：reference 文件是内容资产，删 skill 前先确认全部复制进母skill；不确定就再多拷一遍，别省这一步。
+- **`git ls-files` 退出码陷阱**：`git ls-files <路径>` 对不存在的路径也返回退出码 0（空输出），用它验证"是否已从 git 移除"会误判"仍在"。改用 `git cat-file -e HEAD:<路径>` 或 `git ls-tree HEAD -- <路径>`。
 
 ## 验证
 

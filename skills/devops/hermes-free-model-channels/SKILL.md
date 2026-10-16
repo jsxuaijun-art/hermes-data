@@ -85,6 +85,45 @@ fallback_model:
 - 其他免费渠道（OpenRouter `:free`、NVIDIA NIM、HuggingFace、Novita）**全部要注册拿各自 key**，.env 没有就没法凭空配上；拿到 key 后按同一 dict 格式追加进链（顺序即优先级）。
 - 免费层服务端有波动（同模型偶发 `unavailable`），配置后仍需实测兜底是否真能出内容；对用户诚实说明「当前真正零key可用的只有这一条」。
 
+## 会话模型无视觉时的自动降级（auxiliary.vision）
+
+**症状**：`vision_analyze` 失败，报 `模型 'X' 不支持以下输入类型：image / does not accept input types: image`（HTTP 400）。
+根因是 `auxiliary.vision` 指向了**纯文本模型**（本机曾指到 chudian 的 `deepseek-v4-flash`）。
+
+**修法**：`auxiliary.vision` 是 config.yaml 里独立于主模型的辅助模型槽，指到一个视觉模型即自动降级，
+**不必更换主模型**：
+
+```bash
+cp ~/.hermes/config.yaml ~/.hermes/config.yaml.bak.$(date +%Y%m%d_%H%M%S)   # 先备份
+hermes config set auxiliary.vision.model Doubao-Seed-2.1-Pro
+hermes config set auxiliary.vision.base_url https://aigw.telecomjs.com/v1
+hermes config set auxiliary.vision.api_key '${TELECOM_DOUBAO_KEY}'
+```
+
+- `~/.hermes/config.yaml` **受保护**：agent 用 patch/write 直改会被拒（`Refusing to write to Hermes config file`），
+  **必须走 `hermes config set`**。命令成功会打印 `✓ Set auxiliary.vision.model = ... in ...`。
+- `auxiliary` 下同级的 title_generation / compression / embedding 各自可独立指不同渠道。
+
+**选渠道（按价格最低优先）——本机实测矩阵（telecom 网关 `https://aigw.telecomjs.com/v1`，2026.10.09）：**
+
+| 渠道 | key（.env 名） | 视觉 | 说明 |
+|---|---|---|---|
+| telecom 豆包 `Doubao-Seed-2.1-Pro` | `TELECOM_DOUBAO_KEY` | ✅ 实测读对随机码 | 用户跑短文案的廉价主力 → **视觉默认选它** |
+| telecom `kimi-k3` | `TELECOM_KIMI_KEY` | ✅ 实测读对随机码 | 长文主力，可作视觉备选 |
+| chudian `deepseek-v4-flash` | `DEEPSEEK_API_KEY` | ❌ HTTP 400 | 纯文本模型，配到 vision 必失败 |
+
+**验证铁律：必须用「已知答案」的图，否则无法区分「真看见」与「顺着提示词编」。**
+生成一张带随机码的图（如 `QX7-7271-<随机色>`）发给目标模型，读对才算通过。
+探针脚本：`scripts/vprobe.py`（本技能自带）。
+
+```bash
+python3 scripts/vprobe.py /tmp/vtest.png https://aigw.telecomjs.com/v1 TELECOM_DOUBAO_KEY Doubao-Seed-2.1-Pro
+# 输出 ANSWER: ... 读对图中随机码 = 视觉可用
+```
+
+**别被"模型名"骗**：同一网关下 kimi-k3、Doubao-Seed-2.1-Pro 实测都支持视觉，
+而 chudian 的 `deepseek-v4-flash` 明确拒图。一律实弹验证，不靠猜模型名。
+
 ## 改 config.yaml 两坑（实测踩过）
 
 1. **`yaml.dump` 写回会丢光原文件所有注释**——用户 config 注释宝贵，优先「精确定位、插入整块」的方式保注释；确需 dump 时先告知会丢注释。

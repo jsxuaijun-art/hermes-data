@@ -160,6 +160,7 @@ for k in ['ds','dspro','kimi','db']:
 ### 关键坑：UA 平台上直接抓不到 base_url —— 别浪费时间去逆向反爬
 
 - 某些平台（电信 token.telecomjs.com 实测）首页/子页**全程被反爬加密**：请求返回 `412`，body 是动态加密的 `$_ts.nsd`/`$_ts.cd` JS token，前端单页应用 body 为空，`curl -L` 拿到的全是 HTML 而非接口。**一个域名都探不到，`/v1/models`、`/api/models` 命中的全是 412 反爬页。**
+- **反爬的是「官网/控制台」，不是「API 端点」**（2026.9.22 实弹修正）：电信 TokenHub 的实际 API 域是 `aigw.telecomjs.com/v1`，可直接 curl POST 探测——不带 model → `400 model is required`；带无效 key → `401 Request denied by Key Auth check`；占位 key 拿到 401 就是端点活着且走标准 OpenAI 兼容鉴权。官网 412 只说明官网不可爬；**拿到 base_url 后立即对 API 端点本身实弹验证，别被官网 412 劝退成「必须人工去控制台」**。
 - **结论**：此类平台的 base_url 是**用户侧信息**，无法自主探测。**第 1~2 次探测不通就该停**，直接请用户登录平台控制台复制调用示例/API 文档地址，或贴出 base_url。把时间花在问用户上，不要反复枚举 `xxx.telecomjs.com/v1` 之类域名猜（不同平台 API 域可能跟官网域名完全无关）。
 - 兜底：可批量探测少量候选域名验证「哪些 412（是官网反爬）/哪些 000（无此域名）」，快速证明「猜不到」再转向问用户。实测 10 个候选域名全 412/000 即可确认必须问用户。
 
@@ -243,6 +244,9 @@ echo "$KEY" | grep -qE '^sk-[A-Za-z0-9]{8,}$' || echo "❌ 不是合法 key：$K
 - 控制台/官网列表显示 `DeepSeek_V4_Pro`、`KIMI-K3`（大写、下划线/连字符混合），**但 API 实际只认小写连字符 `deepseek-v4-pro`、`kimi-k3`**。用 UI 里的大写下划线调 `/v1/chat/completions` 会被拒。
 - 配 key 前先用一个 key 实测 `/v1/models` 或直接 `/v1/chat/completions` 定出**确切的 API 模型 ID 写法**，别照抄 UI 名。
 - 电信 `aigw.telecomjs.com/v1` 是 OpenAI 兼容端点；每个 key 只返回/允许它绑定的那一个模型（用 key A 查 `/v1/models` 看不到 key B 的模型是正常的）。
+- **401 Invalid credentials 在此域几乎总是「key 与请求模型不匹配」而非 key 本身坏**（2026.9.22 实弹确认）：每个 key 只绑一个模型，用豆包 key 请求 `deepseek-v3` → 401；同一把 key 换用户确认的模型名 `Doubao-Seed-2.1-Pro` → 200 正常出内容。**调试顺序：先用占位 key 试端点连通性（401=活着），再用真实 key + 用户确认的模型名试，最后才怀疑 key。不要因为一次 401 就让用户重发 key。**
+- **电信同时托管豆包**：`telecom-doubao/doubao-seed-2.1-pro`（key_env `TELECOM_DOUBAO_KEY`）。豆包不再是"无原生适配需自定义端点"——经电信走 OpenAI 兼容即可。模型 ID 大小写连字符版本 `Doubao-Seed-2.1-Pro` 与 UI 展示一致，**但配置里必须用准确大小写 `Doubao-Seed-2.1-Pro`（首字母大写）—— 2026.9.22 实弹推翻旧记录：全小写 `doubao-seed-2.1-pro` → HTTP 401 "Request denied by Key Auth check"（伪装成 key 失效，极易误判），大写 → 200；两次对照确认。****DeepSeek 电信版本的模型 ID 是 `deepseek-v4.1-flash-new`（带 `-new` 后缀），与 chudian 的 `deepseek-v4-flash` 不同**，配别名时别套用旧名。
+- **别名总表 2026.9.22 更新**：`db` 已从 chudian 的 `doubao-seed-2.1-turbo` 改指电信豆包 `telecom-doubao/doubao-seed-2.1-pro`（成为创作默认成稿模型）；`kimi`/`tcl` 均指 `telecom-kimi/kimi-k3`；`tds` 指 `telecom-deepseek-flash/deepseek-v4.1-flash-new`。同名模型仍保留 chudian 别名（ds/dspro）做双平台兜底。
 拖底容灾价值：同名模型（如 kimi-k3）可同时在 chudian + 电信各一个别名，一个平台 key 挂了另一个顶上。
 
 ### 3.x.3 ✅ 配置同步进 GitHub 的安全校验（多机复用前提）
@@ -267,6 +271,64 @@ grep -c "key_env" ~/.hermes/config.yaml   # 数引用数
 ```
 
 **git 同步审批注意（Hermes CLI）：** `cp + git add + git commit + git push` 一条命令组合会触发审批拦截（涉及 commit/覆盖 config）。**拆成：① 复制+commit（会要求用户批准 commit）② push 单独执行**。本会话第一次整条被 `BLOCKED`，拆分后 ① commit 批准成功 ② push 立即成功。
+
+## 3.x.4 创作/成稿默认模型路由（delegation 配默认 + 用户口头覆盖）
+
+用户诉求「文案创作默认用豆包，明说 Kimi 则用 Kimi」时，正确落位是 **delegation（子代理）默认模型 + 别名覆盖**，不是改主会话 `model.default`（主会话仍 deepseek 编排）：
+
+```bash
+# 成稿子代理默认 = 电信豆包
+hermes config set delegation.model   "Doubao-Seed-2.1-Pro"   # ⚠️ 大小写必须准确，全小写 → 401（见上）
+hermes config set delegation.provider "telecom-doubao"
+```
+
+- **主会话模型不动**（`model.default` 保持 deepseek 编排用），只改 `delegation.*`——这是"派出去写稿的模型"，与"编排的模型"解耦。
+- **用户明说「用 Kimi」= 覆盖项**：靠别名体系实现，`model.aliases.kimi`/`tcl` → `telecom-kimi/kimi-k3` 已配好，会话内 `/model kimi` 或口头指令即覆盖默认，不用改 config。
+- **规则固化进记忆**（用户口头约定属于长期行为，须写 memory 条目，让后续会话自动遵守默认+覆盖）。
+- 验证：`hermes config set` 后 `python3 -c "import yaml;c=yaml.safe_load(open('~/.hermes/config.yaml'));print(c['delegation'])"` 确认 model/provider 成对写上。
+- **坑**：`delegation.model` 只填裸模型名（不带 provider/ 前缀），provider 单独用 `delegation.provider` 声明——跟别名格式（provider/model）相反，别混。
+
+## 3.x.5 fallback_providers：多平台付费兜底链（主用欠费自动切、恢复自动回切）
+
+用户诉求「日常沿用现有 chudian 中转站，欠费/挂了自动切电信备用 key，充值成功再自动切回」时的正解。这是顶层根键 `fallback_providers`，与 legacy `fallback_model` 并列；两者同时存在时 **`fallback_providers` 优先**（源码 `get_fallback_chain` 合并时它排在前）。
+
+```yaml
+fallback_providers:
+  - provider: telecom-deepseek-flash
+    model: deepseek-v4.1-flash-new
+  - provider: telecom-doubao
+    model: Doubao-Seed-2.1-Pro
+  - provider: telecom-kimi
+    model: kimi-k3
+```
+
+值 = dict 列表，每项 `provider:`（+ 可选 `model:`）；按顺序逐个尝试，前一个失败自动切下一个。
+
+**配置命令 —— 空列表必须整段替换（点路径加不进去）：**
+
+```bash
+hermes config set fallback_providers '[{"provider":"telecom-deepseek-flash","model":"deepseek-v4.1-flash-new"},{"provider":"telecom-doubao","model":"Doubao-Seed-2.1-Pro"},{"provider":"telecom-kimi","model":"kimi-k3"}]'
+```
+
+- `set_config_value` 对非字符串型 key 会走 `_looks_structured_value` → `yaml.safe_load`，**JSON/YAML 字面量被解析成真 list/dict**（否则存成字符串，读取方 `isinstance(..., list)` 静默忽略 → 看着配了其实没生效）。传 JSON 数组即整体替换，比手改 yaml 安全（保注释、不触发写文件审批拦截）。
+- **别用 `fallback_providers.0.provider` 点路径** —— `_set_nested` 的列表索引要求元素已存在，空列表 `[]` 加不进去，必须整段替换。
+
+**排序原则：价格低 → 高（徐总 2026.9.22 定稿「以价格低为最优选」）。** 公开口径每百万 token（2026.9 估算，以实际账单为准）：
+
+| 模型 | 输入 | 输出 | 定位 |
+|---|---|---|---|
+| deepseek-v4-flash / v4.1-flash | ¥1 | ¥2 | 最便宜 → 兜底首选 |
+| deepseek-v4-pro | ¥3 | ¥6 | 中 |
+| Doubao-Seed-2.1-Pro | ~¥6 | ~¥30 | 明显贵 |
+| kimi-k3 | 高于 flash | | 最贵 → 最后兜底 |
+
+所以「主用 chudian → 电信 deepseek-flash → 豆包 → Kimi」既便宜又衔接最顺：第一层兜底是同款 deepseek，模型行为不突变。
+
+**自动回切（关键行为，源码已核）：** 主 provider 恢复后 Hermes **自动切回主用**，不需手工改回——`gateway/run.py` 的 `restore_primary_runtime`（turn-scoped）负责该生命周期；`_refresh_fallback_model` 每次 agent create/reuse 重读 config.yaml，所以**运行时改 `fallback_providers` 不需重启 gateway**（#60955）。但**已运行会话的链/环境可能仍是旧的**，稳妥做法：改完 `/reset` 或重启一次 Hermes。
+
+**验证（两侧都要做）：**
+1. 先 curl 主 provider 确认日常健康（正常时不该触发 fallback）。
+2. 再读 config 确认落盘：`python3 -c "import yaml;print(yaml.safe_load(open('<HERMES_HOME>/config.yaml'))['fallback_providers'])"`
 
 ## 4. 落地时先要齐这些输入（若仍需新增 key）
 

@@ -39,6 +39,8 @@ triggers:
 6. **创作模型 503 降级（2026.8.10 实测）**：kimi-k3 曾返回 `503 no_available_channel for model 'kimi-k3'`（服务商端渠道暂时无货，非配置问题）。处置：写个 probe 脚本逐一测试候选别名（kimi-k3 / kimi / moonshot-v1-8k / moonshot-v1-32k / kimi-k2 / deepseek-v4-flash），找到可用模型 → **降级用 deepseek 完成双段**（分析+创作同一模型），并在交付时明确告知用户"kimi 暂不可用，已用 deepseek 出稿，kimi 恢复可重跑对比"。kimi 是创作主选，恢复后优先重试。probe 脚本模式见 `scripts/probe_models.py`。
 7. **短视频脚本也走本流水线**：创作模式可切换为 shortvideo（输出：标题三件套+话题标签+完整口播文案+拍摄速查表），规则与交付格式（docx 放桌面）见 `short-video-copywriting` skill。
 8. **deepseek-v4-flash 对长提示词偶发返回空（0字符）**（2026.8.12 实测）：flash 对长分析提示词返回空响应，pro 正常。处置：探测到空输出 → 改用 `deepseek-v4-pro` 重跑分析（质量更高，6段式完整），交付时注明"flash 空响应已降级 pro"。属临时性问题，flash 短提示词仍可用；不要因为一次空响应就永久弃用 flash。
+9. **delegation 子代理 kimi-k3 可能返回 HTTP 401（授权无效）导致成稿为空**（2026.9.21 实测）：爆款写作默认派子代理（delegation.model pin 到 kimi-k3），子代理侧调用返回 401 无产出。**处置：不要重新派发，也不要卡在子代理上——素材/弹药已在主会话，直接主会话 deepseek 成稿**，交付时告知"kimi 通道 401 已用主会话出稿"。若频繁复现再排查该通道授权，别让一次 401 阻断整篇交付。
+10. **wenyan publish 的 cover 文件必须真实存在于服务器**（2026.9.21 实测）：frontmatter `cover: /tmp/xxx.jpg` 指向的文件不存在 → `Remote Publish Failed: ENOENT ... /tmp/xxx.jpg`，正文再完美也发不出去。即使某篇"不用配图"（用户要求跳过正文插图），**封面仍必需**：选一张全新贴题 Unsplash 直链（`w=400&q=60`）→ 本机 curl 下载 → scp 服务器 /tmp → `sed -i 's#cover: 旧#cover: 新#'` 文章文件 → 再 publish。
 
 ## 配图处理与发布前确认（用户指定图流程）
 
@@ -63,9 +65,54 @@ triggers:
 - 落款：苏州盈信企业管理有限公司 + 【关于苏州盈信】300字 GEO 段落 + CTA 互动（回复关键词引流）。
 - 字数 1200-1800，先扔炸弹（最大冲击数据/反差）再讲故事。
 
+## 电信智云 TokenHub 出稿 + 零成本一步核验（2026.9.22 新增）
+
+电信智云 TokenHub 是独立于 chudian 的电信端点。三把 key 已配入 config（`telecom-doubao`/`telecom-kimi`/`telecom-deepseek-flash` providers，key 在 `~/.hermes/.env` 的 `TELECOM_*` 变量）。封装脚本：`scripts/telecom_create.py`（纯标准库，零依赖）。
+
+**用法（出稿=核验，一次请求两件事，零额外token）：**
+```bash
+python telecom_create.py telecom-doubao Doubao-Seed-2.1-Pro /tmp/db_out.txt 素材.txt
+python telecom_create.py telecom-kimi kimi-k3 /tmp/kimi_out.txt 素材.txt
+```
+脚本出稿同时打印**同一响应的 model 字段**并比对 → `模型核验: ✅`。这就是"一步确认是哪家模型生成"的办法，不发额外请求、不消耗额外token。
+
+**"怎么确认是豆包生成的"三步核验法（用户 2026.9.22 提问）：**
+1. 读响应 JSON 顶层的 `model` 字段（服务器真实回显，随出稿响应附带，零成本）——最高可信
+2. 让模型自报家门（"你是谁/哪家公司"）——需额外发一次请求，消耗很少，仅确有必要时用
+3. 模型名大小写感知性（写错大小写报 401）——静态规则，零成本佐证网关确实按模型名路由
+
+**⚠️ 电信端点模型名大小写敏感（2026.9.22 实测，伪装成 401）：**
+- 豆包必须是 `Doubao-Seed-2.1-Pro`（首字母大写，不能全小写 `doubao-seed-2.1-pro`）
+- 模型名大小写不对 → 电信返回 **HTTP 401 "Request denied by Key Auth check"**（伪装成鉴权失败，实际是模型标识未识别），极易误判成 key 失效
+- kimi=`kimi-k3`、deepseek=`deepseek-v4.1-flash-new`（实测 200 正确）
+- `delegation.model` 若写成全小写豆包，委托子代理会 401——必须用准确大小写
+
+**⚠️ 当前会话进程不加载新写入 .env 的 key：** 新 key 加进 `.env` 后，**已运行的 Hermes 会话不会自动读取**（子代理继承的是启动时 os.environ），委托子代理会因空 key 报 401。需重启 Hermes 会话（`/reset` 或退出重进）才生效。curl/独立脚本直连不受影响（每次新读 .env）。
+
+## 模型路由规则（2026.9.22 徐总定稿，固化免手切）
+
+- **所有短文案 / 短视频 → 默认豆包** `telecom-doubao` / `Doubao-Seed-2.1-Pro`
+- **徐总点名"用 Kimi" → 覆盖为** `telecom-kimi` / `kimi-k3`（不再用豆包）
+- **爆款长文 / 公众号长文 → 仍默认 Kimi**（`kimi-k3`），且**主动提示徐总"本条使用了 Kimi"**
+- 主会话 deepseek-v4-flash 做编排/采集/验证，子代理负责成稿；config `delegation.model` 一行换模型
+- 出稿用 `scripts/telecom_create.py`（出稿即零成本核验回显 model 字段）
+
+## 交付格式铁律 + 方向不漂移（2026.9.22 徐总纠正）
+
+1. **任何交付必带「标题三件套（主标题/副标题/引流标题）+ 话题标签 8 个」**，一个都不能省。
+2. **多平台版每一版都要独立带标题+话题**（抖音口播版 / 小红书版 / 朋友圈版各自都要有）——**只给正文 = 交付不完整**（本次被徐总退回）。
+3. **偏离原方向 = 失败**：改写/扩写/多平台化时，**必须保持用户给定素材的方向、角度、人物身份视角**。本次教训：用户原话是"做公司注册会计服务的、周六加了香港供应商微信"（内地经营者视角），多平台版却写成"在香港待了 3 年"的港漂口吻，主角身份被换掉 → 方向跑偏被退回。改写可换措辞、换结构、换平台，但**落点、立场、叙述者身份不能动**。
+4. 用户点名要"标题和话题"时，**直接在对话里输出**，不必重新调 API / 重新生成全文（省 token）。
+
+## 工作方式偏好（2026.9.22 徐总纠正）
+
+- **少请示、按既定流程走**：能按既定流程/默认决定的事，**直接做，不要每条都反复请示确认**。原话：「如果我不想商讨，你就直接开始按照既定流程开始工作。」反对"堆问题/列选项/请示式追问"；需要徐总拍板的**只有真正的分叉点**（角度落点、是否关联业务），其余用默认值推进。
+- **创作前段商讨环节（可跳过）**：默认可在成稿前把「黄金三秒钩子 2-3 个备选 + 文案框架/落点」摆给徐总拍板，再出全文；徐总说"直接出/不用商量"→ 立即跳过。商讨在**主会话**进行（**派子代理之前**），方向确认后再派子代理成稿——避免子代理白写方向、省 token。
+
 ## 支持文件
 
 - `scripts/llm_pipeline.py` — 双模型流水线脚本：`python llm_pipeline.py <模型> <输出文件> analyze|create`。analyze 模式自带 6 段式分析提示词；create 模式自带公众号规范提示词并自动读入分析结果。
+- `scripts/telecom_create.py` — 电信智云 TokenHub 出稿脚本（纯标准库零依赖），出稿即零成本核验（打印服务器回显 model 字段）；支持豆包/Kimi/deepseek 电信 provider + `.env` 自动读 key
 - `scripts/probe_models.py` — 模型可用性探测：kimi 等别名 503 时运行，列出当前可用的别名，决定降级路径（见陷阱6）。
 - `references/production-case-个体户补税半个亿-金伯爵金店.md` — 2026.8.10 太仓金伯爵首饰店偷税案全案素材：核心数据、反差公式、已验证的40秒短视频脚本、5个复用角度。同类稽查公告可参照此格式沉淀案例。
 - `references/wenyan-publish-ops.md` — wenyan 发布实操定稿：CLI 只在服务器（本机无）、rsync 传 md → ssh 上跑 publish 的完整链路、02 红蓝撞色 recolor 配方、Media ID 交付。

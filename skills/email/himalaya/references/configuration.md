@@ -139,18 +139,10 @@ folder.aliases.drafts = "Drafts"
 folder.aliases.trash = "Trash"
 ```
 
-<<<<<<< LOCAL (this PC)
-Map custom folder names:
-=======
 The equivalent TOML sub-section form also works in v1.2.0:
->>>>>>> REPO (github)
 
 ```toml
-<<<<<<< LOCAL (this PC)
-[accounts.default.folder.alias]
-=======
 [accounts.default.folder.aliases]
->>>>>>> REPO (github)
 inbox = "INBOX"
 sent = "Sent"
 drafts = "Drafts"

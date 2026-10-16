@@ -1,10 +1,6 @@
 ---
 name: linear
-<<<<<<< LOCAL (this PC)
-description: Manage Linear issues, projects, and teams via the GraphQL API. Create, update, search, and organize issues. Uses API key auth (no OAuth needed). All operations via curl — no dependencies.
-=======
 description: "Linear: manage issues, projects, teams via GraphQL + curl."
->>>>>>> REPO (github)
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -23,11 +19,7 @@ Manage Linear issues, projects, and teams directly via the GraphQL API using `cu
 
 ## Setup
 
-<<<<<<< LOCAL (this PC)
-1. Get a personal API key from **Linear Settings > API > Personal API keys**
-=======
 1. Get a personal API key from **Linear Settings > Account > Security & access > Personal API keys** (URL: https://linear.app/settings/account/security). Note: the org-level *Settings > API* page only shows OAuth apps and workspace-member keys, not personal keys.
->>>>>>> REPO (github)
 2. Set `LINEAR_API_KEY` in your environment (via `hermes setup` or your env config)
 
 ## API Basics

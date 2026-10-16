@@ -1,13 +1,8 @@
 ---
 name: comfyui
 description: "Generate images, video, and audio with ComfyUI — install, launch, manage nodes/models, run workflows with parameter injection. Uses the official comfy-cli for lifecycle and direct REST/WebSocket API for execution."
-<<<<<<< LOCAL (this PC)
-version: 5.0.0
-author: [kshitijk4poor, alt-glitch]
-=======
 version: 5.1.0
 author: [kshitijk4poor, alt-glitch, purzbeats]
->>>>>>> REPO (github)
 license: MIT
 platforms: [macos, linux, windows]
 compatibility: "Requires ComfyUI (local, Comfy Desktop, or Comfy Cloud) and comfy-cli (auto-installed via pipx/uvx by the setup script)."

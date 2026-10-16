@@ -1,11 +1,7 @@
 ---
 name: obsidian
-<<<<<<< LOCAL (this PC)
-description: Read, search, and create notes in the Obsidian vault.
-=======
 description: Read, search, create, and edit notes in the Obsidian vault.
 platforms: [linux, macos, windows]
->>>>>>> REPO (github)
 ---
 
 # Obsidian Vault (第二知识库)
@@ -14,15 +10,8 @@ Use this skill for filesystem-first Obsidian vault work: reading notes, listing 
 
 ## Vault architecture (双库模型 — 2026-08 确立)
 
-<<<<<<< LOCAL (this PC)
-# Obsidian Vault
-=======
 Obsidian 知识库是 Hermes 的**第二知识库**（第一是 `~/.hermes/` 内存 + hermes-data GitHub 仓库），跨 Codex/Hermes/Claude Code/WorkBuddy 多助手共享。采用**两个 vault + 一个 git 引擎**：
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-**Location:** Set via `OBSIDIAN_VAULT_PATH` environment variable (e.g. in `~/.hermes/.env`).
-=======
 ```
 [D盘 /mnt/d/obsidian-vault]   ← Obsidian 桌面端实时读写的主库(人类+各助手日常使用)
         │  rsync (D盘→WSL, --delete, 引擎镜像)
@@ -32,47 +21,22 @@ Obsidian 知识库是 Hermes 的**第二知识库**（第一是 `~/.hermes/` 内
         ▼
 [GitHub obsidian-vault]        ← 云端备份 / 跨设备拉取源
 ```
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-If unset, defaults to `~/Documents/Obsidian Vault`.
-=======
 - **D盘 vault** = Obsidian 桌面端实际打开、人类和所有 AI 助手日常读写的主库。
 - **WSL vault** (`OBSIDIAN_VAULT_PATH`, 见 `~/.hermes/.env`) = 从 D盘 单向 rsync 过来的 git 引擎镜像。不要在 D盘 上直接跑 git rebase/merge（9pfs 跨文件系统会卡死或用分钟级超时，见 Pitfalls）。
 - **Hermes-Only 快照区** `_AI-Private/Hermes-Only/` 存放 Hermes 人设/记忆/技能快照，由 `~/.hermes/scripts/hermes_only_snapshot.sh` 生成。
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-Note: Vault paths may contain spaces - always quote them.
-=======
 ### 统一同步脚本
->>>>>>> REPO (github)
-
-<<<<<<< LOCAL (this PC)
-## Read a note
-=======
-> **本机（dmin 这台）实际方案：跨机同步脚本已换用 `~/obsidian-vault-sync.sh`**，正式接入了 Obsidian Vault 的独立 git 引擎 `~/obsidian-vault`（remote=jsxuaijun-art/obsidian-vault.git）。每日 12:28 由 cron「Obsidian Vault·每日归档同步」自动执行。
->>>>>>> REPO (github)
 
 ```bash
-<<<<<<< LOCAL (this PC)
-VAULT="${OBSIDIAN_VAULT_PATH:-$HOME/Documents/Obsidian Vault}"
-cat "$VAULT/Note Name.md"
-=======
-~/obsidian-vault-sync.sh            # 完整: rsync(D盘→引擎) + git commit + push
-~/obsidian-vault-sync.sh snapshot   # 只 rsync 备份(不push)
-~/obsidian-vault-sync.sh push       # 只 git commit + push
->>>>>>> REPO (github)
+~/.hermes/scripts/obsidian_sync.sh            # 完整双通道: 快照→rsync→git→push
+~/.hermes/scripts/obsidian_sync.sh snapshot   # 只做 Hermes-Only 快照 + rsync
+~/.hermes/scripts/obsidian_sync.sh push       # 只做 git commit + push
 ```
 
-**要点：**
-- 脚本默认：`DVault=/mnt/d/obsidian-vault`（Obsidian 主库）、`Engine=$HOME/obsidian-vault`（WSL git 引擎）、`Remote=git@github.com:jsxuaijun-art/obsidian-vault.git`
-- push 前 `git fetch --depth 1 --filter=blob:none`（秒级拿远端 tree），再 rebase；冲突时 **WorkBuddy 文件取远端、Hermes/Obsidian 配置取本地**
-- 大仓库网络坑：全量 fetch/clone 会反复 exit 124（pack 卡死），用 `--filter=blob:none` 秒拿 tree 即可
+Hermes 文件更新后，除了推 `hermes-data` GitHub 仓库，还要跑 `obsidian_sync.sh` 备份到 Obsidian 并推 `obsidian-vault` 仓库。
 
-Hermes 文件更新后，除了推 `hermes-data` GitHub 仓库，还要跑 `obsidian-vault-sync.sh` 备份到 Obsidian 并推 `obsidian-vault` 仓库。
-
-> 双库架构的完整落地记录见 `references/dual-vault-sync-setup.md`。
+> 双库架构的完整落地记录（合并过程、脚本内容、git 对齐序列、cron 待办）见 `references/dual-vault-sync-setup.md`。
 
 ### 目录结构
 
@@ -87,8 +51,9 @@ Hermes 文件更新后，除了推 `hermes-data` GitHub 仓库，还要跑 `obsi
 ## Vault path
 
 D 盘主库绝对路径：`/mnt/d/obsidian-vault/`（Obsidian 桌面端打开的就是这个）。
-WSL git 引擎路径：**本机（dmin）为 `~/obsidian-vault`**（remote=jsxuaijun-art/obsidian-vault.git）；旧文档里的 `/home/administrator/hermes-agent/obsidian-vault` 是另一台机（administrator）的路径，本机不用。
-（`.env` 里的 `OBSIDIAN_VAULT_PATH=/mnt/d/ObsidianVault` 是失效旧路径，勿用。）
+WSL git 引擎路径：`/home/administrator/hermes-agent/obsidian-vault/`（即 `OBSIDIAN_VAULT_PATH`）。
+
+File tools do not expand shell variables. Always resolve the vault path first and pass a concrete absolute path.
 
 > 注意：D盘 vault 和 WSL vault 在正常情况下内容应一致（D盘→WSL 单向 rsync）。不要以 WSL vault 为准反过来覆盖 D盘——D盘是 Obsidian 实时编辑的主库。
 
@@ -107,32 +72,17 @@ Use `search_files` with `target: "files"` and the resolved vault path.
 
 Use `search_files` for both filename and content searches.
 
-<<<<<<< LOCAL (this PC)
-```bash
-VAULT="${OBSIDIAN_VAULT_PATH:-$HOME/Documents/Obsidian Vault}"
-=======
 - For filenames, use `search_files` with `target: "files"` and a filename `pattern`.
 - For note contents, use `search_files` with `target: "content"`, the content regex as `pattern`, and `file_glob: "*.md"`.
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# All notes
-find "$VAULT" -name "*.md" -type f
-=======
 ## Create a note
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# In a specific folder
-ls "$VAULT/Subfolder/"
-=======
 Use `write_file` with the resolved absolute path. Include any wiki links to related notes.
 Always add frontmatter with relevant tags, e.g.:
 ```yaml
 ---
 tags: [抖音, 运营规则, 短视频]
 ---
->>>>>>> REPO (github)
 ```
 
 ## Append to a note
@@ -201,52 +151,23 @@ rebase 到主库时 `.gitignore` 常出 add/add 或 content 冲突（两边都�
 3. 根治：`.gitignore` 排除 `dist/`、`*.exe`、大 `*.pdf`，并 `git rm --cached` 已跟踪的大文件（工作区文件保留）。同步脚本 `hermes_only_snapshot.sh` 的 skills rsync 也要加 `--exclude='dist/' --exclude='*.exe'`，否则下次快照又把 dist 加回来。
 4. 移出大文件后若 `.git` 历史对象仍残留（`filter-branch`/`filter-repo`），可重建干净仓库（孤儿分支或重 init）。
 
-<<<<<<< LOCAL (this PC)
-## Search
-=======
 ### P13 每日归档 cron 任务：subagent 同步后必须 parent 自行验证 HEAD 一致性
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-```bash
-VAULT="${OBSIDIAN_VAULT_PATH:-$HOME/Documents/Obsidian Vault}"
-=======
 **场景**：每日归档 cron 任务中，创建日记/更新索引后调用 `obsidian_sync.sh` 时，可能委托给 subagent 执行同步。
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# By filename
-find "$VAULT" -name "*.md" -iname "*keyword*"
-=======
 **陷阱**：subagent 自报告 `exit=0` 和「推送成功」**不可靠**。本 session 实战中，subagent 声称推送成功，但 parent 验证后发现：
 - 本地 HEAD `0bb4297`，远端 HEAD `02c50e8`（不匹配）
 - 远端有 2 个来自其他助手（Codex 等）的每周复盘提交
 - 本地新创建的日记文件和索引更新尚未被 subagent 的提交覆盖
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-# By content
-grep -rli "keyword" "$VAULT" --include="*.md"
-```
-=======
 **根因**：
 1. **subagent 自报告不可靠**：subagent 可能把脚本的 `exit=0`（脚本本身无错误）误读为「push 成功」，但实际 push 可能因远端领先而被拒绝（脚本内部静默处理了失败）
 2. **远端已被其他助手领先**：另一个助手在本地 cron 运行期间向 GitHub 推了新提交，导致 `git push` 报 `[rejected] (fetch first)`
 3. **新文件可能未提交**：subagent 的 git 状态与 parent 不同步，新创建的日记文件可能未被 subagent 的 `git add -A` 捕捉
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-## Create a note
-=======
 **解法**：parent 在 subagent 同步后必须自行验证 + 修复：
->>>>>>> REPO (github)
 
 ```bash
-<<<<<<< LOCAL (this PC)
-VAULT="${OBSIDIAN_VAULT_PATH:-$HOME/Documents/Obsidian Vault}"
-cat > "$VAULT/New Note.md" << 'ENDNOTE'
-# Title
-=======
 cd /home/administrator/hermes-agent/obsidian-vault
 # 1. 验证
 LOCAL=$(git rev-parse HEAD)
@@ -270,34 +191,18 @@ fi
 ```
 
 **典型场景**：远端领先的提交通常是其他助手（如 Codex）的每周复盘/归档，与日记文件所在路径不重叠，rebase 通常顺利通过。本 session 实战中本地 `0bb4297` → 远端 `02c50e8`（2 个每周复盘提交），rebase 无冲突，推送后 HEAD `d5e582e` 一致。
->>>>>>> REPO (github)
 
-<<<<<<< LOCAL (this PC)
-Content here.
-ENDNOTE
-=======
 **WorkBuddy 领先 7 提交的 add/add 冲突实战（2026-08-06）**：远端被其他助手（WorkBuddy 自己的每日/每周归档）领先了 7 个提交，`git rebase origin/main` 时在**非 Hermes 文件**上出 add/add 冲突：
 ```
 CONFLICT (add/add): .workbuddy/automations/automation-*/memory.md
 CONFLICT (add/add): .workbuddy/memory/2026-08-03.md / 2026-08-06.md
 CONFLICT (add/add): _AI-Private/WorkBuddy-Only/daily/2026-08-02/05/06.md
 CONFLICT (add/add): _AI-Private/WorkBuddy-Only/weekly/2026-W32.md
->>>>>>> REPO (github)
 ```
 **根因**：Hermes 引擎 rsync 镜像会把 WorkBuddy-Only 区一并拉到本地，本地 sync 提交"顺带"带着这些文件的旧快照，与远端 WorkBuddy 新提交撞车。
 
-<<<<<<< LOCAL (this PC)
-## Append to a note
-
-=======
 **解法（保持远端 WorkBuddy 版本为权威）**：
->>>>>>> REPO (github)
 ```bash
-<<<<<<< LOCAL (this PC)
-VAULT="${OBSIDIAN_VAULT_PATH:-$HOME/Documents/Obsidian Vault}"
-echo "
-New content here." >> "$VAULT/Existing Note.md"
-=======
 cd /home/administrator/hermes-agent/obsidian-vault
 git fetch origin && git rebase origin/main
 # 冲突文件全部是 WorkBuddy 属文件（不是 Hermes 内容），rebase 期间 --ours=被 rebase 到的 origin/main
@@ -308,14 +213,21 @@ GIT_EDITOR=true git rebase --continue         # 接受默认提交信息，避�
 git push origin main
 # 验证
 [ "$(git rev-parse HEAD)" = "$(git ls-remote origin main | awk '{print $1}')" ] && echo SYNCED
->>>>>>> REPO (github)
 ```
 判断依据：冲突涉及 **`--ours`（保留 rebase 目标=远端新版本）**。Hermes 的日记/索引文件在冲突之外，rebase 后自动保留。若冲突出现在 Hermes-Only 自主文件，才需人工判断合并。**应判断"冲突文件属于谁"**：非本助手（WorkBuddy/其他助手-Only）的文件一律 `--ours` 取远端，本助手自主文件才逐条合并。
 
-<<<<<<< LOCAL (this PC)
-## Wikilinks
-
-Obsidian links notes with `[[Note Name]]` syntax. When creating notes, use these to link related content.
-=======
 **注意**：subagent 委托同步时，上述验证逻辑必须在 parent 用 `execute_code` 中通过 `subprocess` 执行，不能再次委托给 subagent。`obsidian_sync.sh` 脚本本身无问题，问题是 subagent 自报告不可靠。
->>>>>>> REPO (github)
+
+### P15 日记/周报出现空档期（多日/多周无新文件）→ 先查 gateway 与 cron 调度器存活，再归因内容缺失
+
+**场景**：每日归档 cron 应每天产日记，但某段时间（如 2026-09 整月）`projects/日记/` 一直停在旧日期，无 9 月文件。
+
+**常见误判**：以为"那个月没活动/没内容"或"内容被 rsync 冲掉了"。实际根因可能是**调度器压根没在跑**。
+
+**诊断顺序**：
+1. `session_search` 看目标日期的会话——若全是 `cron_*` 自身任务、无独立用户 cli 会话，别急着定论"今日无活动"。
+2. 交叉验证 WSL 引擎与 D盘主库 `projects/日记/` 目录——两边都停在同一天 = 不是 rsync 冲掉，而是这个 cron 长期没执行。
+3. **查 gateway 健康**：`systemctl --user status hermes-gateway` 看重启计数；`journalctl --user -u hermes-gateway` 找 `ImportError`。2026-09 实战根因：`cron/scheduler_provider.py` 缺 `scheduler_for_profile_mode` → gateway 每次启动崩、systemd 崩溃重启 4234 次 → cron 调度器根本没 run → 每日归档/周报全部哑火。
+4. 修复并重启后，**归档 cron 自身能准点触发本身就是修复生效的端到端验证**，可直接写进当日日记。
+
+**原则**：归档链路是"有则归因、无则先查调度器存活"。空档期优先怀疑 gateway/cron 基础设施，而非内容缺失。

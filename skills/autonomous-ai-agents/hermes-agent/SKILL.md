@@ -1,12 +1,7 @@
 ---
 name: hermes-agent
-<<<<<<< LOCAL (this PC)
-description: Complete guide to using and extending Hermes Agent — CLI usage, setup, configuration, spawning additional agents, gateway platforms, skills, voice, tools, profiles, and a concise contributor reference. Load this skill when helping users configure Hermes, troubleshoot issues, spawn agent instances, or make code contributions.
-version: 2.0.0
-=======
 description: "Configure, extend, or contribute to Hermes Agent."
 version: 2.1.0
->>>>>>> REPO (github)
 author: Hermes Agent + Teknium
 license: MIT
 metadata:
@@ -120,11 +115,7 @@ hermes tools disable NAME   Disable a toolset
 
 hermes skills list          List installed skills
 hermes skills search QUERY  Search the skills hub
-<<<<<<< LOCAL (this PC)
-hermes skills install ID    Install a skill
-=======
 hermes skills install ID    Install a skill (ID can be a hub identifier OR a direct https://…/SKILL.md URL; pass --name to override when frontmatter has no name)
->>>>>>> REPO (github)
 hermes skills inspect ID    Preview without installing
 hermes skills config        Enable/disable skills per platform
 hermes skills check         Check for updates
@@ -257,7 +248,6 @@ Type these during an interactive chat session.
 ```
 /config              Show config (CLI)
 /model [name]        Show or change model
-/provider            Show provider info
 /personality [name]  Set personality
 /reasoning [level]   Set reasoning (none|minimal|low|medium|high|xhigh|show|hide)
 /verbose             Cycle: off → new → all → verbose
@@ -291,7 +281,6 @@ Type these during an interactive chat session.
 ### Utility
 ```
 /branch (/fork)      Branch the current session
-/btw                 Ephemeral side question (doesn't interrupt main task)
 /fast                Toggle priority/fast processing
 /browser             Open CDP browser connection
 /history             Show conversation history (CLI)
@@ -347,7 +336,6 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | `memory` | `memory_enabled`, `user_profile_enabled`, `provider` |
 | `security` | `tirith_enabled`, `website_blocklist` |
 | `delegation` | `model`, `provider`, `base_url`, `api_key`, `max_iterations` (50), `reasoning_effort` |
-| `smart_model_routing` | `enabled`, `cheap_model` |
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 
 Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
@@ -736,7 +724,6 @@ Note: This patch lives in `site-packages/` and will be overwritten on `pip insta
 | Gateway logs | `~/.hermes/logs/gateway.log` |
 | Session files | `~/.hermes/sessions/` or `hermes sessions browse` |
 | Source code | `~/.hermes/hermes-agent/` |
-| Session content retrieval (FTS5 fallback) | `references/session-content-fallback-retrieval.md` — use `search_files` on raw JSON when `session_search` returns nothing |
 
 ---
 

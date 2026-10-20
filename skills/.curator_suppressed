@@ -5,11 +5,24 @@ architecture-diagram
 arxiv
 ascii-art
 ascii-video
+<<<<<<< Updated upstream
+=======
+audiocraft-audio-generation
+autonomous-coding-agents
+axolotl
+>>>>>>> Stashed changes
 baoyu-infographic
 blogwatcher
 claude-design
 codebase-inspection
 comfyui
+<<<<<<< Updated upstream
+=======
+coze-agent-engineering
+coze-tax-agent-prompt
+debugging-hermes-tui-commands
+decision-tripwires
+>>>>>>> Stashed changes
 design-md
 dogfood
 evaluating-llms-harness
@@ -18,30 +31,58 @@ findmy
 gif-search
 google-workspace
 hermes-agent-skill-authoring
+hermes-s6-container-supervision
+himalaya
 huggingface-hub
 imessage
 llama-cpp
 llm-wiki
+making-decisions
 manim-video
 maps
 nano-pdf
+native-mcp
 node-inspect-debugger
 notion
 openhue
 p5js
+<<<<<<< Updated upstream
+=======
+peng-accounting-douyin-style
+polymarket
+>>>>>>> Stashed changes
 popular-web-designs
 powerpoint
 pretext
 python-debugpy
+reality-testing-decisions
 requesting-code-review
 research-paper-writing
+<<<<<<< Updated upstream
+=======
+seeking-disconfirming-evidence
+segment-anything-model
+>>>>>>> Stashed changes
 serving-llms-vllm
+short-video-industry-flow
 sketch
 songsee
 songwriting-and-ai-music
 spike
+subagent-driven-development
 systematic-debugging
+tax-incentive-policy
+teams-meeting-pipeline
 test-driven-development
 touchdesigner-mcp
+<<<<<<< Updated upstream
+=======
+unsloth
+vocab-memory-book
+webhook-subscriptions
+website-content-editing
+>>>>>>> Stashed changes
 weights-and-biases
+writing-plans
 xurl
+youtube-content

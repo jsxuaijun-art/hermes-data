@@ -23,9 +23,15 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "active",
     "use_count": 14,
     "view_count": 14
+=======
+    "state": "stale",
+    "use_count": 11,
+    "view_count": 11
+>>>>>>> Stashed changes
   },
   "apple-notes": {
     "archived_at": "2026-09-20T13:17:28.375056+00:00",
@@ -119,7 +125,7 @@
     "view_count": 0
   },
   "autonomous-coding-agents": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:11.762309+00:00",
     "created_at": "2026-06-07T06:58:30.297368+00:00",
     "created_by": null,
     "last_patched_at": "2026-06-07T06:58:59.593943+00:00",
@@ -127,7 +133,7 @@
     "last_viewed_at": "2026-07-01T14:57:27.511050+00:00",
     "patch_count": 3,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 2,
     "view_count": 2
   },
@@ -144,14 +150,14 @@
     "view_count": 2
   },
   "axolotl": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:11.874807+00:00",
     "created_at": "2026-06-30T10:19:35.776234+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:19:35.787934+00:00",
     "last_viewed_at": "2026-06-30T10:19:35.776257+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 1,
     "view_count": 1
   },
@@ -227,7 +233,7 @@
     "view_count": 0
   },
   "china-email-setup": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:12.060554+00:00",
     "created_at": "2026-08-02T07:56:50.159150+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-08-23T01:07:10.229921+00:00",
@@ -235,9 +241,15 @@
     "last_viewed_at": "2026-09-27T02:31:51.900461+00:00",
     "patch_count": 22,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "active",
     "use_count": 15,
     "view_count": 16
+=======
+    "state": "archived",
+    "use_count": 11,
+    "view_count": 12
+>>>>>>> Stashed changes
   },
   "china-tax-compliance": {
     "archived_at": null,
@@ -247,9 +259,45 @@
     "last_viewed_at": "2026-08-06T13:01:41.289396+00:00",
     "patch_count": 0,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "stale",
     "use_count": 2,
     "view_count": 2
+=======
+    "state": "active",
+    "use_count": 4,
+    "view_count": 4
+  },
+  "chinese-accounting-format-conversion": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:26.699209+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+  "chinese-exam-preparation": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:26.715936+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+>>>>>>> Stashed changes
   },
   "chinese-legal-research": {
     "archived_at": null,
@@ -288,7 +336,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -372,7 +420,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -390,7 +438,7 @@
     "view_count": 1
   },
   "company-deregistration": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:12.454977+00:00",
     "created_at": "2026-08-06T13:02:16.813852+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-08-06T14:31:44.220328+00:00",
@@ -398,7 +446,7 @@
     "last_viewed_at": "2026-08-12T09:18:51.888465+00:00",
     "patch_count": 21,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 10,
     "view_count": 10
   },
@@ -426,7 +474,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -473,14 +521,14 @@
     "view_count": 1
   },
   "coze-tax-agent-prompt": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:12.513116+00:00",
     "created_at": "2026-06-30T10:15:26.813510+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:18:32.580285+00:00",
     "last_viewed_at": "2026-06-30T10:18:32.546280+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 2,
     "view_count": 2
   },
@@ -538,7 +586,7 @@
     "view_count": 1
   },
   "debugging-hermes-tui-commands": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:12.634338+00:00",
     "created_at": "2026-06-07T07:03:39.787277+00:00",
     "created_by": null,
     "last_patched_at": null,
@@ -546,19 +594,19 @@
     "last_viewed_at": "2026-06-30T10:20:47.546349+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 2,
     "view_count": 3
   },
   "decision-tripwires": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:12.743402+00:00",
     "created_at": "2026-06-30T10:14:03.636196+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:14:03.672027+00:00",
     "last_viewed_at": "2026-06-30T10:14:03.636232+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 1,
     "view_count": 1
   },
@@ -576,7 +624,7 @@
     "view_count": 1
   },
   "document-rendering-verification": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:12.998457+00:00",
     "created_at": "2026-08-09T01:42:50.775680+00:00",
     "created_by": "agent",
     "last_patched_at": null,
@@ -584,7 +632,7 @@
     "last_viewed_at": null,
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 0,
     "view_count": 0
   },
@@ -640,6 +688,7 @@
     "last_viewed_at": "2026-08-12T12:54:57.973807+00:00",
     "patch_count": 14,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "stale",
     "use_count": 13,
     "view_count": 13
@@ -655,6 +704,11 @@
     "state": "active",
     "use_count": 2,
     "view_count": 2
+=======
+    "state": "active",
+    "use_count": 19,
+    "view_count": 19
+>>>>>>> Stashed changes
   },
   "english-learning": {
     "archived_at": null,
@@ -669,6 +723,39 @@
     "use_count": 25,
     "view_count": 25
   },
+<<<<<<< Updated upstream
+=======
+  "enterprise-diagnostic": {
+    "archived_at": null,
+    "created_at": "2026-09-04T07:03:28.548064+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": "2026-09-04T08:02:09.617118+00:00",
+    "last_viewed_at": "2026-09-04T08:02:09.547460+00:00",
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "active",
+    "use_count": 2,
+    "view_count": 2
+  },
+  "equity-architecture-guide": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:27.131599+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "evaluating-llms-harness": {
     "archived_at": "2026-09-20T13:17:29.926603+00:00",
     "created_at": "2026-06-07T06:48:44.914703+00:00",
@@ -721,6 +808,24 @@
     "use_count": 0,
     "view_count": 0
   },
+<<<<<<< Updated upstream
+=======
+  "fine-tuning-with-trl": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:27.337443+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "ftp-static-site-editing": {
     "archived_at": null,
     "created_at": "2026-06-30T10:14:48.235334+00:00",
@@ -750,13 +855,25 @@
     "created_at": "2026-07-25T15:23:24.111518+00:00",
     "created_by": null,
     "last_patched_at": null,
+<<<<<<< Updated upstream
     "last_used_at": "2026-08-11T14:11:41.820143+00:00",
     "last_viewed_at": "2026-08-11T14:11:41.812504+00:00",
+=======
+    "last_reused_patch_generation": 0,
+    "last_used_at": "2026-09-29T06:16:28.818301+00:00",
+    "last_viewed_at": "2026-09-29T06:16:28.786506+00:00",
+>>>>>>> Stashed changes
     "patch_count": 0,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "stale",
     "use_count": 3,
     "view_count": 3
+=======
+    "state": "active",
+    "use_count": 5,
+    "view_count": 5
+>>>>>>> Stashed changes
   },
   "gif-search": {
     "archived_at": "2026-09-20T13:17:30.245550+00:00",
@@ -795,7 +912,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -825,7 +942,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -840,7 +957,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -855,7 +972,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -885,7 +1002,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -941,7 +1058,7 @@
     "view_count": 1
   },
   "h5-lead-capture": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:13.382112+00:00",
     "created_at": "2026-08-17T13:56:10.674246+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-08-17T13:56:26.556628+00:00",
@@ -949,6 +1066,24 @@
     "last_viewed_at": null,
     "patch_count": 1,
     "pinned": false,
+<<<<<<< Updated upstream
+=======
+    "state": "archived",
+    "use_count": 0,
+    "view_count": 0
+  },
+  "health-record": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:27.808418+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+>>>>>>> Stashed changes
     "state": "stale",
     "use_count": 0,
     "view_count": 0
@@ -967,7 +1102,7 @@
     "view_count": 1
   },
   "hermes-15-level-upgrade": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:13.550601+00:00",
     "created_at": "2026-08-02T07:35:38.211530+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-08-03T13:22:48.984842+00:00",
@@ -975,7 +1110,7 @@
     "last_viewed_at": "2026-08-03T13:22:22.571581+00:00",
     "patch_count": 7,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 5,
     "view_count": 5
   },
@@ -1041,6 +1176,7 @@
     "archived_at": null,
     "created_at": "2026-06-30T09:55:27.541611+00:00",
     "created_by": null,
+<<<<<<< Updated upstream
     "last_patched_at": "2026-08-09T14:10:06.205874+00:00",
     "last_reused_patch_generation": 0,
     "last_used_at": "2026-09-27T02:52:45.520158+00:00",
@@ -1051,6 +1187,33 @@
     "state": "active",
     "use_count": 34,
     "view_count": 34
+=======
+    "last_patched_at": "2026-09-22T10:10:21.337061+00:00",
+    "last_reused_patch_generation": 1,
+    "last_used_at": "2026-09-29T06:57:48.778661+00:00",
+    "last_viewed_at": "2026-09-29T06:57:48.750570+00:00",
+    "patch_count": 13,
+    "patch_generation": 1,
+    "pinned": false,
+    "state": "active",
+    "use_count": 33,
+    "view_count": 33
+  },
+  "hermes-free-model-channels": {
+    "archived_at": null,
+    "created_at": "2026-09-21T01:38:36.451417+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": "2026-09-22T09:10:35.890006+00:00",
+    "last_viewed_at": "2026-09-22T09:10:35.846324+00:00",
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "active",
+    "use_count": 4,
+    "view_count": 4
+>>>>>>> Stashed changes
   },
   "hermes-git-upgrade-repair": {
     "archived_at": null,
@@ -1068,14 +1231,14 @@
     "view_count": 3
   },
   "hermes-s6-container-supervision": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:13.666666+00:00",
     "created_at": "2026-06-30T10:14:24.330813+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:14:24.359587+00:00",
     "last_viewed_at": "2026-06-30T10:14:24.330857+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 1,
     "view_count": 1
   },
@@ -1095,7 +1258,7 @@
     "view_count": 3
   },
   "himalaya": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:13.727551+00:00",
     "created_at": "2026-06-07T06:48:45.637414+00:00",
     "created_by": null,
     "last_patched_at": null,
@@ -1103,10 +1266,28 @@
     "last_viewed_at": "2026-08-02T08:06:52.969446+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 5,
     "view_count": 5
   },
+<<<<<<< Updated upstream
+=======
+  "holding-company-firewall": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:28.040259+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "huggingface-hub": {
     "archived_at": "2026-09-20T13:17:31.117901+00:00",
     "created_at": "2026-06-07T06:48:45.689559+00:00",
@@ -1217,6 +1398,69 @@
     "use_count": 1,
     "view_count": 1
   },
+<<<<<<< Updated upstream
+=======
+  "kanban-orchestrator": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:28.294395+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+  "kanban-worker": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:28.308335+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+  "knowledge-base-architecture": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:28.320409+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+  "linear": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:28.335947+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "llama-cpp": {
     "archived_at": "2026-09-20T13:17:31.400234+00:00",
     "created_at": "2026-06-07T06:48:46.063780+00:00",
@@ -1231,7 +1475,7 @@
     "view_count": 1
   },
   "llm-endpoint-model-verification": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:14.189703+00:00",
     "created_at": "2026-08-05T13:20:44.935811+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-08-05T14:06:00.033952+00:00",
@@ -1239,7 +1483,7 @@
     "last_viewed_at": "2026-08-05T14:05:47.864779+00:00",
     "patch_count": 4,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 2,
     "view_count": 2
   },
@@ -1285,14 +1529,14 @@
     "view_count": 0
   },
   "making-decisions": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:14.285037+00:00",
     "created_at": "2026-06-30T10:14:03.735099+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:14:03.735125+00:00",
     "last_viewed_at": null,
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 1,
     "view_count": 0
   },
@@ -1459,7 +1703,7 @@
     "view_count": 1
   },
   "native-mcp": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:14.370092+00:00",
     "created_at": "2026-07-07T14:16:04.346519+00:00",
     "created_by": null,
     "last_patched_at": null,
@@ -1467,7 +1711,7 @@
     "last_viewed_at": null,
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 0,
     "view_count": 0
   },
@@ -1516,6 +1760,7 @@
     "created_by": null,
     "last_patched_at": null,
     "last_reused_patch_generation": 0,
+<<<<<<< Updated upstream
     "last_used_at": "2026-09-23T15:17:06.735896+00:00",
     "last_viewed_at": "2026-09-23T15:17:06.686610+00:00",
     "patch_count": 0,
@@ -1524,6 +1769,16 @@
     "state": "active",
     "use_count": 5,
     "view_count": 5
+=======
+    "last_used_at": "2026-09-29T06:16:08.066601+00:00",
+    "last_viewed_at": "2026-09-15T08:15:27.472513+00:00",
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 12,
+    "view_count": 3
+>>>>>>> Stashed changes
   },
   "ocr-and-documents": {
     "archived_at": null,
@@ -1541,7 +1796,7 @@
     "view_count": 2
   },
   "offline-collateral-design": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:14.591086+00:00",
     "created_at": "2026-07-24T13:49:39.692002+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-07-25T14:24:46.587154+00:00",
@@ -1549,7 +1804,7 @@
     "last_viewed_at": "2026-07-25T23:47:14.369745+00:00",
     "patch_count": 15,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 17,
     "view_count": 17
   },
@@ -1564,7 +1819,7 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "stale",
     "use_count": 0,
     "view_count": 0
   },
@@ -1581,6 +1836,39 @@
     "use_count": 1,
     "view_count": 1
   },
+<<<<<<< Updated upstream
+=======
+  "outlines": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:29.215545+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+  "overseas-client-acquisition": {
+    "archived_at": null,
+    "created_at": "2026-09-18T06:57:59.877962+00:00",
+    "created_by": null,
+    "last_patched_at": "2026-09-18T06:59:08.435842+00:00",
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 1,
+    "patch_generation": 1,
+    "pinned": false,
+    "state": "active",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "p5js": {
     "archived_at": "2026-09-20T13:17:32.802215+00:00",
     "created_at": "2026-06-07T06:48:46.739283+00:00",
@@ -1595,7 +1883,7 @@
     "view_count": 1
   },
   "peng-accounting-douyin-style": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:14.721389+00:00",
     "created_at": "2026-07-24T12:45:41.598535+00:00",
     "created_by": null,
     "last_patched_at": null,
@@ -1603,10 +1891,28 @@
     "last_viewed_at": "2026-08-02T14:18:17.559657+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 3,
     "view_count": 3
   },
+<<<<<<< Updated upstream
+=======
+  "petdex": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:29.324723+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "plan": {
     "archived_at": null,
     "created_at": "2026-06-07T06:48:46.815330+00:00",
@@ -1683,9 +1989,15 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "active",
     "use_count": 0,
     "view_count": 0
+=======
+    "state": "stale",
+    "use_count": 5,
+    "view_count": 5
+>>>>>>> Stashed changes
   },
   "python-debugpy": {
     "archived_at": "2026-09-20T13:17:33.436247+00:00",
@@ -1715,14 +2027,14 @@
     "view_count": 31
   },
   "reality-testing-decisions": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:14.861113+00:00",
     "created_at": "2026-06-30T10:14:03.748421+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:18:41.163968+00:00",
     "last_viewed_at": "2026-06-30T10:18:41.156839+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 2,
     "view_count": 2
   },
@@ -1766,6 +2078,24 @@
     "use_count": 0,
     "view_count": 0
   },
+<<<<<<< Updated upstream
+=======
+  "sales-communication": {
+    "archived_at": null,
+    "created_at": "2026-09-04T08:10:47.720740+00:00",
+    "created_by": null,
+    "last_patched_at": "2026-09-16T06:59:45.780725+00:00",
+    "last_reused_patch_generation": 2,
+    "last_used_at": "2026-09-29T06:30:09.159805+00:00",
+    "last_viewed_at": "2026-09-29T06:30:09.147547+00:00",
+    "patch_count": 2,
+    "patch_generation": 2,
+    "pinned": false,
+    "state": "active",
+    "use_count": 16,
+    "view_count": 16
+  },
+>>>>>>> Stashed changes
   "scraping-dispatch": {
     "archived_at": null,
     "created_at": "2026-08-04T12:50:25.224449+00:00",
@@ -1782,7 +2112,7 @@
     "view_count": 9
   },
   "scraping-request-handling": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:15.164769+00:00",
     "created_at": "2026-08-04T13:06:38.205246+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-08-04T13:06:46.362345+00:00",
@@ -1790,7 +2120,7 @@
     "last_viewed_at": null,
     "patch_count": 1,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 0,
     "view_count": 0
   },
@@ -1810,14 +2140,14 @@
     "view_count": 0
   },
   "seeking-disconfirming-evidence": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:15.269635+00:00",
     "created_at": "2026-06-30T10:14:03.683656+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:18:41.143287+00:00",
     "last_viewed_at": "2026-06-30T10:18:41.115462+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 2,
     "view_count": 1
   },
@@ -1877,16 +2207,25 @@
   "short-video-copywriting": {
     "archived_at": null,
     "created_at": "2026-06-30T10:07:44.113824+00:00",
+<<<<<<< Updated upstream
     "last_patched_at": "2026-09-27T02:48:15.366699+00:00",
     "last_reused_patch_generation": 1,
     "last_used_at": "2026-09-27T02:53:42.204167+00:00",
     "last_viewed_at": "2026-09-27T02:53:42.193674+00:00",
     "patch_count": 31,
     "patch_generation": 1,
+=======
+    "last_patched_at": "2026-07-26T05:47:03.463095+00:00",
+    "last_reused_patch_generation": 0,
+    "last_used_at": "2026-09-24T04:01:07.769612+00:00",
+    "last_viewed_at": "2026-09-24T04:01:07.759941+00:00",
+    "patch_count": 30,
+    "patch_generation": 0,
+>>>>>>> Stashed changes
     "pinned": false,
     "state": "active",
-    "use_count": 57,
-    "view_count": 58
+    "use_count": 60,
+    "view_count": 61
   },
   "short-video-fun-breakout": {
     "archived_at": null,
@@ -1910,12 +2249,18 @@
     "patch_count": 1,
     "patch_generation": 1,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "active",
     "use_count": 7,
     "view_count": 7
+=======
+    "state": "stale",
+    "use_count": 4,
+    "view_count": 4
+>>>>>>> Stashed changes
   },
   "short-video-industry-flow": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:15.403943+00:00",
     "created_at": "2026-06-30T10:07:44.260390+00:00",
     "last_patched_at": null,
     "last_reused_patch_generation": 0,
@@ -1924,10 +2269,28 @@
     "patch_count": 0,
     "patch_generation": 0,
     "pinned": false,
-    "state": "active",
+    "state": "archived",
     "use_count": 3,
     "view_count": 4
   },
+<<<<<<< Updated upstream
+=======
+  "simplify-code": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:30.118459+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "sketch": {
     "archived_at": "2026-09-20T13:17:34.174589+00:00",
     "created_at": "2026-06-07T06:48:47.515190+00:00",
@@ -1956,6 +2319,39 @@
     "use_count": 1,
     "view_count": 1
   },
+<<<<<<< Updated upstream
+=======
+  "skill-library-consolidation": {
+    "archived_at": null,
+    "created_at": "2026-09-04T08:18:22.718954+00:00",
+    "created_by": "agent",
+    "last_patched_at": "2026-09-16T07:21:31.183767+00:00",
+    "last_reused_patch_generation": 9,
+    "last_used_at": "2026-09-16T08:36:43.021373+00:00",
+    "last_viewed_at": "2026-09-16T08:36:43.011300+00:00",
+    "patch_count": 9,
+    "patch_generation": 9,
+    "pinned": false,
+    "state": "active",
+    "use_count": 4,
+    "view_count": 4
+  },
+  "skill-library-sync": {
+    "archived_at": null,
+    "created_at": "2026-09-17T02:58:09.748959+00:00",
+    "created_by": null,
+    "last_patched_at": "2026-09-17T02:58:25.269432+00:00",
+    "last_reused_patch_generation": 1,
+    "last_used_at": "2026-09-29T06:57:48.761766+00:00",
+    "last_viewed_at": "2026-09-29T06:57:48.721200+00:00",
+    "patch_count": 1,
+    "patch_generation": 1,
+    "pinned": false,
+    "state": "active",
+    "use_count": 2,
+    "view_count": 2
+  },
+>>>>>>> Stashed changes
   "social-media/short-video-copywriting": {
     "archived_at": null,
     "created_at": "2026-07-25T15:12:14.270672+00:00",
@@ -2008,8 +2404,26 @@
     "use_count": 2,
     "view_count": 2
   },
-  "subagent-driven-development": {
+<<<<<<< Updated upstream
+=======
+  "spotify": {
     "archived_at": null,
+    "created_at": "2026-09-08T01:53:30.383368+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
+  "subagent-driven-development": {
+    "archived_at": "2026-09-23T03:19:15.561350+00:00",
     "created_at": "2026-06-07T07:01:32.400853+00:00",
     "created_by": null,
     "last_patched_at": "2026-06-07T07:04:18.154965+00:00",
@@ -2017,10 +2431,43 @@
     "last_viewed_at": "2026-06-30T10:20:47.737121+00:00",
     "patch_count": 1,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 3,
     "view_count": 3
   },
+<<<<<<< Updated upstream
+=======
+  "suzhou-policy-monitor": {
+    "archived_at": null,
+    "created_at": "2026-09-21T02:00:30.659824+00:00",
+    "created_by": null,
+    "last_patched_at": "2026-09-21T02:00:51.241427+00:00",
+    "last_reused_patch_generation": 1,
+    "last_used_at": "2026-09-21T02:54:42.278193+00:00",
+    "last_viewed_at": "2026-09-21T02:54:42.268296+00:00",
+    "patch_count": 1,
+    "patch_generation": 1,
+    "pinned": false,
+    "state": "active",
+    "use_count": 2,
+    "view_count": 2
+  },
+  "swarm": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:30.396728+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "systematic-debugging": {
     "archived_at": "2026-09-20T13:17:34.853203+00:00",
     "created_at": "2026-06-07T06:48:47.809183+00:00",
@@ -2092,7 +2539,11 @@
     "view_count": 0
   },
   "tax-incentive-policy": {
+<<<<<<< Updated upstream
     "archived_at": "2026-10-10T12:25:04.083338+00:00",
+=======
+    "archived_at": "2026-09-23T03:19:15.722967+00:00",
+>>>>>>> Stashed changes
     "created_at": "2026-06-07T10:20:24.066429+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-07-01T11:28:30.568589+00:00",
@@ -2133,7 +2584,11 @@
     "view_count": 6
   },
   "teams-meeting-pipeline": {
+<<<<<<< Updated upstream
     "archived_at": "2026-09-06T09:27:26.317943+00:00",
+=======
+    "archived_at": "2026-09-23T03:19:15.821930+00:00",
+>>>>>>> Stashed changes
     "created_at": "2026-06-07T06:48:47.871179+00:00",
     "created_by": null,
     "last_patched_at": null,
@@ -2142,6 +2597,24 @@
     "patch_count": 0,
     "pinned": false,
     "state": "archived",
+<<<<<<< Updated upstream
+=======
+    "use_count": 1,
+    "view_count": 1
+  },
+  "tencent-news": {
+    "archived_at": null,
+    "created_at": "2026-09-22T05:35:31.533310+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": "2026-09-22T05:35:31.559082+00:00",
+    "last_viewed_at": "2026-09-22T05:35:31.533323+00:00",
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "active",
+>>>>>>> Stashed changes
     "use_count": 1,
     "view_count": 1
   },
@@ -2172,14 +2645,14 @@
     "view_count": 1
   },
   "unsloth": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:15.913343+00:00",
     "created_at": "2026-06-30T10:19:35.677301+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:19:35.694384+00:00",
     "last_viewed_at": "2026-06-30T10:19:35.677330+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 1,
     "view_count": 1
   },
@@ -2199,7 +2672,7 @@
     "view_count": 2
   },
   "video-to-article": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:16.051789+00:00",
     "created_at": "2026-07-26T09:02:01.593384+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-09-05T02:28:29.367508+00:00",
@@ -2209,9 +2682,15 @@
     "patch_count": 15,
     "patch_generation": 3,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "stale",
     "use_count": 16,
     "view_count": 16
+=======
+    "state": "archived",
+    "use_count": 14,
+    "view_count": 14
+>>>>>>> Stashed changes
   },
   "video-transcription": {
     "archived_at": null,
@@ -2229,7 +2708,7 @@
     "view_count": 1
   },
   "vocab-memory-book": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:16.151778+00:00",
     "created_at": "2026-07-03T16:51:08.019670+00:00",
     "created_by": null,
     "last_patched_at": "2026-07-06T14:58:51.878103+00:00",
@@ -2237,7 +2716,7 @@
     "last_viewed_at": "2026-07-06T14:50:04.838797+00:00",
     "patch_count": 39,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 21,
     "view_count": 21
   },
@@ -2255,14 +2734,18 @@
     "view_count": 1
   },
   "website-content-editing": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:16.212402+00:00",
     "created_at": "2026-06-30T10:14:48.289076+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-08-16T02:18:39.956685+00:00",
     "last_viewed_at": "2026-08-16T02:18:39.947946+00:00",
     "patch_count": 0,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "active",
+=======
+    "state": "archived",
+>>>>>>> Stashed changes
     "use_count": 5,
     "view_count": 6
   },
@@ -2292,14 +2775,21 @@
     "patch_count": 4,
     "patch_generation": 4,
     "pinned": false,
+<<<<<<< Updated upstream
     "state": "active",
     "use_count": 3,
     "view_count": 3
+=======
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+>>>>>>> Stashed changes
   },
   "wechat-publish": {
     "archived_at": null,
     "created_at": "2026-06-30T13:09:55.863670+00:00",
     "created_by": null,
+<<<<<<< Updated upstream
     "last_patched_at": "2026-09-06T09:22:09.484208+00:00",
     "last_reused_patch_generation": 2,
     "last_used_at": "2026-09-23T13:44:47.683280+00:00",
@@ -2310,9 +2800,21 @@
     "state": "active",
     "use_count": 104,
     "view_count": 104
+=======
+    "last_patched_at": "2026-08-05T15:09:29.351220+00:00",
+    "last_reused_patch_generation": 0,
+    "last_used_at": "2026-09-29T06:16:28.802907+00:00",
+    "last_viewed_at": "2026-09-29T06:16:28.775936+00:00",
+    "patch_count": 39,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "active",
+    "use_count": 99,
+    "view_count": 99
+>>>>>>> Stashed changes
   },
   "wechat-qa-publish": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:16.452872+00:00",
     "created_at": "2026-07-27T14:35:25.947824+00:00",
     "created_by": "agent",
     "last_patched_at": "2026-08-12T12:57:08.952505+00:00",
@@ -2320,7 +2822,7 @@
     "last_viewed_at": "2026-08-12T12:56:42.592097+00:00",
     "patch_count": 8,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 7,
     "view_count": 7
   },
@@ -2408,14 +2910,14 @@
     "view_count": 5
   },
   "writing-plans": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:16.561537+00:00",
     "created_at": "2026-06-30T10:13:13.313890+00:00",
     "last_patched_at": null,
     "last_used_at": "2026-06-30T10:22:54.967658+00:00",
     "last_viewed_at": "2026-06-30T10:22:54.945675+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 3,
     "view_count": 3
   },
@@ -2449,6 +2951,24 @@
     "use_count": 6,
     "view_count": 6
   },
+<<<<<<< Updated upstream
+=======
+  "xiaohongshu-marketing": {
+    "archived_at": null,
+    "created_at": "2026-09-08T01:53:30.816952+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_reused_patch_generation": 0,
+    "last_used_at": null,
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "patch_generation": 0,
+    "pinned": false,
+    "state": "stale",
+    "use_count": 0,
+    "view_count": 0
+  },
+>>>>>>> Stashed changes
   "xurl": {
     "archived_at": "2026-09-20T13:17:35.788741+00:00",
     "created_at": "2026-06-07T06:48:48.147436+00:00",
@@ -2476,7 +2996,7 @@
     "view_count": 1
   },
   "youtube-content": {
-    "archived_at": null,
+    "archived_at": "2026-09-23T03:19:16.654846+00:00",
     "created_at": "2026-06-07T06:48:48.196438+00:00",
     "created_by": null,
     "last_patched_at": null,
@@ -2484,7 +3004,7 @@
     "last_viewed_at": "2026-07-26T08:54:35.143944+00:00",
     "patch_count": 0,
     "pinned": false,
-    "state": "stale",
+    "state": "archived",
     "use_count": 2,
     "view_count": 2
   },

@@ -14,7 +14,13 @@ Obsidian=第二知识库:D盘/mnt/d/obsidian-vault主库+obsidian_sync.sh,勿搬
 §
 公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
 §
+<<<<<<< Updated upstream
 hermes cron:create <schedule> <prompt>,查`hermes cron runs`;苏州政策监控:周二五9点投企微'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才触发;政务用anysearch抓官文(文号+日期)。pip清华。
+=======
+文案路由(9.22):短视频默认豆包db,完成后必汇报所用模型(默认豆包,明确指定其他也报);钩子可走数字对比/同行吐槽两风格,钩子不强即废稿(软陈述"我做了XX年…"必被否,用反问冲突→数字资历→反转三拍);交付只出docx一份勿再出txt;爆款长文默认Kimi主动提示·代理=CordC2.8.5
+§
+hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策监控已部署(cron'苏州城市破播'周二五9点投企微内部群'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才自动触发,手动run不投递;细节见short-video-copywriting类型五);政务检索用anysearch抓官文(文号+日期)。pip清华。
+>>>>>>> Stashed changes
 §
 脱敏边界【全局规则,适用所有skill】(2026.9.15定稿):只有用户主动发送的信息/文件才脱敏;agent抓网页/搜索(web_search/web_extract/browser_*)公开数据不脱敏,插件desensitize-read默认目标集已剔除网络类(read_file/search_files/terminal/execute_code/vision_analyze保留)。脱敏铁律(处理任何上传材料自动执行):①公司名除
 §
@@ -24,6 +30,7 @@ hermes cron:create <schedule> <prompt>,查`hermes cron runs`;苏州政策监控:
 §
 代理=CordC2.8.5(F:\CordC\),AllowLAN在设置→网络;条件脚本~/.hermes/proxy.sh。
 §
+<<<<<<< Updated upstream
 人设锚点canonical-identity-anchor.md实测5副本改必全同步(sales那份多反挂靠三连问段勿覆盖),源CRLF,diff tr -d '\r'
 §
 桌面文档评估:只读核对+汇报结论,未明确指令不修改不删除。
@@ -65,3 +72,6 @@ memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须�
 徐总认可并要求坚持:交付检索/调研结果时末尾必附「顺带一个对你有用的发现」——除所问答案外主动指出对其业务有用的关联发现(可复制申报链条/同行打法/可切入口子),不问他需不需要。2026.10.14明示
 §
 关注「刘洪英·隆奔财税」(苏州同业):每月1日9点cron+契约longben-liuhongying.json,deliver=wecom:yingxin_inner(企微网关需已连接才能推)。2026-07-23相城太平财税合同双风控=刘洪英主讲。
+=======
+人设锚点(identity-anchor/产品手册)共6副本改必全同步,源CRLF,diff tr -d '\r'
+>>>>>>> Stashed changes

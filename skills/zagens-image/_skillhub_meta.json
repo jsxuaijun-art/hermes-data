@@ -1,0 +1,20 @@
+{
+  "name": "搜图",
+  "installedAt": 1792134942160,
+  "source": "marketplace",
+  "version": "0.1.6",
+  "skillId": "skill_2110191997576908800",
+  "description_zh": "按关键字搜图，筛可商用结果，下载到本地并保留来源和署名。",
+  "description_en": "Search by keyword, keep commercially usable images, and save them locally with source and attribution.",
+  "tag_zh": [
+    "OPC·一人公司",
+    "办公协同",
+    "效率工具"
+  ],
+  "tag_en": [
+    "OPC · Solo Business",
+    "Collaboration",
+    "Productivity Tools"
+  ],
+  "iconSource": "letter:auto"
+}

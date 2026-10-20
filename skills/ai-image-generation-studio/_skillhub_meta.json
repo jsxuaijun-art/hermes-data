@@ -1,0 +1,18 @@
+{
+  "name": "文生图与图片生成工作室",
+  "installedAt": 1792135011189,
+  "source": "marketplace",
+  "version": "0.1.8",
+  "skillId": "skill_2095076808958693376",
+  "description_zh": "生成、合成并编辑产品图、品牌视觉、海报、社交媒体配图、插画和照片的不同版本。",
+  "description_en": "Generate, compose, and edit product images, brand visuals, posters, social graphics, illustrations, and photo variations.",
+  "tag_zh": [
+    "内容创作"
+  ],
+  "tag_en": [
+    "Content Creation"
+  ],
+  "iconSource": "https://openplatform-cdn.codebuddy.cn/public/common/capability_cover/46404d72-9a37-48f5-bae9-8747c58efc10/21841200-63d4-488c-967c-dd093ea0255a.png",
+  "iconLocalPath": "C:\\Users\\Administrator\\.workbuddy\\skills\\ai-image-generation-studio\\_icon.png",
+  "iconDownloadedFrom": "https://openplatform-cdn.codebuddy.cn/public/common/capability_cover/46404d72-9a37-48f5-bae9-8747c58efc10/21841200-63d4-488c-967c-dd093ea0255a.png"
+}

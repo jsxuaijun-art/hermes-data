@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>搜图 · __QUERY__</title>
+<style>
+:root{--bg:#f3f1ec;--card:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#1d4ed8;--soft:#f5f5f4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI","Microsoft YaHei",sans-serif}
+header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);padding:16px 24px 14px;backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-.01em}
+.meta{margin:4px 0 0;color:var(--muted);font-size:13px}
+.bar{display:flex;gap:12px 16px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.bar label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+select,input[type=search]{font:inherit;font-size:13px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+input[type=search]{width:180px}
+.chip{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:12px;cursor:pointer}
+.chip input{accent-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:20px 24px 128px}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card:hover{border-color:#d6d3d1;box-shadow:0 8px 24px rgba(28,25,23,.06)}
+.pick{position:absolute;top:10px;left:10px;z-index:2;width:26px;height:26px;border-radius:8px;border:1px solid #d6d3d1;background:rgba(255,255,255,.94);color:#a8a29e;cursor:pointer}
+.pick.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.idx{position:absolute;top:10px;right:10px;z-index:2;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.94);color:#57534e;font-size:12px}
+.frame{display:flex;align-items:center;justify-content:center;width:100%;height:220px;padding:12px;border:0;border-bottom:1px solid var(--line);background:var(--soft);cursor:zoom-in}
+.frame img{max-width:100%;max-height:100%;object-fit:contain}
+.body{padding:12px 14px 14px}
+h2{margin:0;font-size:14px;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{padding:2px 7px;border-radius:999px;background:#f5f5f4;color:#57534e;font-size:12px}
+.tag.lic{background:#e8f1ff;color:#1e40af}
+.tag.unknown{background:#fff7ed;color:#9a3412}
+.tag.hd{background:#ecfdf3;color:#166534}
+.tag.risk{background:#fef2f2;color:#b91c1c}
+.tag.score{background:#eef2ff;color:#3730a3}
+.by{margin:8px 0 0;color:#44403c;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.src{display:inline-block;margin-top:8px;color:var(--accent);font-size:13px;text-decoration:none}
+.src:hover{text-decoration:underline}
+details{margin-top:8px}
+summary{color:var(--muted);font-size:12px;cursor:pointer}
+details p{margin:6px 0 0;color:#57534e;font-size:12px;line-height:1.45;word-break:break-word}
+.path{color:#a8a29e}
+.empty{display:none;margin:8px 24px 128px;color:var(--muted)}
+footer{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 24px;background:#fff;border-top:1px solid var(--line)}
+footer button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid #d6d3d1;border-radius:8px;background:#fff;cursor:pointer}
+footer button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#selpaths{flex:1;min-width:180px;color:#78716c;font-size:12px;word-break:break-all}
+.lb{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:28px;background:rgba(28,25,23,.88)}
+.lb.on{display:flex}
+.lb figure{margin:0;max-width:min(1100px,100%)}
+.lb img{max-width:100%;max-height:74vh;border-radius:10px;background:#fff}
+.lb figcaption{position:absolute;left:24px;right:24px;bottom:16px;margin:0;color:#f5f5f4;font-size:13px;line-height:1.45;text-align:center;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+@media(max-width:720px){
+  header{position:static;padding:14px}
+  .grid{padding:12px 12px 150px;grid-template-columns:1fr}
+  .frame{height:200px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div>
+      <h1>搜图 · __QUERY__</h1>
+      <p class="meta" id="stat"></p>
+    </div>
+  </div>
+  <div class="bar">
+    <label>最多显示
+      <select id="limit">
+        <option value="0" selected>全部</option>
+        <option value="12">12 张</option>
+        <option value="24">24 张</option>
+        <option value="48">48 张</option>
+      </select>
+    </label>
+    <label>最小宽度
+      <select id="minw">
+        <option value="0">不限</option>
+        <option value="800">≥800px</option>
+        <option value="1200">≥1200px</option>
+        <option value="1600">≥1600px（全屏背景）</option>
+      </select>
+    </label>
+    <label>排序
+      <select id="sort">
+        <option value="score">推荐顺序（适配度）</option>
+        <option value="default">多源轮询顺序</option>
+        <option value="big">按尺寸从大到小</option>
+        <option value="ratio">按宽高比（横向优先）</option>
+      </select>
+    </label>
+    <input id="kw" type="search" placeholder="按标题筛选">
+    <span id="srcbox"></span>
+  </div>
+</header>
+<main class="grid" id="grid"></main>
+<p class="empty" id="empty">没有符合当前筛选条件的图片。</p>
+<footer>
+  <span id="selinfo">已选 0 张</span>
+  <button id="copy" class="primary" type="button">复制选中图片路径</button>
+  <button id="selectall" type="button">全选当前</button>
+  <button id="clear" type="button">清空选择</button>
+  <span id="selpaths"></span>
+</footer>
+<div class="lb" id="lb">
+  <figure>
+    <img id="lbimg" alt="">
+    <figcaption id="lbinfo"></figcaption>
+  </figure>
+</div>
+<script>
+const DATA=__DATA__;
+const SRCNAME={bing:"必应","360":"360",baidu:"百度",wikimedia:"维基共享"};
+const grid=document.getElementById("grid");
+const $=id=>document.getElementById(id);
+const picked=new Set();
+let view=[];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ratio=it=>(it.w&&it.h)?it.w/it.h:0;
+const httpUrl=s=>/^https?:\/\//i.test(String(s||""));
+function apply(){
+  const lim=parseInt($("limit").value,10),minw=parseInt($("minw").value,10),kw=$("kw").value.trim().toLowerCase();
+  const on=new Set([...document.querySelectorAll(".srcchip:checked")].map(c=>c.value));
+  let list=DATA.filter(it=>on.has(it.source));
+  if(minw>0)list=list.filter(it=>(it.w||0)>=minw);
+  if(kw)list=list.filter(it=>(it.title||"").toLowerCase().includes(kw));
+  if($("sort").value==="score")list=list.slice().sort((a,b)=>(b.suitability_score||0)-(a.suitability_score||0));
+  if($("sort").value==="big")list=list.slice().sort((a,b)=>(b.w||0)*(b.h||0)-(a.w||0)*(a.h||0));
+  if($("sort").value==="ratio")list=list.slice().sort((a,b)=>ratio(b)-ratio(a));
+  view=lim>0?list.slice(0,lim):list;
+  render(list.length);
+}
+function render(total){
+  grid.innerHTML="";
+  $("empty").style.display=view.length?"none":"block";
+  view.forEach((it,i)=>{
+    const dim=(it.w&&it.h)?it.w+"×"+it.h:"尺寸未知";
+    const hd=it.w>=1600?'<span class="tag hd">可做全屏</span>':"";
+    const lic=it.license?'<span class="tag lic">'+esc(it.license)+'</span>':'<span class="tag unknown">授权未知</span>';
+    const risk=(it.risk_flags||[]).map(flag=>'<span class="tag risk">'+esc(flag)+'</span>').join("");
+    const author=it.author?'<p class="by">'+esc(it.author)+'</p>':"";
+    const link=httpUrl(it.source_page)?'<a class="src" href="'+esc(it.source_page)+'" target="_blank" rel="noopener noreferrer">查看来源</a>':"";
+    const el=document.createElement("article");
+    el.className="card";
+    el.innerHTML='<button type="button" class="pick'+(picked.has(it.file_abs)?" on":"")+'" data-pk="'+i+'" aria-label="选择">✓</button>'
+      +'<span class="idx">'+esc(it.source_label||"")+'</span>'
+      +'<button type="button" class="frame" data-i="'+i+'" aria-label="'+esc(it.title||"放大图片")+'"><img src="'+esc(it.file)+'" alt="'+esc(it.title||"")+'"></button>'
+      +'<div class="body"><h2>'+esc(it.title||"（无标题）")+'</h2>'
+      +'<div class="tags"><span class="tag">'+esc(SRCNAME[it.source]||it.source)+'</span><span class="tag">'+dim+'</span><span class="tag score">适配 '+(it.suitability_score??"—")+'</span>'+hd+lic+risk+'</div>'
+      +author+link
+      +'<details><summary>署名</summary><p>'+esc(it.attribution||"")+'</p><p class="path">'+esc(it.file_abs||it.file||"")+'</p></details></div>';
+    grid.appendChild(el);
+  });
+  refreshSelection();
+  $("stat").textContent="共 "+DATA.length+" 张 · 当前显示 "+view.length+" 张"+(total!==view.length?"（筛选后 "+total+" 张）":"");
+}
+function refreshSelection(){
+  const selected=DATA.filter(it=>picked.has(it.file_abs)).map(it=>it.file_abs);
+  $("selinfo").textContent="已选 "+selected.length+" 张";
+  $("selpaths").textContent=selected.join("  |  ");
+}
+function openLightbox(it){
+  $("lbimg").src=it.file;
+  $("lbimg").alt=it.title||"";
+  const bits=[it.w&&it.h?it.w+"×"+it.h:"",SRCNAME[it.source]||it.source,it.license||"授权未知",it.attribution||""].filter(Boolean);
+  $("lbinfo").textContent=bits.join(" · ");
+  $("lb").classList.add("on");
+}
+grid.addEventListener("click",e=>{
+  const pk=e.target.closest(".pick");
+  if(pk){const it=view[+pk.dataset.pk];picked.has(it.file_abs)?picked.delete(it.file_abs):picked.add(it.file_abs);apply();return}
+  const frame=e.target.closest(".frame");
+  if(frame)openLightbox(view[+frame.dataset.i]);
+});
+$("lb").addEventListener("click",()=>{$("lb").classList.remove("on");$("lbimg").src=""});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("lb").classList.remove("on");$("lbimg").src=""}});
+["limit","minw","sort"].forEach(id=>$(id).addEventListener("change",apply));
+$("kw").addEventListener("input",apply);
+$("srcbox").addEventListener("change",apply);
+$("selectall").addEventListener("click",()=>{view.forEach(it=>picked.add(it.file_abs));apply()});
+$("clear").addEventListener("click",()=>{picked.clear();apply()});
+$("copy").addEventListener("click",async()=>{
+  const text=DATA.filter(it=>picked.has(it.file_abs)).map(it=>it.file_abs).join("\n");
+  if(!text){$("selinfo").textContent="请先勾选图片";return}
+  try{await navigator.clipboard.writeText(text)}
+  catch(_){const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove()}
+  $("selinfo").textContent="已复制 "+picked.size+" 条路径";
+});
+const srcset=[...new Set(DATA.map(d=>d.source))];
+$("srcbox").innerHTML=srcset.map(s=>'<label class="chip"><input type="checkbox" class="srcchip" value="'+esc(s)+'" checked>'+esc(SRCNAME[s]||s)+'（'+DATA.filter(d=>d.source===s).length+'）</label>').join(" ");
+apply();
+</script>
+</body>
+</html>

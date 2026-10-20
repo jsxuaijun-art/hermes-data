@@ -1,0 +1,8 @@
+{
+  "query": "Yueyang Tower",
+  "sources": ["wikimedia"],
+  "limit": 12,
+  "orientation": "landscape",
+  "license": "commercial",
+  "min_width": 800
+}

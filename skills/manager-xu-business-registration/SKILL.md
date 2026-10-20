@@ -333,18 +333,6 @@ Step 3 — 地道润色：加语气词，调整自然度
 
 > 详细对比见 `references/粤语实战案例-翻译腔vs地道版.md`
 
-### ⚡ 普通话初稿→粤语快速改造（2026.9.20 实战「香港工作氛围」案例）
-
-用户已有中文行业自然流初稿、要求出徐经理粤语版时，走「快速改造」模式，不必从零选题：
-
-**流程**：中文初稿已定 → 直接用粤语思维重写（严禁逐字翻译，参照前文纪律）→ 三步法验证 → 全套输出（标题三件套/话题标签/完整文案/拍摄速查表/评论区神评/私信切入点）→ 自动 TTS → docx+txt 对照包落桌面。
-
-**实战要点**：
-1. **题材契合判断**：故事本身涉及香港/粤语文化（如香港服务商、香港工作文化）→ 粤语化是天然加成，优先做；与香港无关的题材按常规判断。
-2. **人设归位不必过细（2026.9.20 用户纠正）**：改造时不要花精力纠结「这句业务词该归江姐（会计/税务）还是徐经理（商事登记销售）」——保留原文业务表述译成粤语即可（例：原文「做公司注册、会计服务」→「做公司註冊、企業服務」，不需要硬拆人设边界）。整体口吻按徐经理（实在老乡、粤语为主）就行。
-3. **双版本默认交付**：粤语版（视频号首发）+ 普通话对照版（抖音用，改标题+话题标签）一并出，同一素材发两个平台。
-4. **行业自然流红线仍在**：即便是观点/情绪题材，也要保留「下载税务总局/市场监管总局政策视频→存底学政策」这类行业记忆点。
-
 ---
 
 ## 平台运营策略
@@ -610,25 +598,40 @@ Step 5 — 快速拍摄+发布（热点有时效，当天出片）
 | 2 | **徐经理_粤语录音.html**（浏览器 Speech API） | 快速试听 | ⭐⭐⭐ |
 | 3 | 手机录屏 → 播放 → 录音 | 纯预览 | ⭐⭐ |
 
-### 工具一：Python MP3 生成器（edge-tts 直呼，推荐）
+### 工具一：Python MP3 生成器（推荐）
 
-**当前做法（2026.9.20 验证）：系统 `python3` 已自带 edge_tts，直接调用即可，无需任何 venv 路径。** 旧路径 `~/hermes-agent/venv/bin/python` 已不存在，勿再使用；`C:\Users\Admin\Desktop\香港粤语录音.py` 为历史遗迹，勿再依赖。
-**声音**：`zh-HK-WanLungNeural`（香港粤语男声，首选）／`zh-HK-HiuMaanNeural`（女声备选），微软 Edge TTS 引擎，发音纯正。
-**输出目录**：交付一律放 Windows 桌面 `/mnt/c/Users/Admin/Desktop/`（不是 WSL 桌面，也不是 OneDrive 路径）。
+**桌面文件**：`C:\Users\Admin\Desktop\香港粤语录音.py`（⚠️ 注意：此脚本在部分机器上可能不存在于预期路径。**不要卡在找脚本上**——edge-tts 已在 venv 里装好，直接用以下 python 一行调用即可，效果相同）
+
+**已验证成功** — 2026.7.9 首条录音已生成（563KB，约60秒），WSL 中直接运行
+**声音**：`zh-HK-WanLungNeural`（香港粤语男声），微软 Edge TTS 引擎，发音纯正
+
+### 直接调用 edge-tts（绕过桌面脚本，最可靠）
+```bash
+cd /tmp && ~/hermes-agent/venv/bin/python -c "
+import asyncio, edge_tts
+async def main():
+    text = open('/tmp/canto.txt', encoding='utf-8').read()
+    tts = edge_tts.Communicate(text, voice='zh-HK-WanLungNeural', rate='-8%')
+    await tts.save('<桌面路径>.mp3')
+asyncio.run(main())
+### 工具一：Python MP3 生成器（推荐）
+
+**当前推荐做法（2026.7.31 验证）：直接用 hermes-agent venv 里的 edge-tts 库，无需旧 py 脚本。** 桌面路径已过时，勿再找 `C:\Users\Admin\Desktop\香港粤语录音.py`。
 
 ```bash
-# WSL 系统 python3 直接生成（已验证 2026.9.20）
-cd /tmp && python3 - <<'PY'
+# 在 WSL 中直接用 venv 的 edge-tts
+~/hermes-agent/venv/bin/python - <<'PY'
 import asyncio, edge_tts
 async def main():
     text = open('/tmp/canto_tts.txt', encoding='utf-8').read()
     tts = edge_tts.Communicate(text, voice='zh-HK-WanLungNeural', rate='-8%')
-    await tts.save('/mnt/c/Users/Admin/Desktop/徐经理_录音.mp3')
+    await tts.save('/mnt/d/OneDrive/Desktop/徐经理_录音.mp3')
 asyncio.run(main())
 PY
 ```
 
-**已验证成功** — 2026.7.9 首条录音（WSL 直跑）；2026.9.20 更新为系统 python3 直呼 edge_tts（WanLung 男声 / HiuMaan 女声），输出 `/mnt/c/Users/Admin/Desktop/`。
+**已验证成功** — 2026.7.9 首条录音已生成；2026.7.31 更新为 venv edge-tts 直连（WanLung 男声、也可用 HiuMaan 女声），输出到 `/mnt/d/OneDrive/Desktop/`。
+**旧脚本遗迹**（历史纪录，勿再依赖）：`C:\Users\Admin\Desktop\香港粤语录音.py`
 
 ### 工具二：浏览器 HTML 预览（快速试听）
 

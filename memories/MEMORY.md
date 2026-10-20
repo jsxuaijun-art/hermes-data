@@ -8,29 +8,18 @@ GEO必加载geo-optimization技能+8平台指南(百家号/知乎/网易号/新�
 §
 用户触发词约定：「朋友圈」→wechat-moments-marketing出文案+3张Unsplash图+拷桌面+企微API推XuAiJun勿问确认。「调用短视频skill」→自动同时调爬虫skill(python-web-scraping-setup)按主题搜信息，输出要超前超脱的上帝视角、提出不同观点并分析得头头是道。
 §
-文章改写:换措辞且打乱结构/重组角度逻辑链不雷同,五大事项类可重排拆分调侧重点。
-§
 Obsidian=第二知识库:D盘/mnt/d/obsidian-vault主库+obsidian_sync.sh,勿搬~/.hermes运行时(密钥/SQLite/--delete)。详obsidian skill。
 §
 公众号文章尾部(2026-08-06定稿)：电话132-2229-7318/180-1262-7126；CTA三动作(收藏/转发/关注)，标题「请点屏幕右下角：」红粗加大；话题标签5-8个勿漏。详见wechat-publish尾部模板。
 §
-<<<<<<< Updated upstream
 hermes cron:create <schedule> <prompt>,查`hermes cron runs`;苏州政策监控:周二五9点投企微'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才触发;政务用anysearch抓官文(文号+日期)。pip清华。
-=======
-文案路由(9.22):短视频默认豆包db,完成后必汇报所用模型(默认豆包,明确指定其他也报);钩子可走数字对比/同行吐槽两风格,钩子不强即废稿(软陈述"我做了XX年…"必被否,用反问冲突→数字资历→反转三拍);交付只出docx一份勿再出txt;爆款长文默认Kimi主动提示·代理=CordC2.8.5
-§
-hermes cron:create <schedule> <prompt>,执行查`hermes cron runs`;苏州政策监控已部署(cron'苏州城市破播'周二五9点投企微内部群'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才自动触发,手动run不投递;细节见short-video-copywriting类型五);政务检索用anysearch抓官文(文号+日期)。pip清华。
->>>>>>> Stashed changes
 §
 脱敏边界【全局规则,适用所有skill】(2026.9.15定稿):只有用户主动发送的信息/文件才脱敏;agent抓网页/搜索(web_search/web_extract/browser_*)公开数据不脱敏,插件desensitize-read默认目标集已剔除网络类(read_file/search_files/terminal/execute_code/vision_analyze保留)。脱敏铁律(处理任何上传材料自动执行):①公司名除
-§
-技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平 skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;Hermes/~/.codex/~/.claude/.workbuddy 侧是嵌套 skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按上述已知路径定点查
 §
 本机Hermes升级=混合目录隔离法勿git reset
 §
 代理=CordC2.8.5(F:\CordC\),AllowLAN在设置→网络;条件脚本~/.hermes/proxy.sh。
 §
-<<<<<<< Updated upstream
 人设锚点canonical-identity-anchor.md实测5副本改必全同步(sales那份多反挂靠三连问段勿覆盖),源CRLF,diff tr -d '\r'
 §
 桌面文档评估:只读核对+汇报结论,未明确指令不修改不删除。
@@ -63,7 +52,7 @@ yt-dlp已装在Hermes venv(2026.08.19)。WSL侧ffmpeg=imageio-ffmpeg静态版(jo
 §
 长文出稿铁律:第三方网关(telecom aigw)非流式调用有~90s响应上限,长稿会中途断/整单超时→必须stream=true流式直连。delegate_task走非流式,委派写长稿(文案/文章)易整体失败,失败要如实说+改流式重试。通用调用器=skill llm-longform-generation/scripts/stream_chat.py(密钥走环境变量名传入,勿内联)。
 §
-「推送github」=双通道全推(徐总默认两处都要):①统一库skill-library(C:\Users\Administrator\skill-library)②hermes-data(本地仓库=/mnt/c/Users/Admin/hermes-sync,注意用户名是Admin非Administrator)。hermes-data走~/.hermes/sync-push.sh(已修为v5:先fetch+reset再拷贝本地,旧版顺序会静默丢掉已跟踪文件如SKILL.md的改动),跑完必核 local==remote。桌面成品(Word/PDF/PNG)不入库。
+技能统一库:四工具同读SKILL.md;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh}。⚠️本机~/.hermes/skills只是工作副本,会被hermes-data拉取脚本(devops/hermes-data-sync/scripts/hermes_pull.sh、~/.hermes/sync-pull.sh)用rsync -a从GitHub覆盖(会盖掉未推的本机改动)——真凶是它,不是skilllib install(后者非破坏:本机≠lib则SKIP)→改skill后立即同步canonical+push双通道,勿靠本机副本持久,同步后re-verify。Hermes侧嵌套skills/<类>/<名>(social-media/short-video-copywriting、productivity/wechat-moments-marketing、creative/de-ai-copywriting)为活动路径;hermes-data里扁平/归档副本是历史残留。推送:①skill-library内commit+push②hermes-data=/mnt/c/Users/Admin/hermes-sync(用户Admin),走~/.hermes/sync-push.sh,跑完核local==remote。桌面成品不入库。
 §
 交付打包铁律(徐总2026.10.12):一任务全部产物先入同名文件夹再压成一个zip,桌面C:\Users\Administrator\Desktop只留压缩包禁零散。实操(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试)详skill内容纪律。
 §
@@ -72,6 +61,3 @@ memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须�
 徐总认可并要求坚持:交付检索/调研结果时末尾必附「顺带一个对你有用的发现」——除所问答案外主动指出对其业务有用的关联发现(可复制申报链条/同行打法/可切入口子),不问他需不需要。2026.10.14明示
 §
 关注「刘洪英·隆奔财税」(苏州同业):每月1日9点cron+契约longben-liuhongying.json,deliver=wecom:yingxin_inner(企微网关需已连接才能推)。2026-07-23相城太平财税合同双风控=刘洪英主讲。
-=======
-人设锚点(identity-anchor/产品手册)共6副本改必全同步,源CRLF,diff tr -d '\r'
->>>>>>> Stashed changes

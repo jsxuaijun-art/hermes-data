@@ -1,6 +1,6 @@
 # Review Output Template
 
-Use this as the structure for PR review summary comments. Copy and fill in the sections.
+Use this as the structure for PR review summary comments.
 
 ## For PR Summary Comment
 
@@ -18,15 +18,14 @@ Use this as the structure for PR review summary comments. Copy and fill in the s
 - **file.py:line** — [description]. Suggestion: [fix].
 
 ### ⚠️ Warnings
-<!-- Issues that SHOULD be fixed, but not strictly blocking -->
+<!-- Issues that SHOULD be fixed -->
 - **file.py:line** — [description].
 
 ### 💡 Suggestions
-<!-- Non-blocking improvements, style preferences, future considerations -->
+<!-- Non-blocking improvements -->
 - **file.py:line** — [description].
 
 ### ✅ Looks Good
-<!-- Call out things done well — positive reinforcement -->
 - [aspect that was done well]
 
 ---
@@ -35,40 +34,23 @@ Use this as the structure for PR review summary comments. Copy and fill in the s
 
 ## Severity Guide
 
-| Level | Icon | When to use | Blocks merge? |
-|-------|------|-------------|---------------|
-| Critical | 🔴 | Security vulnerabilities, data loss risk, crashes, broken core functionality | Yes |
-| Warning | ⚠️ | Bugs in non-critical paths, missing error handling, missing tests for new code | Usually yes |
-| Suggestion | 💡 | Style improvements, refactoring ideas, performance hints, documentation gaps | No |
-| Looks Good | ✅ | Clean patterns, good test coverage, clear naming, smart design decisions | N/A |
+| Level | Icon | Blocks merge? |
+|-------|------|---------------|
+| Critical | 🔴 | Yes |
+| Warning | ⚠️ | Usually yes |
+| Suggestion | 💡 | No |
+| Looks Good | ✅ | N/A |
 
 ## Verdict Decision
-
-- **Approved ✅** — Zero critical/warning items. Only suggestions or all clear.
+- **Approved ✅** — Zero critical/warning items.
 - **Changes Requested 🔴** — Any critical or warning item exists.
-- **Reviewed 💬** — Observations only (draft PRs, uncertain findings, informational).
+- **Reviewed 💬** — Observations only (draft PRs, informational).
 
 ## For Inline Comments
 
-Prefix inline comments with the severity icon so they're scannable:
-
+Prefix inline comments with severity icon:
 ```
-🔴 **Critical:** User input passed directly to SQL query — use parameterized queries to prevent injection.
-```
-
-```
+🔴 **Critical:** User input passed directly to SQL query — use parameterized queries.
 ⚠️ **Warning:** This error is silently swallowed. At minimum, log it.
+💡 **Suggestion:** This could be simplified with a dict comprehension.
 ```
-
-```
-💡 **Suggestion:** This could be simplified with a dict comprehension:
-`{k: v for k, v in items if v is not None}`
-```
-
-```
-✅ **Nice:** Good use of context manager here — ensures cleanup on exceptions.
-```
-
-## For Local (Pre-Push) Review
-
-When reviewing locally before push, use the same structure but present it as a message to the user instead of a PR comment. Skip the PR metadata header and just start with the severity sections.

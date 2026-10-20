@@ -52,7 +52,7 @@ yt-dlp已装在Hermes venv(2026.08.19)。WSL侧ffmpeg=imageio-ffmpeg静态版(jo
 §
 长文出稿铁律:第三方网关(telecom aigw)非流式调用有~90s响应上限,长稿会中途断/整单超时→必须stream=true流式直连。delegate_task走非流式,委派写长稿(文案/文章)易整体失败,失败要如实说+改流式重试。通用调用器=skill llm-longform-generation/scripts/stream_chat.py(密钥走环境变量名传入,勿内联)。
 §
-技能统一库:四工具同读SKILL.md;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh}。⚠️本机~/.hermes/skills只是工作副本,会被hermes-data拉取脚本(devops/hermes-data-sync/scripts/hermes_pull.sh、~/.hermes/sync-pull.sh)用rsync -a从GitHub覆盖(会盖掉未推的本机改动)——真凶是它,不是skilllib install(后者非破坏:本机≠lib则SKIP)→改skill后立即同步canonical+push双通道,勿靠本机副本持久,同步后re-verify。Hermes侧嵌套skills/<类>/<名>(social-media/short-video-copywriting、productivity/wechat-moments-marketing、creative/de-ai-copywriting)为活动路径;hermes-data里扁平/归档副本是历史残留。推送:①skill-library内commit+push②hermes-data=/mnt/c/Users/Admin/hermes-sync(用户Admin),走~/.hermes/sync-push.sh,跑完核local==remote。桌面成品不入库。
+技能统一库:四工具同读SKILL.md;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00。需注意:①本机~/.hermes/skills只是工作副本,hermes-data拉取脚本rsync会覆盖(真凶非skilllib install,后者非破坏:本机≠lib则SKIP);②同名多副本时Hermes按路径字母序(sorted)取第一个加载(iter_skill_index_files),顶层扁平副本会遮蔽嵌套分类版(social-media/short-video-copywriting字母序败给short-video-copywriting)→改skill后必用scan_skill_commands验实际加载路径;③改完md5比对全同+立即同步canonical+push双通道,勿靠本机副本持久。推送:①skill-library内commit+push②hermes-data=/mnt/c/Users/Admin/hermes-sync(用户Admin),走~/.hermes/sync-push.sh,跑完核local==remote。桌面成品不入库。
 §
 交付打包铁律(徐总2026.10.12):一任务全部产物先入同名文件夹再压成一个zip,桌面C:\Users\Administrator\Desktop只留压缩包禁零散。实操(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试)详skill内容纪律。
 §

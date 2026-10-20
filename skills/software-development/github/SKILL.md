@@ -1,56 +1,64 @@
 ---
 name: github
-description: "GitHub via gh CLI: PRs, issues, reviews, repos, auth."
+category: devops
+description: Complete GitHub workflow skill — auth, PRs, issues, repos, code review, codebase inspection, and repo access. Covers both gh CLI and curl/git fallbacks for environments without gh.
 version: 2.0.0
-author: Ben Barclay (benbarclay), Hermes Agent
-license: MIT
-platforms: [linux, macos, windows]
 metadata:
   hermes:
-    tags: [github, gh, git, pull-requests, issues, code-review, repos, auth, ci]
-    category: software-development
-    related_skills: [codebase-inspection, requesting-code-review]
+    tags: [github, git, pull-requests, issues, code-review, authentication, repos]
+    related_skills: [hermes-agent-sync, webhook-subscriptions]
 ---
 
-# GitHub
+# GitHub Operations — Umbrella Skill
 
-Work GitHub end to end with the `gh` CLI (REST fallback where noted): auth,
-issues, the PR lifecycle, issue-to-PR delivery, code review, and repo
-management. This skill consolidates six former skills; each workflow lives
-complete in its reference file — ALWAYS read the matching reference before
-starting that workflow, the body below only routes.
+## Overview
 
-## Routing
+This umbrella skill covers all GitHub interactions the agent performs. Each major workflow is documented in its own reference file under `references/`. The shared **auth detection** and **owner/repo extraction** boilerplate lives here once instead of being duplicated across 7 files.
 
-| Task | Read first |
-|---|---|
-| Auth broken / new machine / token or SSH setup / gh login | `references/auth.md` |
-| Create, triage, label, assign, close issues | `references/issues.md` |
-| Branch, commit, open PR, watch CI, merge | `references/pr-workflow.md` |
-| Carry an ISSUE to a verified PR (full delivery loop) | `references/issue-to-pr.md` |
-| Review someone's PR: diffs, inline comments, verdict | `references/code-review.md` |
-| Clone/create/fork repos, remotes, releases | `references/repo-management.md` |
+## Quick Auth Detection (shared)
 
-Supporting assets: `scripts/gh-env.sh` + `scripts/git-credential-token.py`
-(auth helpers), `templates/` (PR bodies, bug report, feature request),
-`references/ci-troubleshooting.md`, `references/conventional-commits.md`,
-`references/github-api-cheatsheet.md`, `references/review-output-template.md`.
+Use this before any GitHub operation that needs API access:
 
-## Core discipline (applies to every workflow)
+```bash
+# Determine which auth method to use
+if command -v gh &>/dev/null && gh auth status &>/dev/null; then
+  AUTH="gh"
+else
+  AUTH="git"
+  if [ -z "$GITHUB_TOKEN" ]; then
+    if [ -f ~/.hermes/.env ] && grep -q "^GITHUB_TOKEN=" ~/.hermes/.env; then
+      GITHUB_TOKEN=$(grep "^GITHUB_TOKEN=" ~/.hermes/.env | head -1 | cut -d= -f2 | tr -d '\n\r')
+    elif grep -q "github.com" ~/.git-credentials 2>/dev/null; then
+      GITHUB_TOKEN=$(grep "github.com" ~/.git-credentials 2>/dev/null | head -1 | sed 's|https://[^:]*:\([^@]*\)@.*|\1|')
+    fi
+  fi
+fi
+echo "Using: $AUTH"
 
-- Preflight once per session: `gh auth status` — if it fails, go to
-  `references/auth.md` before anything else.
-- Prefer `gh` over raw REST; drop to `gh api` only for endpoints the
-  porcelain lacks (the cheatsheet lists them).
-- Never report CI green without checking `gh pr checks` yourself; never
-  claim merged without verifying `state,mergedAt`.
-- Read full context before writing: `gh issue view --comments` /
-  `gh pr view --comments` — decisions live in threads, not titles.
-- Sweep for duplicates before creating anything:
-  `gh pr list --search` / `gh issue list --search`.
+# Extract owner/repo from git remote
+REMOTE_URL=$(git remote get-url origin)
+OWNER_REPO=$(echo "$REMOTE_URL" | sed -E 's|.*github\.com[:/]||; s|\.git$||')
+OWNER=$(echo "$OWNER_REPO" | cut -d/ -f1)
+REPO=$(echo "$OWNER_REPO" | cut -d/ -f2)
+echo "Owner: $OWNER, Repo: $REPO"
+```
 
-## Verification
+## Sub-skills (see references/)
 
-- The workflow's own reference file defines done for that task.
-- Cross-cutting: every claim about remote state (CI, merge, release,
-  issue state) is backed by a fresh `gh` read, never memory.
+| Skill | Purpose | File |
+|-------|---------|------|
+| **auth** | GitHub auth setup: HTTPS tokens, SSH keys, gh CLI login | `references/github-auth.md` |
+| **PR workflow** | Branch, commit, open, CI, merge lifecycle | `references/github-pr-workflow.md` |
+| **code review** | Review PR diffs, inline comments via gh or REST | `references/github-code-review.md` |
+| **issues** | Create, triage, label, assign issues | `references/github-issues.md` |
+| **repo management** | Clone, create, fork repos; manage remotes, releases, secrets | `references/github-repo-management.md` |
+| **codebase inspection** | LOC, language breakdown, code/comment ratios via pygount | `references/codebase-inspection.md` |
+| **repo access** | Browse tree, read files, download content; fallback strategies | `references/github-repo-access.md` |
+
+## Fallback strategies
+
+All GitHub skills support two access modes:
+- **`gh` CLI** — richer API access, simpler auth. Use when available.
+- **`git` + `curl`** — works anywhere `git` is installed. Uses `GITHUB_TOKEN` from `~/.hermes/.env` or `~/.git-credentials`.
+
+For environments where `git clone` and `raw.githubusercontent.com` are blocked (restricted networks, Docker containers), see `references/github-repo-access.md` for advanced fallback strategies including CDN workarounds and shallow clones.

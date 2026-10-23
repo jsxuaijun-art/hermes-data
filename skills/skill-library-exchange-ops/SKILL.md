@@ -1,7 +1,7 @@
 ---
 name: skill-library-exchange-ops
 description: 共享技能库被还原/多副本不一致时，做 from-canonical 还原与 md5 核验。
-version: 1.2.0
+version: 1.3.0
 author: Hermes Agent
 license: MIT
 category: devops
@@ -25,6 +25,7 @@ metadata:
 - 校验本地源 / skill-library / hermes-data 仓库三处一致性。
 - 交付涉及四工具共享的 skill 改动，需要正确的同步→推送→核验顺序。
 - 改了 skill 却「像没生效」，或裸名 `skill_view` 报 `Ambiguous` —— 同名多副本字母序遮蔽（见「二号陷阱」）。
+- 要**根治**同名多副本/遮蔽（去重到每组一份），或批量统一全库副本内容 —— 见「根治：同名多副本去重」。
 
 ## 架构与权威源
 
@@ -85,7 +86,24 @@ print(c["/short-video-copywriting"]["skill_md_path"])   # ← 真正加载的那
 
 > 完整实测数据、批量修复脚本与「阻挡-20 个」清单见 `references/same-name-shadowing-2026-10-20.md`。
 
-**结构性隐患（未根治）**：只要「顶层扁平遗留副本」还在，每次 skilllib 只装嵌套版 → 遮蔽会复发。根治=消除双份并存（清掉扁平遗留副本，保留备份），需用户点头，勿擅自删。
+### 根治：同名多副本去重（2026-10-20 已执行，用户批准）
+
+**为什么根治**：只要「顶层扁平遗留副本」还在，skilllib 每次只装嵌套版 → 遮蔽必然复发。**已于 2026-10-20 经用户批准执行**：重名组 94 → 4，删除冗余副本本机 88 份 + hermes-data 88 份，全库 396 个唯一 skill，`short-video-copywriting` 等被遮蔽的 skill 恢复加载正确版。
+
+**去重铁律（4 条，每条都是踩坑换来的）**：
+
+1. **匹配键必须是 frontmatter `name:`，不是目录名。** 目录名 ≠ 技能名是**真实存在**的实况（`coze-agent-engineering/agent-prompts/` 里的 SKILL.md，frontmatter `name: coze-tax-agent-prompt`）。首轮按**目录名**匹配，结果错配文件、覆盖无关技能、还误改了 `.archive/` —— 被迫用全量备份整体回滚重做。
+2. **排除 `~/.hermes/skills/.archive/`**（curator 归档，不被加载，不一致是正常的）与一切支持目录。首次失败的另一半原因就是没排除它。
+3. **删除必须镜像到 hermes-data。** 只删本机副本不够 —— `hermes_pull.sh` / `sync-pull.sh` 的 `rsync -a` 会从 hermes-data 把扁平副本**还原回来**，遮蔽立刻复发。删本机 `X` 的同一轮必须删 hermes-data 同相对路径的 `X`。
+4. **只对「内容完全一致」的重名组去重。** 内容不同的重名组是**真冲突**（两个不同 skill 撞名），强行按 canonical 覆盖会毁掉其中一个 —— 报告用户改名，勿擅自删。
+
+**保留哪一份**：每组留路径**最深**的那份（即 skilllib 托管的分类嵌套版 `~/.hermes/skills/<类>/<名>/`），删掉其余（含顶层扁平遗留）。因为 **skilllib install 只写嵌套版，嵌套版是唯一能持久的形态**。删完后 `Ambiguous` 自动消失，且因内容此前已统一，行为不变（实测去重后 `short-video-copywriting` 加载 `social-media/short-video-copywriting/SKILL.md`）。
+
+**动作前必须先备份**：`tar czf ~/skill-dupes-backup/skills-full-<ts>.tar.gz -C ~/.hermes skills`（实测 838M）。备份目录**绝不可**放在 `~/.hermes/skills/` 内（含 SKILL.md 会被当新 skill 扫到）。
+
+**2026-10-20 实况剩余 4 组真冲突（未动，待用户定夺）**：`research` / `research-report`（`deep-research/` 中文版 vs `research-en/` 英文版撞名，建议英文版改名 `research-en`）；`coze-tax-agent-prompt`（`agent-prompts` 子目录命名问题，canonical 里同样存在）；`hermes-upgrade`（不在库）。
+
+> 可执行脚本：`scripts/scan_same_name_copies.py`（**默认只读**：报告重名组、内容是否一致、实际加载哪份、将删哪些；`--apply` 才执行去重并把删除镜像到 hermes-data）。完整过程、首轮失败复盘与实测数据见 `references/dedupe-same-name-copies-2026-10-20.md`。
 
 ## 三处一致性核验（md5）
 
@@ -133,6 +151,10 @@ hd = "/mnt/c/Users/Admin/hermes-sync/skills"
 - 别对同步夹跑「把 ~/.hermes 全量 --delete 镜像过去」——同步夹有 .git 等 ~/.hermes 没有的文件会被删。详见 `hermes-data-sync`（user-owned）P11。
 - 备份被遮蔽的旧加载版时，**别把备份目录建在 `~/.hermes/skills/` 内** —— 里面有 SKILL.md 就会被扫描当新 skill，制造新的副本。放 `~/skill-dupes-backup/` 之类目录。
 - 「`skill_view` 读到的内容对」**不等于**「运行加载的就是那份」。同名多副本时两者可能不同 —— 判活动路径只认 `scan_skill_commands()`。
+- **同名副本的匹配/统一/去重一律用 frontmatter `name:`，绝不用目录名**：目录名与技能名不同名真实存在（`agent-prompts/` 装的是 `coze-tax-agent-prompt`），按目录名匹配会错配并覆盖无关技能。
+- **删同名冗余副本时必须同步删 hermes-data 对应副本**，否则 `rsync -a` 会从 hermes-data 还原扁平副本，遮蔽复发。
+- 重名组里**内容不一致的是「真冲突」而不是「待同步」**（两个不同 skill 撞名）——不能按 canonical 强覆盖，报告用户改名。
+- 批量改/删副本前先整目录 tar 备份，且**备份目录不能放在 `~/.hermes/skills/` 内**（会被当新 skill 扫到）。
 
 ## Verification
 
@@ -140,6 +162,8 @@ hd = "/mnt/c/Users/Admin/hermes-sync/skills"
 - [ ] 改过的每个 skill：lib / local 活动路径 / hermes-data 三处 md5 一致。
 - [ ] skill-library 与 hermes-data 两仓库 `git status -sb` 均 local==origin/main。
 - [ ] 确认本轮没有跑过 `拉取.bat` / sync-pull（或确认拉取发生在本机改动 push 之后）。
+- [ ] **去重后**：按 frontmatter `name:` 统计的重名组数明显下降（本次 94→4），且剩余组**全部是内容不一致的真冲突**；`scan_skill_commands()` 复核改过的 skill 仍加载预期版本（可用内容标志串判断，如「去AI味」）。
+- [ ] 去重若删过副本：确认 hermes-data 里对应副本**也已删除**（否则下次 rsync 还原）。
 
 ## Related
 

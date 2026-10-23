@@ -44,16 +44,3 @@ ssh root@47.103.27.171 "curl -sL -o /var/www/html/images/<filename>.jpg 'https:/
 |:-----|:---------|:-----------|
 | 数据分析/大屏 | 1551288049-bebda4e38f71 | section_datascreen |
 | 财务计算/算账 | 1554224155-6726b3ff858f | section_finance |
-| 数据报表/增长图表 | 1460925895917-afdab827c52f | section_checklist, section_report |
-| 财务账单/算账 | 1554224154-26032ffc0d07 | section_lowprice, section_calc |
-
-> 以上 1460925895917、1554224154 两条为 2026.8.5 自查通知文章实配验证（WSL 直链可下载，JPEG 有效）。
-
-## 会议/商办类（2026.8.5 补充验证）
-
-| 场景 | Photo ID | 文件名建议 |
-|:-----|:---------|:-----------|
-| 会议室讨论 | 1542744173-8e7e53415bb0 | section_tips, section_meeting2 |
-| 商务办公协作 | 1556761175-b413da4baf72 | section_office2 |
-| 商务会议/文件 | 1517048676732-d65bc937f952 | section_policy, cover_doc |
-| 天秤/法令司法 | 1543286386-713bdd548da4 | section_law |

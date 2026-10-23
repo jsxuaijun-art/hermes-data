@@ -34,7 +34,7 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 §
 视觉降级:auxiliary.vision已指向telecom豆包Doubao-Seed-2.1-Pro(aigw.telecomjs.com/v1, ${TELECOM_DOUBAO_KEY})=主模型读不了图时自动接管,无需换主模型。config.yaml受保护,patch/write直改被拒,必须`hermes config set`(改前先cp备份)。探针=skill hermes-free-model-channels/scripts/vprobe.py(发已知随机码图验真伪)。
 §
-user-owned技能不可自动改(created_by=None实测):short-video-copywriting、skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、chinese-legal-research、wechat-article-search、multi-search-engine、business-registration-advisor;先`hermes curator adopt <name>`。agent建的(powerpoint/compliant-accounting/document-rendering-verification等)可自动改。chinese-legal-research有双副本,skill_view裸名报Ambiguous,用'skills/chinese-legal-research'。
+user-owned技能不可自动改(created_by=None实测,后台自律审查会被拒):short-video-copywriting、skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、chinese-legal-research、wechat-article-search、multi-search-engine、business-registration-advisor、word-documents、deliverable-handoff、content-evidence-discipline、tax-audit-response(frontmatter写agent_created:true也照样被拒,反例);reference-material-integration=bundled只读。前台会话可直接改,后台审查不行;要开放先`hermes curator adopt <name>`。chinese-legal-research有双副本,skill_view裸名报Ambiguous,用'skills/chinese-legal-research'。
 §
 路径表达铁律:回复中一切文件路径一律用Windows盘符(C:\...),绝不出现WSL路径;连脚本/工作目录也先拷到C盘目录再引用(如C:\Users\Administrator\yingxin_ppt\)。详skill wsl-windows-file-delivery。
 §
@@ -46,7 +46,7 @@ user-owned技能不可自动改(created_by=None实测):short-video-copywriting�
 §
 合规账报价表已入skill compliant-accounting:refs/13-合规账报价表与定价口径.md(4档12行官方阶梯)+templates/合规账报价表模板.docx+scripts/gen_quote.py(改价改顶部常量)。定价唯一源=13-参考;03-产品手册§八年费区间是旧口径勿混用。该skill有顶层与skills/skills/嵌套两份副本,内容已一致。
 §
-yt-dlp已装在Hermes venv(2026.08.19)。WSL侧ffmpeg=imageio-ffmpeg静态版(johnvansickle 7.0.2)，已symlink为~/.local/bin/ffmpeg(yt-dlp只认名字叫ffmpeg的二进制)。自动合并用法:venv/bin/yt-dlp --ffmpeg-location /home/administrator/.local/bin -f "bv*[height<=480]+ba/b[height<=480]" <url>。Windows侧ffmpeg 8.1(Winget,含ffprobe)可从WSL调用,但跨系统合并会因路径不通失败→下载+合并必须同系统。GitHub直连不稳,yt-dlp.exe易半途断(可用curl -C -续传或镜像)。B站视频国内直连约3-4MB/s。
+yt-dlp在Hermes venv;WSL侧ffmpeg=~/.local/bin/ffmpeg(imageio-ffmpeg静态,yt-dlp只认此名)。用法:venv/bin/yt-dlp -f "bv*[height<=480]+ba/b[height<=480]" <url>。下载+合并须同系统;GitHub直连不稳用镜像/curl -C -续传。
 §
 微信视频号下载(sph/)=徐总刚需:skill sph-video-downloader(奇云API凭据QIYUN_APP_ID/KEY本机密钥文件勿写记忆),跑法parse_download_qiyun.py <链接>存桌面\视频号\;口播交faster-whisper;user-owned改需curator adopt。
 §
@@ -61,3 +61,5 @@ memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须�
 徐总认可并要求坚持:交付检索/调研结果时末尾必附「顺带一个对你有用的发现」——除所问答案外主动指出对其业务有用的关联发现(可复制申报链条/同行打法/可切入口子),不问他需不需要。2026.10.14明示
 §
 关注「刘洪英·隆奔财税」(苏州同业):每月1日9点cron+契约longben-liuhongying.json,deliver=wecom:yingxin_inner(企微网关需已连接才能推)。2026-07-23相城太平财税合同双风控=刘洪英主讲。
+§
+盈信打印主力=A5记账凭证纸(约90%用量,半张A4碳粉省一半),月约6400张/年约7.7万张;选打印设备/算耗材成本以此为准,且须A5能从标准纸盒进纸(非仅手送)。

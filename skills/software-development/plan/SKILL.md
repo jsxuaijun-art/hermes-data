@@ -1,25 +1,14 @@
 ---
 name: plan
-<<<<<<< LOCAL (this PC)
-description: Plan mode for Hermes — inspect context, write a markdown plan into the active workspace's `.hermes/plans/` directory, and do not execute the work.
-version: 1.0.0
-author: Hermes Agent
-=======
 description: "Plan mode: write an actionable markdown plan to .hermes/plans/, no execution. Bite-sized tasks, exact paths, complete code."
 version: 2.0.0
 author: Hermes Agent (writing-craft adapted from obra/superpowers)
->>>>>>> REPO (github)
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   hermes:
-<<<<<<< LOCAL (this PC)
-    tags: [planning, plan-mode, implementation, workflow]
-    related_skills: [writing-plans, subagent-driven-development]
-=======
     tags: [planning, plan-mode, implementation, workflow, design, documentation]
     related_skills: [subagent-driven-development, test-driven-development, requesting-code-review]
->>>>>>> REPO (github)
 ---
 
 # Plan Mode

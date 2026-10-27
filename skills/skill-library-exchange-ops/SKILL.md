@@ -161,6 +161,11 @@ hd = "/mnt/c/Users/Admin/hermes-sync/skills"
 
 ⚠️ 中途**不要**跑 `拉取.bat` / `sync-pull.sh`（会把还没推的本机改动冲掉）。要拉别机的新内容，先确保本机改动已 push。
 
+⚠️ **hermes-data 的推送顺序有坑（2026-10-27 实测）**：`sync-push.sh` 开头是 `git fetch origin main && git reset --hard origin/main`——**任何「先手动拷/改进 hermes-data 工作区但还没 commit」的文件都会被 reset 冲掉还原成远端旧版**。因此：
+- 手动预拷到 hermes-data 工作区再跑 sync-push.sh 的那一步写入会**静默丢失**（该路径不会出现在新同步 commit 里）。
+- sync-push.sh 只 `cp -rf ~/.hermes/skills/* skills/`，即只刷新「~/.hermes/skills/ 里有的结构」（活动/嵌套版）；**hermes-data 里的扁平遗留副本拷不进去**，不会自动更新。
+- 正确顺序：**先跑 sync-push.sh**，再对需要更新的扁平/其它副本**显式 commit+push**（或先把手动改动 commit 进 hermes-data 再跑同步脚本）。跑完用 `git show HEAD:<路径> | grep` 核对远端 HEAD 里确实含新内容，别只信 `git status` 干净。
+
 ## Pitfalls
 
 - `author: Hermes Agent` frontmatter 不代表 curator-managed；`created_by=None` 即为 user-owned，autonomous 写入必被拒。实测 `cron-job-ops`、`skill-library-consolidation` 都是 frontmatter 像 agent 写、实际 user-owned。
@@ -168,6 +173,7 @@ hd = "/mnt/c/Users/Admin/hermes-sync/skills"
 - `skill-exchange` 是 `--no-agent --script` cron，有真实文件系统写副作用，但**只新增不覆盖**；真正会覆盖本机已改文件的是 hermes-data 的**拉取脚本 `rsync -a`**（`hermes_pull.sh` / `~/.hermes/sync-pull.sh`）。
 - 别对同步夹跑「把 ~/.hermes 全量 --delete 镜像过去」——同步夹有 .git 等 ~/.hermes 没有的文件会被删。详见 `hermes-data-sync`（user-owned）P11。
 - **`~/.hermes/sync-push.sh` 卡在 `[1/4] Sync ... (fetch+reset)`（git fetch 一直挂着）**：`git ls-remote origin` 秒回 ≠ fetch 会通——ls-remote 只列 ref，fetch 要传对象（远端已前进时对象多、直连慢会挂；`~/.hermes/proxy.sh` 探测到 Clash 7890 端口不通时会保持直连，本次即走此路径）。**别用短前台 timeout 跑同步脚本**——会被杀在半途，留下「已 fetch+reset、文件还没拷入」的中间态（git status 干净 ≠ 同步完成）。改 `background=true + notify_on_complete` 跑完整脚本，结束后 `git log --oneline -3`（应看到新 sync commit）+ 三处 md5 核验。fetch 真卡死可试 `GIT_SSH_COMMAND="ssh -o ConnectTimeout=15"`（沿用 hermes-data-sync 的已验证解法）。
+- **`~/.hermes/sync-push.sh` 开头 `git reset --hard origin/main` 会冲掉「手动先同步进 hermes-data 工作区但未 commit」的改动（2026-10-27 实测）**：想手动把某个扁平/额外副本补进 hermes-data，先跑 sync-push.sh 必然被 reset 还原成远端旧版，那笔改动不会进同步 commit。顺序应为「先跑 sync-push.sh → 再对需补的路径显式 commit+push」，或先 commit 进 hermes-data 再跑同步脚本。且 sync-push.sh 只 cp `~/.hermes/skills/*`（活动/嵌套结构），**flat 遗留副本不会自动更新**——凡要更新的副本都需显式推送 + `git show HEAD:<路径>|grep` 核验远端 HEAD 内容，别只信 `git status` 干净。
 - 备份被遮蔽的旧加载版时，**别把备份目录建在 `~/.hermes/skills/` 内** —— 里面有 SKILL.md 就会被扫描当新 skill，制造新的副本。放 `~/skill-dupes-backup/` 之类目录。
 - 「`skill_view` 读到的内容对」**不等于**「运行加载的就是那份」。同名多副本时两者可能不同 —— 判活动路径只认 `scan_skill_commands()`。
 - **同名副本的匹配/统一/去重一律用 frontmatter `name:`，绝不用目录名**：目录名与技能名不同名真实存在（`agent-prompts/` 装的是 `coze-tax-agent-prompt`），按目录名匹配会错配并覆盖无关技能。

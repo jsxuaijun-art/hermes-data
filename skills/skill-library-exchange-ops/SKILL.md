@@ -86,6 +86,24 @@ print(c["/short-video-copywriting"]["skill_md_path"])   # ← 真正加载的那
 
 > 完整实测数据、批量修复脚本与「阻挡-20 个」清单见 `references/same-name-shadowing-2026-10-20.md`。
 
+## ⚠️ 三号陷阱：向 canonical 注入增量时 patch 锚点对不上，其实是 canonical 落后于本机（2026-10-27 实测）
+
+**症状**：本机 skill 已是最新版，向 canonical（skill-library）逐行 patch 注入增量时，`patch` 报 `Could not find a match for old_string`——锚点在 canonical 里找不到。
+
+**根因**：**patch 锚点缺失 ≠ 你的内容错了/过期。** 常是 **canonical 比本机旧**——缺的不是本轮增量，而是更早的会话/脚本早已加进本机的行。本例 canonical 的通用话术模块索引表缺「加微信已发报价…首次巩固跟进」一整行（历史行、非本轮增量），两个 patch 锚点全落空。
+
+**判定 & 安全覆盖（先双向 diff 再决定「打补丁 vs 整体覆盖」）**：
+```bash
+diff <local SKILL.md> <canonical SKILL.md>
+# 若全部差异是「本机独有 <」、没有任何「canonical 独有 >」行
+# → 本机是 canonical 的严格超集 → 直接用 cp 整体覆盖，是安全升级
+cp <local SKILL.md> <canonical SKILL.md>   # 一次性带上历史增量 + 本轮增量，零数据丢失
+diff <local> <canonical> && echo 一致        # 覆盖后 diff 为空 = 落盘一致
+```
+**注意**：仅当 diff 确认**零 canonical 独有行**时整体覆盖才安全；只要存在 `>` 行（canonical 有本机没有的内容），逐行 patch 才是对的。
+
+**教训**：向 canonical 同步前先跑双向 diff 裁定「打补丁 vs 整体覆盖」；补丁打不上先怀疑 canonical 滞后，别怀疑自己的内容。
+
 ### 根治：同名多副本去重（2026-10-20 已执行，用户批准）
 
 **为什么根治**：只要「顶层扁平遗留副本」还在，skilllib 每次只装嵌套版 → 遮蔽必然复发。**已于 2026-10-20 经用户批准执行**：重名组 94 → 4，删除冗余副本本机 88 份 + hermes-data 88 份，全库 396 个唯一 skill，`short-video-copywriting` 等被遮蔽的 skill 恢复加载正确版。
@@ -149,6 +167,7 @@ hd = "/mnt/c/Users/Admin/hermes-sync/skills"
 - hermes-data 仓库与本机都存在多个同名 skill 的扁平/嵌套/归档副本。**搜 md5 / 改 skill 时，一律先用 `scan_skill_commands()` 确认"活动路径"，别想当然认定是嵌套版** ——同名多副本时按路径字典序取第一个，扁平版可能胜出并遮蔽嵌套版。
 - `skill-exchange` 是 `--no-agent --script` cron，有真实文件系统写副作用，但**只新增不覆盖**；真正会覆盖本机已改文件的是 hermes-data 的**拉取脚本 `rsync -a`**（`hermes_pull.sh` / `~/.hermes/sync-pull.sh`）。
 - 别对同步夹跑「把 ~/.hermes 全量 --delete 镜像过去」——同步夹有 .git 等 ~/.hermes 没有的文件会被删。详见 `hermes-data-sync`（user-owned）P11。
+- **`~/.hermes/sync-push.sh` 卡在 `[1/4] Sync ... (fetch+reset)`（git fetch 一直挂着）**：`git ls-remote origin` 秒回 ≠ fetch 会通——ls-remote 只列 ref，fetch 要传对象（远端已前进时对象多、直连慢会挂；`~/.hermes/proxy.sh` 探测到 Clash 7890 端口不通时会保持直连，本次即走此路径）。**别用短前台 timeout 跑同步脚本**——会被杀在半途，留下「已 fetch+reset、文件还没拷入」的中间态（git status 干净 ≠ 同步完成）。改 `background=true + notify_on_complete` 跑完整脚本，结束后 `git log --oneline -3`（应看到新 sync commit）+ 三处 md5 核验。fetch 真卡死可试 `GIT_SSH_COMMAND="ssh -o ConnectTimeout=15"`（沿用 hermes-data-sync 的已验证解法）。
 - 备份被遮蔽的旧加载版时，**别把备份目录建在 `~/.hermes/skills/` 内** —— 里面有 SKILL.md 就会被扫描当新 skill，制造新的副本。放 `~/skill-dupes-backup/` 之类目录。
 - 「`skill_view` 读到的内容对」**不等于**「运行加载的就是那份」。同名多副本时两者可能不同 —— 判活动路径只认 `scan_skill_commands()`。
 - **同名副本的匹配/统一/去重一律用 frontmatter `name:`，绝不用目录名**：目录名与技能名不同名真实存在（`agent-prompts/` 装的是 `coze-tax-agent-prompt`），按目录名匹配会错配并覆盖无关技能。

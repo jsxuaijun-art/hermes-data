@@ -61,6 +61,27 @@ python3 scripts/stream_chat.py \
 两条都实测支持流式；密钥在 `~/.hermes/.env`。渠道与 fallback 链的配置细节见
 `hermes-free-model-channels`（user-owned）。
 
+### 中途调 kimi 读图（含图任务，2026-10 实测）⚠️
+
+主会话常用模型（deepseek-v4-flash）**没有视觉能力**，读不了客户发的图
+（营业执照/财务报表/股权转让协议/截图等）。但不需要切换整个会话模型——
+**在 deepseek 主会话里后台直接调 kimi-k3 的 API 即可**（与公众号 skill 调 kimi
+同一条渠道 `aigw.telecomjs.com/v1`，密钥 `TELECOM_KIMI_KEY`）。
+
+- **kimi-k3 实测支持图**：OpenAI 兼容 `image_url` 格式（`data:image/png;base64,...`），
+  能准确识别图中文字/内容。**key = 用 kimi 读图，而不是把主会话切到 kimi**。
+- **通用调用脚本**：`scripts/kimi_chat.py` — 支持文字 + 多张图片混合输入，
+  模型默认 kimi-k3：
+  ```bash
+  python3 scripts/kimi_chat.py --text "读取这些图，提取XX信息" \
+      --images /a.png,/b.jpg --out /tmp/result.txt [--key-env TELECOM_KIMI_KEY]
+  ```
+- **响应读取**：读 `choices[0].message.content`（kimi 的推理见 `reasoning_content`，
+  别把 reasoning 当正文）。
+- **用前探测**：正式调用前先拿一张小图真实探测通道（脚本已内置可复用思路），
+  防 503 无可用渠道/模型名失效。
+- **分工**：读图/处理含图材料 → kimi；编排/采集/验证/汇报 → deepseek 主会话。
+
 ## 创作类委派：简报必须自带「已核实事实白名单」
 
 把文案/方向的创作交给外部模型（豆包/kimi）时，**主会话必须先核实事实，再把事实作为白名单写进 brief**，

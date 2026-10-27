@@ -50,6 +50,36 @@ print('tables:', xml.count('<w:tbl>'), 'paragraphs:', xml.count('<w:p>'))
 ```
 Good for counting tables/paras, not for layout.
 
+**Reopening the .docx with python-docx to verify text content** (catches text bugs a render won't show):
+```python
+from docx import Document
+d = Document('out.docx')
+print('paras:', len([p for p in d.paragraphs if p.text.strip()]), 'tables:', len(d.tables))
+for p in d.paragraphs:
+    if '待确认' in p.text:
+        print('real newlines:', p.text.count('\n'))     # 应>0，说明填表说明正确分行
+        print('literal \\n:', '\\\\n' in p.text)         # 应为 False —— 见下面陷阱
+```
+- **陷阱：字面 `\\n` vs 真实换行——别被 `repr()` 骗了。** 生成脚本里若写的是
+  `'...待确认"\\\\n2. ...'`（源码里字面反斜杠+n 两个字符），docx 里存的就是字面
+  `\n` 文本，打开时显示一行乱字而不分行。用 `p.text.count('\n') == 0` + `'\\\\n' in p.text`
+  判定，比肉眼/shadow 的 `repr` 可靠（`repr` 把真实换行也显示成 `\n`，两难分清）。
+- 修复：把源码里的 `'\\\\n'` 改成真实换行 `'\n'`（或 `add_paragraph` 多段），重新生成再复验一次。
+
+**Docx packaged inside a delivery zip (徐总交付打包铁律: 桌面只留 zip)**:
+If `out.docx` was zipped up (`fname.zip` → Desktop), the snippet above throws
+`KeyError: word/document.xml` — the OUTER zip holds the .docx *file*, not its XML.
+Go outer → docx bytes → `io.BytesIO` → inner zip. Two steps, not one:
+```python
+import zipfile, io
+outer = zipfile.ZipFile("交付物.zip")
+d = zipfile.ZipFile(io.BytesIO(outer.read(outer.namelist()[0])))  # 唯一条目=docx
+xml = d.read("word/document.xml").decode()
+print('tables:', xml.count('<w:tbl>'), 'paragraphs:', xml.count('<w:p>'))
+```
+Add a keyword spot-check to catch "该写的没写进去": `for kw in [...]: assert kw in xml`.
+
+
 ## Known environment quirk
 
 Some providers/models (e.g. deepseek-v4-flash) do not accept image inputs, so the normal vision QA chain is unavailable for them. This is an environment trait, not a tool defect — the pdftotext fallback above is the reliable working path, not a refusal.

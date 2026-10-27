@@ -50,7 +50,7 @@ yt-dlp在Hermes venv;WSL侧ffmpeg=~/.local/bin/ffmpeg(imageio-ffmpeg静态,yt-dl
 §
 微信视频号下载(sph/)=徐总刚需:skill sph-video-downloader(奇云API凭据QIYUN_APP_ID/KEY本机密钥文件勿写记忆),跑法parse_download_qiyun.py <链接>存桌面\视频号\;口播交faster-whisper;user-owned改需curator adopt。
 §
-长文出稿铁律:第三方网关(telecom aigw)非流式调用有~90s响应上限,长稿会中途断/整单超时→必须stream=true流式直连。delegate_task走非流式,委派写长稿(文案/文章)易整体失败,失败要如实说+改流式重试。通用调用器=skill llm-longform-generation/scripts/stream_chat.py(密钥走环境变量名传入,勿内联)。
+长文/读图出稿(skill llm-longform-generation):①长文→stream=true流式直连(非流式~90s超时中断);delegate_task非流式写长稿易失败,失败如实说+改流式。脚本scripts/stream_chat.py。②主模型deepseek无视觉,读客户图(执照/财报/股转协议/截图)后台直接调kimi-k3读图,无需切主会话模型:scripts/kimi_chat.py支持文字+多图,密钥TELECOM_KIMI_KEY(aigw.telecomjs.com/v1),kimi实测支持image_url读图,响应读message.content(reasoning在reasoning_content),用前小图探测防503。密钥走环境变量名勿内联。
 §
 技能统一库:四工具同读SKILL.md;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00。需注意:①本机~/.hermes/skills只是工作副本,hermes-data拉取脚本rsync会覆盖(真凶非skilllib install,后者非破坏:本机≠lib则SKIP);②同名多副本时Hermes按路径字母序(sorted)取第一个加载(iter_skill_index_files),顶层扁平副本会遮蔽嵌套分类版(social-media/short-video-copywriting字母序败给short-video-copywriting)→改skill后必用scan_skill_commands验实际加载路径;③改完md5比对全同+立即同步canonical+push双通道,勿靠本机副本持久。推送:①skill-library内commit+push②hermes-data=/mnt/c/Users/Admin/hermes-sync(用户Admin),走~/.hermes/sync-push.sh,跑完核local==remote。桌面成品不入库。
 §

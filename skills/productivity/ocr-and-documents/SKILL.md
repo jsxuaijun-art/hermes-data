@@ -1,7 +1,7 @@
 ---
 name: ocr-and-documents
 description: "Extract text from PDFs/scans (pymupdf, marker-pdf)."
-version: 2.3.0
+version: 2.4.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -15,6 +15,7 @@ metadata:
 For DOCX: use `python-docx` (parses actual document structure, far better than OCR).
 For PPTX: see the `powerpoint` skill (uses `python-pptx` with full slide/notes support).
 This skill covers **PDFs and scanned documents**.
+For **multi-format → Markdown** (Word/Excel/PPT/PDF), `markitdown` (Microsoft) is a first-choice lightweight option — see below.
 
 ## Step 1: Remote URL Available?
 
@@ -28,6 +29,40 @@ web_extract(urls=["https://example.com/report.pdf"])
 This handles PDF-to-markdown conversion via Firecrawl with no local dependencies.
 
 Only use local extraction when: the file is local, web_extract fails, or you need batch processing.
+
+## Step 1.5: MarkItDown (Microsoft) — lightweight multi-format → Markdown
+
+`markitdown` (Microsoft OSS, `pip install markitdown[all]`) converts **Word (.docx), Excel, PowerPoint, PDF, HTML, audio/video** into Markdown. It is small (no PyTorch, unlike marker-pdf), fast, and handles Chinese text well. Verified in this environment against real tax/legal docs (docx AND pdf), including tables → markdown tables.
+
+**Install** (in the venv; `[all]` pulls PDF/Office/audio deps):
+```bash
+pip install "markitdown[all]" -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+**Usage**:
+```bash
+markitdown input.docx > output.md   # any supported format
+markitdown input.pdf  > output.md
+```
+Python:
+```python
+from markitdown import MarkItDown
+md = MarkItDown()
+text = md.convert("input.docx").text_content
+```
+
+**Pitfalls (observed)**
+- `.pdf` file with a filename indicating PDF but a broken structure throws `FileConversionException: No /Root object! - Is this really a PDF?`. Check the true format with `head -c 20 file.pdf | xxd` — a real PDF starts with `%PDF`. Some print-save/exported PDFs are structurally invalid despite the extension; try a different source or pymupdf on those.
+- Audio/video → text needs `ffmpeg` on PATH (pydub warns if missing). If only imageio-ffmpeg's binary is available, symlink it: `ln -sf <imageio-path>/ffmpeg ~/bin/ffmpeg`.
+- Image OCR is NOT included by default in the base install; markitdown keeps images as references. For scanned-image text extraction use marker-pdf or an OCR model instead.
+- MarkItDown goes "format → md" only. For the reverse (md → formatted .docx) use `pandoc` or the `word-documents` / `markdown-to-word-converter` skill.
+
+**Decision** between local extractors:
+| Tool | Best for | Size |
+|------|----------|------|
+| **markitdown** | multi-format (docx/xlsx/pptx/pdf→md), text + structure incl. Chinese | few MB |
+| **pymupdf** | PDF only: split/merge/search/plain-text, instant, no models | ~25MB |
+| **marker-pdf** | OCR of scanned PDFs, equations, complex layouts | ~5GB |
 
 ## Step 2: Choose Local Extractor
 
@@ -234,6 +269,26 @@ cmap = f.getBestCmap()
 for ch in '0123456789,.()-':
     print(f'{repr(ch)}: {\"OK\" if ord(ch) in cmap else \"MISSING\"}' )
 "
+
+## Images → Text: RapidOCR (lightweight Chinese/onscreen OCR)
+
+For **plain images** (comics, screenshots, long-platform images like 公众号 or 小红书 image-narratives) use **RapidOCR** (`rapidocr_onnxruntime`). It is far lighter than marker-pdf, handles Chinese well, and is the reliable path when the active model has NO vision capability (vision_analyze 400) — it beats both `web_extract` (no URL) and subagent vision (slow/timeouts).
+
+```bash
+# Install (WSL, no sudo — venv or system with --break-system-packages; pip via 清华源)
+PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple python3 -m pip install --break-system-packages -q rapidocr_onnxruntime onnxruntime
+```
+```python
+from rapidocr_onnxruntime import RapidOCR
+ocr = RapidOCR()
+res, _ = ocr('path.png')          # res = [box, text, conf] list
+print([t for _, t, _ in res])
+```
+
+**Workflow for very long images** (e.g. a WeChat 漫画 long-image 928×16383):
+1. Cut the long image into ~1600px strips with PIL (`Image.open(...)`, `crop`), OCR each strip, concatenate line order.
+2. Record the **storyline/sequence** of each strip (strip index → key beats) so the narrative timeline survives the transcription and can be re-ordered later.
+3. ⚠️ Chinese OCR produces a few recognition errors (e.g. 「产业园A座301」→「产业田A遮301」). Fix by semantic correction. **Never quote policy/legal text from OCR alone** — verify against the official source before publishing.
 
 ## Non-Standard Documents: Music Scores
 

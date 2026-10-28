@@ -177,6 +177,7 @@ hd = "/mnt/c/Users/Admin/hermes-sync/skills"
 - 备份被遮蔽的旧加载版时，**别把备份目录建在 `~/.hermes/skills/` 内** —— 里面有 SKILL.md 就会被扫描当新 skill，制造新的副本。放 `~/skill-dupes-backup/` 之类目录。
 - 「`skill_view` 读到的内容对」**不等于**「运行加载的就是那份」。同名多副本时两者可能不同 —— 判活动路径只认 `scan_skill_commands()`。
 - **同名副本的匹配/统一/去重一律用 frontmatter `name:`，绝不用目录名**：目录名与技能名不同名真实存在（`agent-prompts/` 装的是 `coze-tax-agent-prompt`），按目录名匹配会错配并覆盖无关技能。
+- **向 hermes-data / canonical 拷文件前，先用 `git ls-files | grep <skill名>` 核对该仓库实际跟踪的路径，只往跟踪路径写**——不要臆测存在嵌套副本就往 `skills/skills/<名>/` 或 `<名>/skills/<名>/` 写（2026-10-27 实测：臆测目标写出了 `skills/skill-library-exchange-ops/skills/skill-library-exchange-ops/` 的冗余副本，`git add -A` 把它裹挟进 commit 推上了远端，凭空制造新的同名多副本/遮蔽隐患）。已误建时清理：`git rm -r --cached <多余路径> && rm -rf <多余路径>`，提交（`delete mode 100644`）重推，再用 `git ls-tree -r HEAD --name-only | grep <skill名>` 核验远端 HEAD 只剩应跟踪的文件。**写盘只应命中 `git ls-files` 列出的路径**；目标仓库没有的副本形态不要自创。
 - **删同名冗余副本时必须同步删 hermes-data 对应副本**，否则 `rsync -a` 会从 hermes-data 还原扁平副本，遮蔽复发。
 - 重名组里**内容不一致的是「真冲突」而不是「待同步」**（两个不同 skill 撞名）——不能按 canonical 强覆盖，报告用户改名。
 - 批量改/删副本前先整目录 tar 备份，且**备份目录不能放在 `~/.hermes/skills/` 内**（会被当新 skill 扫到）。

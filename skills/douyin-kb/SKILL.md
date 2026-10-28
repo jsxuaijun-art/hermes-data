@@ -9,18 +9,27 @@ metadata:
     tags: [douyin, 抖音, 知识库, obsidian, 收藏]
     category: productivity
     related_skills: [video-download, video-transcription, ima-skill]
+triggers:
+  - 收一个抖音 / 抖音收藏进库 / 把这条收进知识库
+  - v.douyin.com / douyin.com/video/ (直接粘贴抖音链接即触发)
+  - 在收藏库找 / 查收藏 / 抖音知识库
 ---
 
 # 抖音收藏知识库 (douyin-kb) Skill
 
 ## When to Use
 
-用户说「收一个抖音／这条收藏进库／把抖音收藏转成知识卡片」时，把一条抖音视频：
-下载 → 转写 → 生成知识卡片 → 存入 Obsidian 主库 `30-Knowledge/抖音知识库/`。
+用户在对话中**直接粘贴一条抖音分享链接**（`v.douyin.com/短链` 或 `douyin.com/video/<id>`）时，自动走本流程，**无需用户再说"收一个抖音"**（快捷指令：粘贴即触发）。
+
+把一条抖音视频：下载 → 转写 → 生成知识卡片 → 存入 Obsidian 主库 `30-Knowledge/抖音知识库/`。
 
 **目标**：刷到有价值的内容照常收藏，丢链接给我，我自动整理成可检索的知识卡片
 （一句话概括 + 核心要点 + 长视频章节拆分 + 原视频链接）。想查时说
 「在收藏库找讲 XX 的视频」，我读卡片汇总返回。
+
+**存储策略（2026-10-28 徐总确认）**：**vault 只存 .md 卡片文字 + 原视频链接，不存视频文件**。
+下载的 mp4 / 抽出的 wav / 转写稿都只是处理过程临时文件，放在 `/tmp`，出卡后立即删除。
+理由：视频体积大，存进去会撑爆 vault、拖垮 git/obsidian 同步；文字 + 原链接已含全部可检索信息，查看时一键跳转。
 
 **数据边界**：本目录随 `obsidian_sync.sh` 推送 GitHub。**涉客户/涉税敏感内容不要走这里**，
 敏感内容放私有区。知识库只存公开的财税知识/方法论。
@@ -71,6 +80,7 @@ python3 ~/.hermes/skills/douyin-kb/scripts/transcribe.py /tmp/xx.mp4 \
 5. **入库**：`write_file` 写入 `/mnt/d/obsidian-vault/30-Knowledge/抖音知识库/YYYY-MM-DD-主题-关键词.md`；
    更新 `_MOC.md` 最新收藏 + 主题标签导航。
 6. **交付**：回复路径用 Windows 盘符 `D:\obsidian-vault\30-Knowledge\抖音知识库\...`；附一句话概括 + 原链接。
+7. **清理临时文件（必做）**：出卡并交付后，删除 `/tmp` 下的下载视频、抽出的 wav、转写 .md（如 `/tmp/douyin_*.mp4`、`/tmp/douyin_*_transcript.md`、`/tmp/*.wav`）。**vault 只保留 .md 卡片 + 原链接，不落任何视频/音频**。
 
 ## Pitfalls
 

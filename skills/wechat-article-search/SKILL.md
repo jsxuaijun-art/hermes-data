@@ -7,13 +7,10 @@ version: 0.1.0
 allowed-tools: Bash,Read
 metadata:
   clawdbot:
-    emoji: "\U0001F50E"
+    emoji: "🔎"
     requires:
       bins:
         - node
-display_name: "wechat-article-search"
-display_name_en: "wechat-article-search"
-visibility: "public"
 ---
 
 # 微信公众号文章搜索说明

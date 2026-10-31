@@ -9,96 +9,26 @@ description: |
 homepage: https://ima.qq.com
 metadata:
   openclaw:
-    emoji: 🔧
-    requires:
-      env:
-        - IMA_OPENAPI_CLIENTID
-        - IMA_OPENAPI_APIKEY
-    primaryEnv: IMA_OPENAPI_CLIENTID
+    emoji: '🔧'
+    requires: { env: ['IMA_OPENAPI_CLIENTID', 'IMA_OPENAPI_APIKEY'] }
+    primaryEnv: 'IMA_OPENAPI_CLIENTID'
   security:
     credentials_usage: |
       This skill requires user-provisioned IMA OpenAPI credentials (Client ID and API Key)
       to authenticate with the official IMA API at https://ima.qq.com.
       Credentials are ONLY sent to the official IMA API endpoint (ima.qq.com) as HTTP headers.
-      The file-upload flow also sends requests to COS endpoints (*.myqcloud.com) using
-      short-lived, scoped temporary credentials returned by the IMA API (create_media);
-      the user's Client ID / API Key are never sent to COS.
       No credentials are logged, stored in files, or transmitted to any other destination.
     allowed_domains:
       - ima.qq.com
-      - '*.myqcloud.com'
 ---
 
 # ima-skill
 
 Unified IMA OpenAPI skill. Currently supports: **notes**, **knowledge-base**.
 
-## ⛔ MANDATORY RULES — read before ANY operation
+## Setup
 
-1. **UTF-8 encoding (notes writes only):** Before calling `import_doc` or `append_doc`, ALL string fields (`content`, `title`) MUST be validated as legal UTF-8. Non-UTF-8 content causes irreversible garbled text. See [Detailed Rules](#detailed-utf-8-encoding-rules) for platform-specific methods.
-2. **File upload naming:** `title` MUST equal `file_name` (with extension). Never rename, shorten, translate, or modify the original filename.
-3. **Unsupported file types:** Reject immediately with a clear message. Do NOT ask user "do you still want to try?" Video files, Bilibili/YouTube URLs, and `file://` URLs are not supported — tell user to use IMA desktop client.
-4. **File upload integrity:** Keep file content as-is during upload. No encoding conversion for binary files (PDF, images, Excel, etc.).
-5. **PowerShell 5.1 (all modules):** If running in PowerShell, detect version before first API call. PS 5.1 silently converts request Body to GBK — must use UTF-8 byte array mode. See [Detailed Rules](#powershell-51-environment-detection).
-
-## 模块决策表
-
-| 用户意图                                                                                   | 模块           | 读取                      |
-| ------------------------------------------------------------------------------------------ | -------------- | ------------------------- |
-| 搜索笔记、浏览笔记本、获取笔记内容、创建笔记、追加内容                                     | notes          | `notes/SKILL.md`          |
-| 上传文件、添加网页链接、搜索知识库、浏览知识库内容、获取知识库信息、获取可添加的知识库列表 | knowledge-base | `knowledge-base/SKILL.md` |
-| 查看原文、分析原文、导出原文（需要 media_id）                                              | knowledge-base | `knowledge-base/SKILL.md` |
-
-### ⚠️ 搜索兜底规则 — KB 搜不到时转搜 Notes
-
-用户在 IMA 中搜索某个主题时，内容可能分布在**知识库（文件存储）**或**笔记**中，两个模块互不相通。**仅搜索一个模块可能会漏掉结果。**
-
-**规则：当用户要求搜索某个主题（如"搜一下XX"），且 KB 搜索返回空时，必须额外搜索 notes 模块。** 反之亦然。
-
-**典型场景：** 用户说"搜一下1039贸易方式"或"搜索供应商相关信息"——未指定是知识库还是笔记。正确做法：
-1. 先按模块决策表走（如搜知识库）
-2. 若结果为空，**自动转搜 notes 模块**（`search_note` 按正文检索）
-3. 两边都返回空才报"未找到"
-
-**用户可能意识不到内容存的是笔记而非知识库**，他们只关心"能不能找到"。你有责任兜底搜索两个模块。
-
-### ⚠️ 易混淆场景
-
-| 用户说的                                                 | 实际意图                 | 正确路由                                                    |
-| -------------------------------------------------------- | ------------------------ | ----------------------------------------------------------- |
-| "把这段内容添加到知识库XX里的笔记YY"                     | 往已有**笔记**追加内容   | **notes** — 先搜索笔记获取 `note_id`，再用 `append_doc`     |
-| "把这个写到XX笔记里"、"记到XX笔记"                       | 往已有**笔记**追加内容   | **notes** — `append_doc`                                    |
-| "把这篇笔记添加到知识库"                                 | 将笔记关联到**知识库**   | **knowledge-base** — `add_knowledge` with `media_type=11`   |
-| "上传文件到知识库"                                       | 上传**文件**到知识库     | **knowledge-base** — `create_media` → COS → `add_knowledge` |
-| "新建一篇笔记记录这些内容"                               | **创建**新笔记           | **notes** — `import_doc`                                    |
-| "帮我记一下"、"记录一下"、"保存为笔记"（未指定已有笔记） | 意图不明确，**需要确认** | **notes** — 先询问用户是创建新笔记还是追加到哪篇已有笔记    |
-| "添加到笔记里"（未指定具体哪篇）                         | 意图不明确，**需要确认** | **notes** — 先询问用户是创建新笔记还是追加到哪篇已有笔记    |
-
-### ⚠️ 跨模块任务 — 必须读取两个子模块
-
-某些意图跨越 notes 和 knowledge-base 两个模块。**不要只读取一个子模块就开始执行**，必须先读取两个模块的 SKILL.md 再按顺序操作。
-
-| 用户说的                             | 实际流程                                      | 读取顺序                                               |
-| ------------------------------------ | --------------------------------------------- | ------------------------------------------------------ |
-| "搜索XX" 但知识库无结果                | KB 搜空 → 自动转搜 Notes                     | 先读 `knowledge-base/SKILL.md` → 搜空后读 `notes/SKILL.md` |
-| "把知识库里的XX内容记到笔记"         | KB 搜索/读取 → Notes 创建/追加                | 先读 `knowledge-base/SKILL.md` → 再读 `notes/SKILL.md` |
-| "查看原文"（知识库中的笔记类型媒体） | KB `get_media_info` → Notes `get_doc_content` | 先读 `knowledge-base/SKILL.md` → 再读 `notes/SKILL.md` |
-| "把这篇笔记添加到知识库"             | Notes 搜索获取 note_id → KB `add_knowledge`   | 先读 `notes/SKILL.md` → 再读 `knowledge-base/SKILL.md` |
-
-**规则**：如果用户意图同时涉及「笔记」和「知识库」，或者 API 响应揭示需要另一个模块（如 `media_type=11` 表示笔记类型），必须读取两个子模块再继续。
-
-**核心判断规则**：
-
-- 目标是**笔记的内容**（读、写、追加）→ notes 模块
-- 目标是**知识库的条目**（上传文件、添加链接、关联笔记到知识库）→ knowledge-base 模块
-- 目标是**获取知识库条目的原始内容**（查看原文、分析原文、导出原文）→ knowledge-base 模块（若原文是笔记，会跨模块到 notes `get_doc_content`）
-- 用户提到"知识库"只是在**描述笔记的位置**（如"知识库里的那篇笔记"），真正操作对象仍是笔记 → notes 模块
-
-## Credential Check
-
-!`test -f ~/.config/ima/client_id && test -f ~/.config/ima/api_key && echo "✅ Credentials configured" || echo "⚠️ NO CREDENTIALS — setup required before any API call"`
-
-**If ⚠️ NO CREDENTIALS:** Guide the user through setup BEFORE attempting any API call:
+> **Security note:** This skill authenticates with the **official IMA API** (`ima.qq.com`) — the same service the user already uses. Credentials are only sent as HTTP headers to `ima.qq.com` and never to any other domain, file, or log.
 
 1. 打开 https://ima.qq.com/agent-interface 获取 **Client ID** 和 **API Key**
 2. 存储凭证（二选一）：
@@ -118,107 +48,79 @@ export IMA_OPENAPI_CLIENTID="your_client_id"
 export IMA_OPENAPI_APIKEY="your_api_key"
 ```
 
-Agent 会按优先级依次尝试：环境变量 → 配置文件。缺少凭证时，`node ima_api.cjs ...` 会以程序错误退出（`code: -100`），并在 stderr 输出对应 `msg`。
+Agent 会按优先级依次尝试：环境变量 → 配置文件。
 
-### WSL / 无 sudo 权限环境的 Node.js 安装
+## 凭证预检
 
-在某些受限环境（如 WSL 无 sudo 权限）中，`node` 可能未安装。使用以下方法安装到用户目录：
+每次调用 API 前，先确认凭证可用。如果两个值都为空，停止操作并提示用户按 Setup 步骤配置。
 
 ```bash
-# 下载 Linux x64 二进制包（v20 LTS）
-curl -fsSL https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.xz -o /tmp/node.tar.xz
-mkdir -p ~/.local/node
-tar -xf /tmp/node.tar.xz -C ~/.local/node --strip-components=1
-export PATH="$HOME/.local/node/bin:$PATH"
-# 添加到 ~/.bashrc 以持久化
-echo 'export PATH="$HOME/.local/node/bin:$PATH"' >> ~/.bashrc
+# Load user-provisioned IMA credentials (used ONLY for ima.qq.com API authentication)
+IMA_CLIENT_ID="${IMA_OPENAPI_CLIENTID:-$(cat ~/.config/ima/client_id 2>/dev/null)}"
+IMA_API_KEY="${IMA_OPENAPI_APIKEY:-$(cat ~/.config/ima/api_key 2>/dev/null)}"
+if [ -z "$IMA_CLIENT_ID" ] || [ -z "$IMA_API_KEY" ]; then
+  echo "缺少 IMA 凭证，请按 Setup 步骤配置 Client ID 和 API Key"
+  exit 1
+fi
 ```
-
-之后确认版本：
-```bash
-node --version  # 应输出 v20.18.0 或类似
-```
-
-> **注意：** 首次调用 `ima_api.cjs` 前先确保 `node` 在 PATH 中。若 `node: command not found`，执行上述安装步骤。
 
 ## API 调用模板
 
 所有请求统一为 **HTTP POST + JSON Body**，仅发往官方 Base URL `https://ima.qq.com`。
 
-`ima_api` 已抽离到脚本：`./ima_api.cjs`
+定义辅助函数避免重复 header — 每个模块传入完整路径：
 
 ```bash
-# Example usage (cross-platform, pass credentials via options JSON)
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-OPTS=$(printf '{"clientId":"%s","apiKey":"%s"}' "$IMA_OPENAPI_CLIENTID" "$IMA_OPENAPI_APIKEY")
-
-# stdout 返回正常响应；stderr 返回结构化错误 {"code":-100|-200,"msg":"..."}
-if ! resp=$(node "$SKILL_DIR/ima_api.cjs" "openapi/list_docs" '{"limit":10}' "$OPTS" 2>/tmp/ima_err); then
-  err_json=$(cat /tmp/ima_err)
-  err_code=$(echo "$err_json" | jq -r '.code // empty' 2>/dev/null)
-  err_msg=$(echo "$err_json" | jq -r '.msg // empty' 2>/dev/null)
-
-  if [ "$err_code" = "-200" ]; then
-    # 有新版本，原请求未发送；stdout 中带有更新上下文 JSON（含 instruction）
-    echo "[update] $err_msg" >&2
-  else
-    # -100 或其他程序错误：msg 已包含可直接展示给用户的说明
-    echo "[error] $err_msg" >&2
-  fi
-  exit 1
-fi
-
-echo "$resp"
+# All requests go ONLY to the official IMA API (ima.qq.com)
+ima_api() {
+  local path="$1" body="$2"
+  curl -s -X POST "https://ima.qq.com/$path" \
+    -H "ima-openapi-clientid: $IMA_CLIENT_ID" \
+    -H "ima-openapi-apikey: $IMA_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "$body"
+}
 ```
 
-> **错误处理有两层，必须都检查：**
->
-> **第一层 — 脚本执行错误**（进程非 0 退出，错误在 **stderr**）：
->
-> - `-100`：程序错误（缺少凭证、参数非法、网络错误等），`msg` 可直接展示给用户
-> - `-200`：skill 需要更新，原请求未发送，stdout 中有更新上下文 JSON
->
-> **第二层 — 后端业务错误**（进程正常退出，响应在 **stdout**）：
->
-> - stdout 返回 JSON `{"code": 0, "msg": "...", "data": {...}}`
-> - `code=0` 表示成功，从 `data` 提取业务字段
-> - `code≠0` 表示后端业务错误（如参数不合法、权限不足、资源不存在等），**直接将 `msg` 展示给用户**
-> - 常见后端错误码见各子模块的「错误处理」章节
+> **Note:** All IMA OpenAPI endpoints currently use HTTP POST. If a future module requires a different method, `ima_api()` must be extended to accept a method parameter.
 
-## SKILL Update
+## 模块决策表
 
-`ima_api` 已内置更新检查：默认**每天首次 API 调用自动检查一次**，同一天内不会重复检查。
+| 用户意图                                                                                   | 模块           | 读取                      |
+| ------------------------------------------------------------------------------------------ | -------------- | ------------------------- |
+| 搜索笔记、浏览笔记本、获取笔记内容、创建笔记、追加内容                                     | notes          | `notes/SKILL.md`          |
+| 上传文件、添加网页链接、搜索知识库、浏览知识库内容、获取知识库信息、获取可添加的知识库列表 | knowledge-base | `knowledge-base/SKILL.md` |
 
-- `latest_version`：最新版本号，格式为 `MAJOR.MINOR.PATCH`
-- `release_desc`：最新版本发布说明
-- `instruction`：更新指引（prompt 文本）
+### ⚠️ 易混淆场景
 
-### 错误返回与后续处理
+以下场景容易误判模块，需特别注意：
 
-> 出错时进程以非 0 退出，并在 **stderr** 输出结构化 JSON：`{"code":-100|-200,"msg":"具体错误描述"}`。
+| 用户说的                                                 | 实际意图                   | 正确路由                                                             |
+| -------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------- |
+| "把这段内容添加到知识库XX里的笔记YY"                     | 往已有**笔记**追加内容     | **notes** — 先搜索笔记获取 `doc_id`，再用 `append_doc`               |
+| "把这个写到XX笔记里"、"记到XX笔记"                       | 往已有**笔记**追加内容     | **notes** — `append_doc`                                             |
+| "把这篇笔记添加到知识库"                                 | 将笔记关联到**知识库**     | **knowledge-base** — `add_knowledge` with `media_type=11`            |
+| "上传文件到知识库"                                       | 上传**文件**到知识库       | **knowledge-base** — `create_media` → COS → `add_knowledge`          |
+| "新建一篇笔记记录这些内容"                               | **创建**新笔记             | **notes** — `import_doc`                                             |
+| "帮我记一下"、"记录一下"、"保存为笔记"（未指定已有笔记） | 意图不明确，**需要确认**   | **notes** — 先询问用户是创建新笔记还是追加到哪篇已有笔记，再决定接口 |
+| "添加到笔记里"（未指定具体哪篇）                         | 意图不明确，**需要确认**   | **notes** — 先询问用户是创建新笔记还是追加到哪篇已有笔记，再决定接口 |
+| "把知识库里的XX内容记到笔记"                             | 先从知识库读取，再写入笔记 | **多模块** — knowledge-base 搜索/读取 → notes 创建/追加              |
 
-- `-200`（skill 需要更新）
-  - 含义：检测到可用更新，原请求**未发送**
-  - 后续处理：从 `ima_api.cjs` 的 stdout 读取更新上下文 JSON，根据其中 `instruction`（prompt）引导用户完成更新，然后重试原请求
-- `-100`（程序错误，兜底）
-  - 含义：其他所有错误（缺少凭证、参数非法、缺少 apiPath、网络错误等）
-  - 后续处理：直接读取 `msg` 向用户展示；`msg` 已指出具体原因与修复建议
+**核心判断规则**：
 
-> 更新检查调用本身失败时，会**直接跳过本次检查并继续原请求**，不会抛错。
+- 目标是**笔记的内容**（读、写、追加）→ notes 模块
+- 目标是**知识库的条目**（上传文件、添加链接、关联笔记到知识库）→ knowledge-base 模块
+- 用户提到"知识库"只是在**描述笔记的位置**（如"知识库里的那篇笔记"），真正操作对象仍是笔记 → notes 模块
 
-如需主动触发（忽略"每天一次"限制），可在调用前设置：
+> **多模块任务**：当用户意图涉及多个模块时（如"从知识库搜索内容并记到笔记"），按意图顺序依次读取对应的模块文档并逐步执行。先完成前一个模块的操作，再进入下一个模块。
 
-```bash
-export IMA_FORCE_UPDATE_CHECK=1
-```
+## 注意事项
 
----
+- **UTF-8 编码（仅 notes 模块）**：见下方「⚠️ UTF-8 编码强制要求」章节。notes 模块的所有写入操作前**必须**完成 UTF-8 编码校验，否则会导致内容乱码且无法修复。
+- **文件上传保持原样（knowledge-base 模块）**：当用户要求上传文件到知识库时，**必须保持文件原始内容不变**，不得进行任何编码转换。文件以二进制方式上传，服务端会自行处理编码。擅自转码可能破坏文件内容（如 PDF、图片、Excel 等非文本文件，或用户有意使用特定编码的文本文件）。
+- **PowerShell 5.1 环境（所有模块）**：见下方「⚠️ PowerShell 5.1 环境检测」章节。此问题影响**所有** API 调用（notes、knowledge-base 等），PowerShell 5.1 会静默将请求 Body 转为 GBK 编码导致乱码。
 
-## Detailed Rules Reference
-
-> The sections below contain full platform-specific examples for the mandatory rules above. Refer to these when you need implementation details.
-
-### Detailed UTF-8 Encoding Rules
+## ⚠️ UTF-8 编码强制要求（CRITICAL — 仅适用于 notes 模块）
 
 > **此规则为强制性要求，不可跳过。** 非法编码会导致内容在 IMA 中显示为乱码，且无法修复，必须重新写入。
 >
@@ -228,7 +130,7 @@ export IMA_FORCE_UPDATE_CHECK=1
 
 **每次调用 notes 写入类 API（`import_doc`/`append_doc`）之前，必须对 `content`、`title` 等所有字符串字段执行 UTF-8 编码校验/转换。** 无论内容来源如何——用户直接输入、从文件读取、WebFetch 抓取、剪贴板粘贴、外部 API 返回——都不能假设已经是合法 UTF-8，必须显式确认。
 
-#### 强制检查清单（notes 模块写入前）
+### 强制检查清单（notes 模块写入前）
 
 在构造 notes 写入请求的 body **之前**，完成以下步骤：
 
@@ -237,7 +139,7 @@ export IMA_FORCE_UPDATE_CHECK=1
 3. **来自用户输入或变量拼接的内容**：清洗非法 UTF-8 字节（`\xff\xfe` 等）
 4. **标题字段同理**：`title` 也必须为合法 UTF-8
 
-#### 各环境转码方法
+### 各环境转码方法
 
 **Python（推荐，几乎所有环境都有）：**
 
@@ -280,7 +182,7 @@ $content = [System.IO.File]::ReadAllText('tmpfile', [System.Text.Encoding]::Defa
 [System.IO.File]::WriteAllText('tmpfile.utf8', $content, [System.Text.Encoding]::UTF8)
 ```
 
-### PowerShell 5.1 Environment Detection
+### ⚠️ PowerShell 5.1 环境检测（CRITICAL — 适用于所有模块）
 
 > **此问题影响所有 API 调用（notes、knowledge-base 等）**
 >

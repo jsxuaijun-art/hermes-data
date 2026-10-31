@@ -1,6 +1,6 @@
 ---
 name: hermes-git-upgrade-repair
-description: "Use when Hermes 升级后仍显旧版本或守卫拦截 git reset。"
+description: "Use when Hermes 升级后仍显旧版本、守卫拦截 git reset，或 China 网络大增量拉取失败（git fetch 反复断/下载慢，需 zip 断点续传 + 快照式升级）。"
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -84,79 +84,91 @@ hermes --version                  # 应显示 Up to date
   stdin 无应答），timeout 后无输出 —— 手动 git 操作才是可靠路径
 - 运行中的会话进程加载的是启动时的代码，`hermes --version` 在**新开进程**里验证
 
-### 4. 升级后 gateway 立即退出 exit 78：新版 api_server 强密钥守卫（0.21.3 实测坑）
+### 4. China 网络大增量升级：别磨 git fetch，用 zip 断点续传 + 快照提交（2026.9 实测）
 
-**症状**：升级到 0.21.x 后 `systemctl --user restart hermes-gateway` → `Active: failed (exit-code)`，`status=78`。78 在 unit 里是 `RestartPreventExitStatus`，**有意不重试**（不是崩溃循环）。日志：
+git fetch 拉**月度大增量**（delta >~60MB）经代理必在收尾处被切断（curl 92 HTTP/2 CANCEL /
+curl 56 GnuTLS early-EOF），且 **git pack 无法续传——每次重试从零开始**（5 次 × 共 2.6h 全废）。
+可靠路径 = **gh-proxy.com zip 断点续传（支持 HTTP 206 range）→ 全量 CRC 校验 → 快照提交**：
 
-```
-ERROR gateway.platforms.api_server: [Api_Server] Refusing to start: API_SERVER_KEY is required \
-  for the API server, including loopback-only binds on 127.0.0.1.
-ERROR gateway.run: Gateway hit a non-retryable startup conflict: api_server: API_SERVER_KEY \
-  was rejected by the startup guard ...
-Gateway exiting cleanly: ... status=78
-```
-
-**根因**：新版 api_server 启动守卫要求 `API_SERVER_KEY` 是强密钥（≥16 字符，`has_usable_secret` 校验）。旧版无此守卫，config.yaml 里 `platforms.api_server.enabled: true` 裸跑过也不报错；升级后立即拒绝启动并**连带整个 gateway 退出**。
-
-**修复**（保持 enabled:true 意图、不降级安全）：
 ```bash
-grep -c 'API_SERVER_KEY' ~/.hermes/.env   # 0 = 缺
-echo "API_SERVER_KEY=$(openssl rand -hex 32)" >> ~/.hermes/.env
-hermes gateway restart   # 或 hermes-agent/venv/bin/hermes gateway restart（顺带刷新 unit）
+url="https://gh-proxy.com/https://github.com/NousResearch/hermes-agent/archive/refs/heads/main.zip"
+for i in $(seq 1 20); do curl -L -C - --http1.1 -o /tmp/hermes-main.zip "$url" && break; sleep 3; done
+python3 -c "import zipfile;z=zipfile.ZipFile('/tmp/hermes-main.zip');b=z.testzip();print('ALL OK' if b is None else f'BAD CRC: {b}')"
+# 校验失败 = partial 本身损坏 → 整包重下，勿续传（续传"完成"的 zip 也可能是坏的）
 ```
-之后 `ss -tlnp | grep 8642` 应看到监听。不用的也可以 `platforms.api_server.enabled: false`，但用户明确配置过就配 key 更对。
 
-**排查纪律**：先 `journalctl --user -u hermes-gateway -n 30 | grep -iE 'ERROR|exit|78'` 看退出码，别先怀疑配置/凭据；gateway 日志里 `check_fn xxx returned False` 刷屏 = 缺 key 工具的 check_fn 正常返回，不是错误，排查时 exclude。
+**先试 release TAG zip，别在 main.zip 上死磕**（2026.10 实测 v0.22.5）：main.zip(≈101MB)
+反复在 28–35M 被切断，且这次 `-C -` 续传**不涨尺寸**（gh-proxy 当时不认 range）。
+改 `archive/refs/tags/v0.22.5.zip`（95M）单次 curl 一把过：
 
-### 5. gateway 崩溃循环（restart counter 高涨）＝混合目录版本失配（2026.9 实测）
-
-**症状**：`systemctl --user status hermes-gateway` 显示 active 但 Main PID 每次变、
-日志重复 `Scheduled restart job, restart counter is at 4234`（每 ~20s 一次）、
-`hermes cron status` 报 "Gateway is not running"（调度的 cron 全部停摆）。
-
-**根因**：混合目录（git 跟踪数据、源码 untracked）升级时**部分文件被覆盖**：
-新文件（如 `gateway/run.py`）引用了旧文件（如 `cron/scheduler_provider.py`）
-里不存在的符号。本机实例：`from cron.scheduler_provider import
-scheduler_for_profile_mode` → ImportError，该函数在全项目任何文件、任何 git
-历史里都不存在（`git log -S` 无结果）——是 run.py 引用了从未实现的函数。
-
-**诊断三步**：
 ```bash
-journalctl --user -u hermes-gateway --no-pager -n 40 | grep -iE "import|error|traceback"
-grep -n "from cron.scheduler_provider import" gateway/run.py   # 缺哪个名字
-grep -rn "def <名字>" cron/                                    # 全项目确认不存在
+curl -L --retry 3 --speed-time 60 --speed-limit 1000 --max-time 480 -sS \
+  -o /tmp/hermes-v0.22.5.zip \
+  "https://gh-proxy.com/https://github.com/NousResearch/hermes-agent/archive/refs/tags/v0.22.5.zip"
 ```
 
-**修复**：在被引用的旧文件里补上缺失符号（向后兼容、最小侵入）。本例 run.py
-只把返回值交给 `cron_provider.start(...)` 与 isinstance 判断 → 补一个 identity
-包装函数即可（multiplex 实际由 `InProcessCronScheduler.start()` 的
-`profile_homes` 参数处理）。补完 syntax-check（lint ok）→ 重启 gateway →
-确认 restart counter 不再涨、日志无 ImportError、目标平台 connected。
+本机没有 `unzip` → 用标准库：`python3 -m zipfile -e <zip> /tmp`（/ -l 列内容）。
 
-**教训**：混合目录下**任何跨文件符号引用都可能失配**。修 bug 前先
-`grep -rn "def <symbol>"` 全项目确认符号是否存在；gateway 崩溃循环优先怀疑
-ImportError，不要先怀疑配置/凭据。
+快照提交（干净 upstream clone）：`git tag pre-upgrade-<日期>` → rsync --delete 覆盖
+（exclude .git/venv/skills 等用户文件）→ `git add -A && git commit`（父=旧 HEAD，
+**回滚=一条 `git reset --hard <tag>`**）→ `pip install -e .`（清华源）。
+快照提交后 `hermes --version` 报 `Update available` 是**假象**（上游又前进几个 commit），
+版本号正确（如 v0.21.4）即忽略。
 
-**修复后验证 cron 真的会投递**（2026.9 实测）：
-- **gateway 在线是 cron 自动触发的硬前提**——调度器由 gateway 托管
-  （systemd `hermes-gateway.service`）；gateway 崩着，周二/五这类定时任务
-  永远不会自动跑。
-- **手动 `hermes cron run <id>` 是独立进程（source=direct）**：能跑脚本、
-  显示 succeeded，但投递依赖常驻 gateway 的适配器——gateway 离线时
-  succeeded 不代表消息送到了企微。验证闭环 = gateway connected → 触发 →
-  gateway.log 有 send 记录 → 收件端真实收到。
-- **deliver 到企微群用 `wecom:<群chat_id>`，不能用群名**。群 chat_id 查
-  `~/.hermes/state.db` 的 sessions 表（key 形如
-  `agent:main:wecom:group:<chat_id>:<user_id>`）。例：内部群「徐江机器人」
-  = `wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg`（成员 XuAiJun +
-  GaoJiHuiJiShianna）。投群报 93001 `not allow send msg in room` = 机器人
-  不在该群/chat_id 不对，回 sessions 表核对。
-- **手动 run 报 `claim_job_for_fire() got an unexpected keyword argument
-  'return_job'`** = 同属混合目录失配：`tools/cronjob_tools.py` 按新版 API
-  调 `cron/jobs.py` 的旧签名。修法：给 `claim_job_for_fire` 加
-  `return_job=False` 参数（True 时成功返回 job dict，向后兼容），补跑
-  `tests/cron/test_claim_job_for_fire.py` 全绿，再 `hermes cron run` 验证
-  从 failed → succeeded。
+完整配方（自愈循环、CRC 校验、错误串速查）见 `references/china-network-large-delta-upgrade.md`。
+
+### 5. 别 mv 走正在运行的 editable 源码目录 —— 当前会话工具直接崩（2026.10 实测 v0.20.6→v0.22.5）
+
+venv 是 editable 安装，**正在跑的 Hermes 会话自己的工具也从这个目录 import**
+（execute_code → `tools/code_execution_tool.py`）。升级时若
+`mv hermes-agent-v0.20.6 hermes-agent-v0.20.6.bak` 再建空目录，当前会话的工具立刻
+报 `ImportError: cannot import name '_error_result' from 'tools.code_execution_tool'`，
+整个会话的 execute_code 等全废。正确姿势：
+
+- 先在 /tmp 解压好 + CRC 校验过，再**一步 `mv` 换目录**（旧→.bak，新→原名），中间
+  不建空目录；翻车就把 `.bak` 秒 mv 回来，再
+  `~/.venv-hermes/bin/python -c "import hermes_cli.main; print('OK')"` 确认恢复。
+- 目录名保持旧版名无妨（内容已是新版），判定版本看 `hermes --version` 真实输出。
+- **zip 覆盖/替换后源码目录没有 `.git`**：以后想走 git fetch 升级必须先重新 clone。
+  升级前若还要用 git 回滚，先 `git tag pre-upgrade-<日期>` 打好再换。
+- 活安装目录不一定是 `/home/dmin/hermes-agent`（本机实际在 `/home/dmin/hermes-agent-v0.20.6`，
+  另一份 `/home/dmin/hermes-agent` 是独立拷贝）。动手前先
+  `readlink -f $(which hermes)` / `pip show hermes-agent | grep -i location` 确认活的
+  那份，别凭 skill 里的路径假设操作。
+- zip 覆盖安装后 `hermes --version` 显示 `vunknown / Install method: unknown` 是
+  **正常现象**——目录无 `.git`（版本探测拿不到上游 SHA），纯元数据问题，功能不受影响，
+  别误判为装坏。想恢复版本/日期/Install method 显示**不必重装 git**，直接补版本戳即可
+  （install-stamp.json + .install_method + config.py 白名单），配方见
+  `references/version-stamp-tarball.md`；stamp 只影响显示，不改变运行中的代码。
+
+### 6. 升级后 `hermes chat` 报 `Error: Gateway starting: deadline` —— 旧 systemd user unit 作祟（2026.10 实测 v0.22.5）
+
+**症状**：zip 覆盖升级后，`hermes` / `hermes chat` 启动即打印若干横幅后报
+`Error: Gateway starting: deadline` 退出；`systemctl --user status hermes-gateway`
+显示 `Active: failed (Result: exit-code)`、Main PID `status=1/FAILURE`。
+
+**根因**：升级只替换了磁盘代码，但 `~/.config/systemd/user/hermes-gateway.service`
+的 ExecStart 仍指向旧安装（旧目录/旧参数）。新版 gateway 自检时旧进程无响应，
+CLI 的健康检查死等（deadline）后报错退出。
+
+**修复（顺序执行）**：
+```bash
+hermes gateway stop                    # 停旧服务
+pkill -f "hermes_cli.main gateway"     # 清残留（勿误杀当前 chat 进程）
+hermes gateway install                 # 重写 unit 到当前安装 + 自动 start
+hermes gateway status                  # 验证 active(running) 且不再超时
+```
+验证要点：unit 里 ExecStart 的 sys.path 指向**新版**源码目录；`journalctl --user
+-u hermes-gateway -b` 无 exit-code=1。
+
+**排查前提——先隔离 wrapper**：本机 `hermes` 被 alias 到 `~/.hermes/hermes-wsl.sh`
+（云端企微检查 + `exec .../bin/hermes chat`）。判断"二进制坏了 vs 服务层问题"时
+直接调底层二进制绕开 wrapper：
+```bash
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY   # 本机直连信道清代理
+/home/dmin/.venv-hermes/bin/hermes --version           # 能跑 = 二进制健康
+```
+完整诊断链见 `references/post-upgrade-gateway-deadline.md`。
 
 ## 版本旗标快查
 

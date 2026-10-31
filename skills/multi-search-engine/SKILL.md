@@ -1,12 +1,10 @@
 ---
 name: multi-search-engine
-description: Multi search engine integration with 16 engines (7 CN + 9 Global). Supports advanced search operators, time filters, site search, privacy engines, and WolframAlpha knowledge queries. No API keys required.
-description_zh: "集成 17 个搜索引擎（8 国内 + 9 国际），无需 API"
-description_en: "Multi search engine integration with 16 engines (7 CN + 9 Global). Supports adva..."
+description: Multi search engine integration with 16 engines (7 CN + 9 Global). Supports advanced search operators, time filters, site search, privacy engines, and WolframAlpha knowledge queries. No API
+  keys required.
+description_zh: 集成 17 个搜索引擎（8 国内 + 9 国际），无需 API
+description_en: Multi search engine integration with 16 engines (7 CN + 9 Global). Supports adva...
 version: 2.1.3
-display_name: "multi-search-engine"
-display_name_en: "multi-search-engine"
-visibility: "public"
 ---
 
 # Multi Search Engine

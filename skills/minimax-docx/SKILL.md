@@ -1,8 +1,14 @@
 ---
 name: minimax-docx
 description: >
-  Professional DOCX document creation, editing, and formatting using OpenXML SDK (.NET). Three pipelines: (A) create new documents from scratch, (B) fill/edit content in existing documents, (C) apply template formatting with XSD validation gate-check. MUST use this skill whenever the user wants to produce, modify, or format a Word document — including when they say "write a report", "draft a proposal", "make a contract", "fill in this form", "reformat to match this template", or any task whose final output is a .docx file. Even if the user doesn't mention "docx" explicitly, if the task implies a printable/formal document, use this skill.
-
+  Professional DOCX document creation, editing, and formatting using OpenXML SDK (.NET).
+  Three pipelines: (A) create new documents from scratch, (B) fill/edit content in existing
+  documents, (C) apply template formatting with XSD validation gate-check.
+  MUST use this skill whenever the user wants to produce, modify, or format a Word document —
+  including when they say "write a report", "draft a proposal", "make a contract",
+  "fill in this form", "reformat to match this template", or any task whose final output
+  is a .docx file. Even if the user doesn't mention "docx" explicitly, if the task
+  implies a printable/formal document, use this skill.
 description_zh: "Word 文档生成与编辑"
 description_en: "Generate and edit Word documents from scratch"
 version: 1.0.0
@@ -27,9 +33,6 @@ triggers:
   - 公文
   - 排版
   - 套模板
-display_name: "minimax-docx"
-display_name_en: "minimax-docx"
-visibility: "public"
 ---
 
 # minimax-docx

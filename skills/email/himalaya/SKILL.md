@@ -1,7 +1,7 @@
 ---
 name: himalaya
-description: "Himalaya CLI: IMAP/SMTP email from terminal."
-version: 1.1.0
+description: CLI to manage emails via IMAP/SMTP. Use himalaya to list, read, write, reply, forward, search, and organize emails from the terminal. Supports multiple accounts and message composition with MML (MIME Meta Language).
+version: 1.0.0
 author: community
 license: MIT
 platforms: [linux, macos, windows]
@@ -213,16 +213,16 @@ Note: `himalaya message write` without piped input opens `$EDITOR`. This works w
 
 ### Move/Copy Emails
 
-Move to folder (target folder comes first, then the message ID):
+Move to folder:
 
 ```bash
-himalaya message move "Archive" 42
+himalaya message move 42 "Archive"
 ```
 
-Copy to folder (target folder comes first, then the message ID):
+Copy to folder:
 
 ```bash
-himalaya message copy "Important" 42
+himalaya message copy 42 "Important"
 ```
 
 ### Delete an Email
@@ -270,7 +270,7 @@ himalaya attachment download 42
 Save to specific directory:
 
 ```bash
-himalaya attachment download 42 --downloads-dir ~/Downloads
+himalaya attachment download 42 --dir ~/Downloads
 ```
 
 ## Output Formats

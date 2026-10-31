@@ -13,6 +13,16 @@ triggers:
 
 # Cron Tasks — Autonomous Reminder Escalation
 
+## Cronjob 调度语法（schedule 字段）
+
+Hermes `cronjob`（action=create/update）的 `schedule` 用 **5 段标准 cron**（分 时 日 月 周）。常见坑：
+
+- `28 12 * * *` = 每天 12:28 ✅
+- `28 12 * * 1` = 每周一 12:28 ✅
+- ❌ 不要写 7 段（如 `0 12 28 * * *`）：会静默解析成「每月 28 号 12:00」，不是「每天 12:28」。建好后必须核对返回的 `next_run_at` 是否符合预期，发现跑错立即 `action=remove` 重建。
+
+调试顺序中的其他要点：建任务后读返回的 `next_run_at` 验证；需改投递渠道用 `action=update` + `deliver`（如 `wecom:<user> dm` / `origin` / `local`）。
+
 ## Core Principle
 
 When running as a cron job with no user present, every message is a "last chance" until proven otherwise. Evolve the message — never repeat yourself.
@@ -86,3 +96,24 @@ After output, confirm:
 - [ ] Not repeating any message from a previous attempt
 - [ ] Default behavior is set if final attempt
 - [ ] No open-ended "please respond" at attempt 3
+
+## Cron Failure Diagnosis
+
+When a user reports a cron job "not starting" or showing `last_status=error`:
+
+1. Run `cronjob list` — check `last_status`, `enabled`, `last_run_at`
+2. Check `errors.log` for the actual error near `last_run_at` timestamp
+3. Most common cause: **API key 401** — key was valid when the cron was created but expired by fire time
+4. Manual re-run (`cronjob run`) reproduces the failure
+5. Fix the key in `.env`, re-run to confirm
+- **Same key works in CLI but not in cron?** → Check `base_url_env_var`
+  (even if config.yaml has the custom base_url, the credential path doesn't read it)
+- **Manual `cronjob run` creates an empty session?** → Pattern D — approval bypass
+  (scheduled runs auto-bypass, manual runs don't)
+   Even if `resolve_runtime_provider()` returns the correct base_url, the
+   actual API call may use a different endpoint. The fix is to set the
+   provider's `base_url_env_var` in `.env` (e.g. `DEEPSEEK_BASE_URL`).
+   See `references/cron-failure-diagnosis.md#pattern-b-config-loading-discrepancy-provider-base_url-resolver`
+   for the full mechanism and test script.
+
+See `references/cron-failure-diagnosis.md` for the full diagnostic workflow, common failure patterns (API key 401, config loading discrepancy, subagent auth failure), and a quick checklist.

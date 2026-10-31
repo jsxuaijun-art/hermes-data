@@ -1,0 +1,14 @@
+{
+  "cooldown_hours": 8,
+  "ondemand_timeout_days": 14,
+  "verified_refresh_day": 1,
+  "extract_days": [15, "last"],
+  "boundary_days": {
+    "vivid": 7,
+    "distilled": 30
+  },
+  "memory_file": "~/.claude/projects/YOUR-PROJECT/memory/MEMORY.md",
+  "reminders_file": "~/.claude/projects/YOUR-PROJECT/memory/reminders.md",
+  "patterns_file": "~/.claude/projects/YOUR-PROJECT/memory/patterns.md",
+  "archive_file": "~/.claude/projects/YOUR-PROJECT/memory/archive.md"
+}

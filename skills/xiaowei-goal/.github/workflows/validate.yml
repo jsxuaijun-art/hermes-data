@@ -1,0 +1,48 @@
+name: Validate Xiaowei Goal
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Validate example goals
+        run: python3 scripts/validate_xiaowei_goal.py examples/*.txt
+
+      - name: Evaluate example goal quality
+        run: python3 scripts/evaluate_goal_output.py examples/*.txt
+
+      - name: Run daily evolution audit
+        run: python3 scripts/daily_evolution_audit.py --report /tmp/daily-evolution-report.md
+
+      - name: Run negative validator tests
+        run: python3 scripts/test_validator_negative_cases.py
+
+      - name: Validate manifest JSON
+        run: python3 -m json.tool manifest.json > /tmp/xiaowei-goal-manifest.json
+
+      - name: Validate README topics
+        run: python3 scripts/check_readme_topics.py
+
+      - name: Check installed skill self-test against repository
+        run: python3 scripts/check_installed_skill.py .
+
+      - name: Validate YAML files
+        run: |
+          ruby -e 'require "yaml"; YAML.load_file("agents/interface.yaml"); YAML.load_file(".github/workflows/validate.yml"); YAML.load_file(".github/workflows/daily-evolution.yml")'
+
+      - name: Compile Python scripts
+        run: python3 -m py_compile scripts/validate_xiaowei_goal.py scripts/evaluate_goal_output.py scripts/daily_evolution_audit.py scripts/check_release_consistency.py scripts/check_readme_topics.py scripts/check_installed_skill.py scripts/test_validator_negative_cases.py

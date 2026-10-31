@@ -74,6 +74,7 @@ Send, label, archive, or create follow-ups only within approval. For ambiguous s
 ## Pitfalls
 
 - Treating unread as synonymous with important.
+- Fighting a provider-CLI auth failure instead of switching to the account's proven reader. China 163 blocks third-party IMAP with `NO SELECT Unsafe Login` (wind control); the working path is POP3 via the account-specific reader script (see `china-email-setup`). Treat connector failure as a non-event: fall back to the POP3 reader and proceed with triage.
 - Missing earlier unanswered questions in a long thread.
 - Retrying after SMTP succeeded but save-to-Sent failed, causing duplicate mail.
 - Claiming inbox zero when pagination or another folder was omitted.

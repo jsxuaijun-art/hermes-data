@@ -15,6 +15,9 @@ metadata:
 ## 何时使用
 用户说「生图」「AI生图」「生成图片」「画一张xxx」「通义万相」「wanx」「做个AI图的」时触发。配合 wechat-comic-cells 的路线B，产出真·AI绘画质感（用户明确不满意纯SVG手绘风格，要求专业绘画质感）。
 
+## ⛔ 模型铁律（2026.10.11 徐总强调）
+生图**一律禁用 deepseek 模型**（deepseek 无图像生成能力，且徐总明确要求公众号配图/AI生图不得用 deepseek）。生图唯一指定：**doubao-seedream-5.0-pro-0724**（主推）；备选通义万相/硅基流动。整任务跑完全部配图再回主会话默认模型，任务中不得降级、不得换用 deepseek。
+
 ## 核心脚本
 `/home/dmin/.hermes/scripts/image_gen_cn.py`
 

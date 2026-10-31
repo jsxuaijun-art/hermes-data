@@ -1,7 +1,7 @@
 ---
 name: research-paper-writing
 title: Research Paper Writing Pipeline
-description: "Write ML papers for NeurIPS/ICML/ICLR: design→submit."
+description: End-to-end pipeline for writing ML/AI research papers — from experiment design through analysis, drafting, revision, and submission. Covers NeurIPS, ICML, ICLR, ACL, AAAI, COLM. Integrates automated experiment monitoring, statistical analysis, iterative writing, and citation verification.
 version: 1.1.0
 author: Orchestra Research
 license: MIT
@@ -22,7 +22,6 @@ End-to-end pipeline for producing publication-ready ML/AI research papers target
 
 This is **not a linear pipeline** — it is an iterative loop. Results trigger new experiments. Reviews trigger new analysis. The agent must handle these feedback loops.
 
-<!-- ascii-guard-ignore -->
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    RESEARCH PAPER PIPELINE                  │
@@ -42,7 +41,6 @@ This is **not a linear pipeline** — it is an iterative loop. Results trigger n
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
-<!-- ascii-guard-ignore-end -->
 
 ---
 
@@ -2148,7 +2146,7 @@ Compose this skill with other Hermes skills for specific phases:
 | **`memory`** | Persist key decisions across sessions: contribution framing, venue choice, reviewer feedback. |
 | **`cronjob`** | Schedule experiment monitoring, deadline countdowns, automated arXiv checks. |
 | **`clarify`** | Ask the user targeted questions when blocked (venue choice, contribution framing). |
-| **cron `deliver:`** | Notify the user when experiments complete or drafts are ready even if they're not in chat — schedule the check as a cron job with a messaging `deliver:` target (the agent no longer has a `send_message` tool; outbound delivery is handled by cron/`hermes send`). |
+| **`send_message`** | Notify user when experiments complete or drafts are ready, even if user isn't in chat. |
 
 ### Tool Usage Patterns
 
@@ -2159,7 +2157,7 @@ terminal("ps aux | grep <pattern>")
 → terminal("ls results/")
 → execute_code("analyze results JSON, compute metrics")
 → terminal("git add -A && git commit -m '<descriptive message>' && git push")
-→ (final response auto-delivers "Experiment complete: <summary>"; for unattended runs, schedule via cron with a deliver: target)
+→ send_message("Experiment complete: <summary>")
 ```
 
 **Parallel section drafting** (using delegation):
@@ -2259,6 +2257,122 @@ cronjob("create", {
 
 ### Communication Patterns
 
+**When to notify the user** (via `send_message` or direct response):
+- Experiment batch completed (with results table)
+- Unexpected finding or failure requiring decision
+- Draft section ready for review
+- Deadline approaching with incomplete tasks
+
+**When NOT to notify:**
+- Experiment still running, no new results → `[SILENT]`
+- Routine monitoring with no changes → `[SILENT]`
+- Intermediate steps that don't need attention
+
+**Report format** — always include structured data:
+```
+## Experiment: <name>
+Status: Complete / Running / Failed
+
+| Task | Method A | Method B | Method C |
+|------|---------|---------|---------|
+| Task 1 | 85.2 | 82.1 | **89.4** |
+
+Key finding: <one sentence>
+Next step: <what happens next>
+```
+
+### Decision Points Requiring Human Input
+
+Use `clarify` for targeted questions when genuinely blocked:
+
+| Decision | When to Ask |
+|----------|-------------|
+| Target venue | Before starting paper (affects page limits, framing) |
+| Contribution framing | When multiple valid framings exist |
+| Experiment priority | When TODO list has more experiments than time allows |
+| Submission readiness | Before final submission |
+
+**Do NOT ask about** (be proactive, make a choice, flag it):
+- Word choice, section ordering
+- Which specific results to highlight
+- Citation completeness (draft with what you find, note gaps)
+
+---
+
+## Reviewer Evaluation Criteria
+
+Understanding what reviewers look for helps focus effort:
+
+| Criterion | What They Check |
+|-----------|----------------|
+| **Quality** | Technical soundness, well-supported claims, fair baselines |
+| **Clarity** | Clear writing, reproducible by experts, consistent notation |
+| **Significance** | Community impact, advances understanding |
+| **Originality** | New insights (doesn't require new method) |
+
+**Scoring (NeurIPS 6-point scale):**
+- 6: Strong Accept — groundbreaking, flawless
+- 5: Accept — technically solid, high impact
+- 4: Borderline Accept — solid, limited evaluation
+- 3: Borderline Reject — weaknesses outweigh
+- 2: Reject — technical flaws
+- 1: Strong Reject — known results or ethics issues
+
+See [references/reviewer-guidelines.md](references/reviewer-guidelines.md) for detailed guidelines, common concerns, and rebuttal strategies.
+
+---
+
+## Common Issues and Solutions
+
+| Issue | Solution |
+|-------|----------|
+| Abstract too generic | Delete first sentence if it could prepend any ML paper. Start with your specific contribution. |
+| Introduction exceeds 1.5 pages | Split background into Related Work. Front-load contribution bullets. |
+| Experiments lack explicit claims | Add: "This experiment tests whether [specific claim]..." before each one. |
+| Reviewers find paper hard to follow | Add signposting, use consistent terminology, make figure captions self-contained. |
+| Missing statistical significance | Add error bars, number of runs, statistical tests, confidence intervals. |
+| Scope creep in experiments | Every experiment must map to a specific claim. Cut experiments that don't. |
+| Paper rejected, need to resubmit | See Conference Resubmission in Phase 7. Address reviewer concerns without referencing reviews. |
+| Missing broader impact statement | See Step 5.10. Most venues require it. "No negative impacts" is almost never credible. |
+| Human eval criticized as weak | See Step 2.5 and [references/human-evaluation.md](references/human-evaluation.md). Report agreement metrics, annotator details, compensation. |
+| Reviewers question reproducibility | Release code (Step 7.9), document all hyperparameters, include seeds and compute details. |
+| Theory paper lacks intuition | Add proof sketches with plain-language explanations before formal proofs. See [references/paper-types.md](references/paper-types.md). |
+| Results are negative/null | See Phase 4.3 on handling negative results. Consider workshops, TMLR, or reframing as analysis. |
+
+---
+
+## Reference Documents
+
+| Document | Contents |
+|----------|----------|
+| [references/writing-guide.md](references/writing-guide.md) | Gopen & Swan 7 principles, Perez micro-tips, Lipton word choice, Steinhardt precision, figure design |
+| [references/citation-workflow.md](references/citation-workflow.md) | Citation APIs, Python code, CitationManager class, BibTeX management |
+| [references/checklists.md](references/checklists.md) | NeurIPS 16-item, ICML, ICLR, ACL requirements, universal pre-submission checklist |
+| [references/reviewer-guidelines.md](references/reviewer-guidelines.md) | Evaluation criteria, scoring, common concerns, rebuttal template |
+| [references/sources.md](references/sources.md) | Complete bibliography of all writing guides, conference guidelines, APIs |
+| [references/experiment-patterns.md](references/experiment-patterns.md) | Experiment design patterns, evaluation protocols, monitoring, error recovery |
+| [references/autoreason-methodology.md](references/autoreason-methodology.md) | Autoreason loop, strategy selection, model guide, prompts, scope constraints, Borda scoring |
+| [references/human-evaluation.md](references/human-evaluation.md) | Human evaluation design, annotation guidelines, agreement metrics, crowdsourcing QC, IRB guidance |
+| [references/paper-types.md](references/paper-types.md) | Theory papers (proof writing, theorem structure), survey papers, benchmark papers, position papers |
+
+### LaTeX Templates
+
+Templates in `templates/` for: **NeurIPS 2025**, **ICML 2026**, **ICLR 2026**, **ACL**, **AAAI 2026**, **COLM 2025**.
+
+See [templates/README.md](templates/README.md) for compilation instructions.
+
+### Key External Sources
+
+**Writing Philosophy:**
+- [Neel Nanda: How to Write ML Papers](https://www.alignmentforum.org/posts/eJGptPbbFPZGLpjsp/highly-opinionated-advice-on-how-to-write-ml-papers)
+- [Sebastian Farquhar: How to Write ML Papers](https://sebastianfarquhar.com/on-research/2024/11/04/how_to_write_ml_papers/)
+- [Gopen & Swan: Science of Scientific Writing](https://cseweb.ucsd.edu/~swanson/papers/science-of-writing.pdf)
+- [Lipton: Heuristics for Scientific Writing](https://www.approximatelycorrect.com/2018/01/29/heuristics-technical-scientific-writing-machine-learning-perspective/)
+- [Perez: Easy Paper Writing Tips](https://ethanperez.net/easy-paper-writing-tips/)
+
+**APIs:** [Semantic Scholar](https://api.semanticscholar.org/api-docs/) | [CrossRef](https://www.crossref.org/documentation/retrieve-metadata/rest-api/) | [arXiv](https://info.arxiv.org/help/api/basics.html)
+
+**Venues:** [NeurIPS](https://neurips.cc/Conferences/2025/PaperInformation/StyleFiles) | [ICML](https://icml.cc/Conferences/2025/AuthorInstructions) | [ICLR](https://iclr.cc/Conferences/2026/AuthorGuide) | [ACL](https://github.com/acl-org/acl-style-files)
 **When to notify the user** (via your direct/final response, or a cron `deliver:` target for unattended runs):
 - Experiment batch completed (with results table)
 - Unexpected finding or failure requiring decision

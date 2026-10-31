@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>xiaowei-goal 在线报告</title>
+  <style>
+    :root {
+      --page: #f6f8f7;
+      --paper: #ffffff;
+      --ink: #17202a;
+      --muted: #5d6670;
+      --line: #d9e0df;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      line-height: 1.7;
+    }
+
+    a {
+      color: var(--accent);
+      font-weight: 700;
+      text-underline-offset: .18em;
+    }
+
+    main {
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 56px 0;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      line-height: 1.2;
+    }
+
+    .lead {
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .report-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    article {
+      padding: 20px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1.18rem;
+      line-height: 1.35;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .meta {
+      margin-top: 10px;
+      color: var(--accent-2);
+      font-size: .92rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>xiaowei-goal 在线报告</h1>
+    <p class="lead">三份会议纪要已拆成三个独立 HTML 页面，分别阅读、分别转发。</p>
+
+    <section class="report-list" aria-label="报告列表">
+      <article>
+        <h2><a href="./ai-product-application-transformation-20260510.html">AI 产品应用与转型讨论</a></h2>
+        <p>重点：AI 产品化、AIOS、Skill/MCP、组织转型、合规与版权。</p>
+        <p class="meta">会议时间：2026-05-10 14:21-18:44</p>
+      </article>
+
+      <article>
+        <h2><a href="./ai-product-development-acquisition-20260510.html">AI 产品开发与获客经验分享</a></h2>
+        <p>重点：需求挖掘、竞品与付费证据、内容获客、GEO、知识产品化。</p>
+        <p class="meta">会议时间：2026-05-10 18:45-19:52</p>
+      </article>
+
+      <article>
+        <h2><a href="./ai-education-product-planning-20260510.html">AI 教育产品规划与交流</a></h2>
+        <p>重点：K12 老师场景、班级激励宠物产品、教育数字化、游戏化与合规。</p>
+        <p class="meta">会议时间：2026-05-10 19:56-20:49</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

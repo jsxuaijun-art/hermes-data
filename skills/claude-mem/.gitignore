@@ -1,0 +1,17 @@
+# User-overridable config (may contain private paths / personal settings)
+config.json
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Editor cache
+*.swp
+*.swo
+.idea/
+.vscode/
+*~
+
+# Temp
+*.tmp
+*.log

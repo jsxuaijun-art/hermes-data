@@ -1,100 +1,74 @@
----
-name: opencode
-description: "Delegate coding to OpenCode CLI (features, PR review)."
-version: 1.2.0
-author: Hermes Agent
-license: MIT
-platforms: [linux, macos, windows]
-metadata:
-  hermes:
-    tags: [Coding-Agent, OpenCode, Autonomous, Refactoring, Code-Review]
-    related_skills: [claude-code, codex, hermes-agent]
----
+# OpenCode CLI — Quick Reference
 
-# OpenCode CLI
+Open-source, provider-agnostic AI coding agent.
 
-Use [OpenCode](https://opencode.ai) as an autonomous coding worker orchestrated by Hermes terminal/process tools. OpenCode is a provider-agnostic, open-source AI coding agent with a TUI and CLI.
+## Installation
 
-## When to Use
-
-- User explicitly asks to use OpenCode
-- You want an external coding agent to implement/refactor/review code
-- You need long-running coding sessions with progress checks
-- You want parallel task execution in isolated workdirs/worktrees
-
-## Prerequisites
-
-- OpenCode installed: `npm i -g opencode-ai@latest` or `brew install anomalyco/tap/opencode`
-- Auth configured: `opencode auth login` or set provider env vars (OPENROUTER_API_KEY, etc.)
-- Verify: `opencode auth list` should show at least one provider
-- Git repository for code tasks (recommended)
-- `pty=true` for interactive TUI sessions
-
-## Binary Resolution (Important)
-
-Shell environments may resolve different OpenCode binaries. If behavior differs between your terminal and Hermes, check:
-
-```
-terminal(command="which -a opencode")
-terminal(command="opencode --version")
+```bash
+npm i -g opencode-ai@latest   # or brew install anomalyco/tap/opencode
+opencode auth login
 ```
 
-If needed, pin an explicit binary path:
+## Commands
 
-```
-terminal(command="$HOME/.opencode/bin/opencode run '...'", workdir="~/project", pty=true)
-```
+| Flag | Effect |
+|------|--------|
+| `run 'prompt'` | One-shot execution and exit (NO pty needed) |
+| `-c / --continue` | Continue last session |
+| `-s <id>` | Continue specific session |
+| `--model provider/model` | Force specific model |
+| `-f <path>` | Attach file to message |
+| `--thinking` | Show model thinking blocks |
+| `--format json` | Machine-readable output |
 
-## One-Shot Tasks
+## One-Shot (no pty needed)
 
-Use `opencode run` for bounded, non-interactive tasks:
-
-```
-terminal(command="opencode run 'Add retry logic to API calls and update tests'", workdir="~/project")
-```
-
-Attach context files with `-f`:
-
-```
-terminal(command="opencode run 'Review this config for security issues' -f config.yaml -f .env.example", workdir="~/project")
-```
-
-Show model thinking with `--thinking`:
-
-```
-terminal(command="opencode run 'Debug why tests fail in CI' --thinking", workdir="~/project")
+```bash
+opencode run 'Add retry logic to API calls and update tests'
+opencode run 'Review this config' -f config.yaml -f .env.example
+opencode run 'Refactor auth module' --model openrouter/anthropic/claude-sonnet-4
 ```
 
-Force a specific model:
+## Parallel Work Pattern
 
-```
-terminal(command="opencode run 'Refactor auth module' --model openrouter/anthropic/claude-sonnet-4", workdir="~/project")
-```
+## Interactive (background, pty=true)
 
-## Interactive Sessions (Background)
-
-For iterative work requiring multiple exchanges, start the TUI in background:
-
-```
+```bash
 terminal(command="opencode", workdir="~/project", background=true, pty=true)
-# Returns session_id
-
-# Send a prompt
-process(action="submit", session_id="<id>", data="Implement OAuth refresh flow and add tests")
-
-# Monitor progress
+process(action="submit", session_id="<id>", data="Implement OAuth refresh flow")
 process(action="poll", session_id="<id>")
-process(action="log", session_id="<id>")
-
-# Send follow-up input
-process(action="submit", session_id="<id>", data="Now add error handling for token expiry")
-
-# Exit cleanly — Ctrl+C
-process(action="write", session_id="<id>", data="\x03")
-# Or just kill the process
-process(action="kill", session_id="<id>")
 ```
 
+## Session & Cost Management
+
+List past sessions:
+
+Exit: `process(action="write", data="\x03")` — NEVER use `/exit`.
+
+## PR Review
+
+```bash
+opencode pr 42
+```
+
+## Pitfalls
+
+- Interactive `opencode` (TUI) sessions require `pty=true`. The `opencode run` command does NOT need pty.
+- `/exit` is NOT a valid command — it opens an agent selector. Use Ctrl+C to exit the TUI.
+- PATH mismatch can select the wrong OpenCode binary/model config.
+- If OpenCode appears stuck, inspect logs before killing:
+  - `process(action="log", session_id="<id>")`
+- Avoid sharing one working directory across parallel OpenCode sessions.
+- Enter may need to be pressed twice to submit in the TUI (once to finalize text, once to send).
+
+## Verification
+
+## Session & Cost
+
+```bash
+opencode session list
+opencode stats
+opencode stats --days 7 --models anthropic/claude-sonnet-4
 **Important:** Do NOT use `/exit` — it is not a valid OpenCode command and will open an agent selector dialog instead. Use Ctrl+C (`\x03`) or `process(action="kill")` to exit.
 
 ### TUI Keybindings
@@ -115,6 +89,7 @@ process(action="kill", session_id="<id>")
 After exiting, OpenCode prints a session ID. Resume with:
 
 ```
+
 terminal(command="opencode -c", workdir="~/project", background=true, pty=true)  # Continue last session
 terminal(command="opencode -s ses_abc123", workdir="~/project", background=true, pty=true)  # Specific session
 ```
@@ -151,6 +126,17 @@ terminal(command="opencode -s ses_abc123", workdir="~/project", background=true,
 
 OpenCode has a built-in PR command:
 
+Success criteria:
+- Output includes `OPENCODE_SMOKE_OK`
+- Command exits without provider/model errors
+- For code tasks: expected files changed and tests pass
+
+## Key Pitfalls
+
+- `opencode run` does NOT need pty (it's non-interactive). Only the TUI needs pty.
+- `/exit` is NOT a valid command — opens agent selector instead. Use Ctrl+C.
+- PATH mismatch can select wrong binary. Check with `which -a opencode`.
+- Enter may need to be pressed twice to submit in TUI.
 ```
 terminal(command="opencode pr 42", workdir="~/project", pty=true)
 ```

@@ -1,7 +1,7 @@
 ---
 name: hermes-agent
-description: "Configure, extend, or contribute to Hermes Agent."
-version: 2.1.0
+description: Complete guide to using and extending Hermes Agent — CLI usage, setup, configuration, spawning additional agents, gateway platforms, skills, voice, tools, profiles, and a concise contributor reference. Load this skill when helping users configure Hermes, troubleshoot issues, spawn agent instances, or make code contributions.
+version: 2.0.0
 author: Hermes Agent + Teknium
 license: MIT
 metadata:
@@ -115,7 +115,7 @@ hermes tools disable NAME   Disable a toolset
 
 hermes skills list          List installed skills
 hermes skills search QUERY  Search the skills hub
-hermes skills install ID    Install a skill (ID can be a hub identifier OR a direct https://…/SKILL.md URL; pass --name to override when frontmatter has no name)
+hermes skills install ID    Install a skill
 hermes skills inspect ID    Preview without installing
 hermes skills config        Enable/disable skills per platform
 hermes skills check         Check for updates
@@ -248,6 +248,7 @@ Type these during an interactive chat session.
 ```
 /config              Show config (CLI)
 /model [name]        Show or change model
+/provider            Show provider info
 /personality [name]  Set personality
 /reasoning [level]   Set reasoning (none|minimal|low|medium|high|xhigh|show|hide)
 /verbose             Cycle: off → new → all → verbose
@@ -281,6 +282,7 @@ Type these during an interactive chat session.
 ### Utility
 ```
 /branch (/fork)      Branch the current session
+/btw                 Ephemeral side question (doesn't interrupt main task)
 /fast                Toggle priority/fast processing
 /browser             Open CDP browser connection
 /history             Show conversation history (CLI)
@@ -336,6 +338,7 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | `memory` | `memory_enabled`, `user_profile_enabled`, `provider` |
 | `security` | `tirith_enabled`, `website_blocklist` |
 | `delegation` | `model`, `provider`, `base_url`, `api_key`, `max_iterations` (50), `reasoning_effort` |
+| `smart_model_routing` | `enabled`, `cheap_model` |
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 
 Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
@@ -638,7 +641,29 @@ hermes config set auxiliary.vision.provider <your_provider>
 hermes config set auxiliary.vision.model <model_name>
 ```
 
-### Tirith not scanning (auto-install failed)
+### pyOpenSSL/cryptography 兼容警告（可安全忽略）
+
+VCS 升级到新版后 pip 可能报：`pyOpenSSL 26.x requires cryptography<50,>=49.0.0, but you have 48.0.1`。
+这是**假冲突，无需处理**：
+- `cryptography==48.0.1` 是 pyproject 官方故意 pin 死（CVE 修复 + msal/alibabacloud 需 <49 兼容），升到 49 反而破坏这些包。
+- pyOpenSSL 是 Crawl4AI 的传递依赖，运行时 `import OpenSSL; OpenSSL.SSL.Context(...)` 完全正常。
+- 验证方法：`venv/bin/python -c "import OpenSSL; OpenSSL.SSL.Context(OpenSSL.SSL.TLS_METHOD)"` 无报错即正常。
+
+### Windows 侧 venv 通过 WSL interop 运行故障
+
+WSL 内直接调 Windows venv 的 `.exe`（python.exe/hermes.exe）会**超时或 exit -1073741515（DLL 缺失）**，即使 venv 本身完好。原因：WSL interop 找 DLL 的路径与 Windows 不同。
+
+可靠执行方式（三选一）：
+1. **uv 是 Windows venv 的原生管理器**（uv 创建的 venv 无 pip.exe 且用 uv 的 python）：
+   `/mnt/c/Users/Administrator/.local/bin/uv.exe pip install -e <win-path> --python <venv>\Scripts\python.exe --index-url https://pypi.tuna.tsinghua.edu.cn/simple`
+2. **PowerShell Start-Process + 脚本文件**（绕开 stdout 管道缓冲）：
+   写一个 .ps1 用 `Start-Process -FilePath <py> -ArgumentList <script.py> -Wait -NoNewWindow -PassThru` 执行。
+3. **python 内部写文件**（避免 stdout 编码/缓冲问题）：
+   让被调脚本用 `open(path,'w')` 写结果到文件，再在 WSL 侧 `cat` 读取。
+
+已验证（Windows 中文系统）：subprocess 输出需 `encoding="utf-8", errors="replace"`，否则 GBK UnicodeDecodeError。
+
+
 
 Tirith auto-downloads from GitHub releases (`sheeki03/tirith`) in a background thread. On slow or throttled networks, the download times out (exit 28) and Hermes falls back to pattern matching. Logs show `download_failed` in `~/.hermes/.tirith-install-failed`.
 
@@ -702,6 +727,7 @@ Note: This patch lives in `site-packages/` and will be overwritten on `pip insta
 | Gateway logs | `~/.hermes/logs/gateway.log` |
 | Session files | `~/.hermes/sessions/` or `hermes sessions browse` |
 | Source code | `~/.hermes/hermes-agent/` |
+| Session content retrieval (FTS5 fallback) | `references/session-content-fallback-retrieval.md` — use `search_files` on raw JSON when `session_search` returns nothing |
 
 ---
 

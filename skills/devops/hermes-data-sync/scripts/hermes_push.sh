@@ -22,16 +22,12 @@ echo "[path] Sync dir = $HERMES_SYNC_DIR"
 
 # --- 1) rsync WSL -> 同步夹 (skills 去 --delete 防误删) ---
 echo "[1] rsync WSL -> sync dir ..."
-mkdir -p "$HERMES_SYNC_DIR/memories" "$HERMES_SYNC_DIR/skills" "$HERMES_SYNC_DIR/plugins"
+mkdir -p "$HERMES_SYNC_DIR/memories" "$HERMES_SYNC_DIR/skills"
 rsync -a ~/.hermes/SOUL*.md "$HERMES_SYNC_DIR/" 2>/dev/null
 rsync -a ~/.hermes/config.yaml "$HERMES_SYNC_DIR/" 2>/dev/null
 rsync -a ~/.hermes/memories/ "$HERMES_SYNC_DIR/memories/" 2>/dev/null
 rsync -a --exclude='.curator_backups/' --exclude='gstack/*/dist/' --exclude='*.tar.gz' --exclude='*.tar' \
   ~/.hermes/skills/ "$HERMES_SYNC_DIR/skills/" 2>/dev/null
-# plugins/ 用户插件随设备走(如 desensitize-read 脱敏钩子)。
-# 注意: ~/.hermes/leak-blocklist.txt 在 ~/.hermes 根目录, 不在本清单内, 保持本地不推送(含真实身份)。
-rsync -a --exclude='*__pycache__*' --exclude='*.pyc' \
-  ~/.hermes/plugins/ "$HERMES_SYNC_DIR/plugins/" 2>/dev/null
 echo "[OK]"
 
 # --- 2) git pull --rebase (同步远端) ---
@@ -48,14 +44,8 @@ if [ -f .git/MERGE_MSG ] || [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ]
 fi
 git stash pop 2>/dev/null
 
-# --- 3) stage + leak_scan 脱敏泄漏扫描 (防真实身份进仓库) ---
+# --- 3) stage + sync_guard 防误删闸 (传本机 hermes root 启用一致性检测) ---
 git add -A
-if ! python3 "$SKILL_DIR/scripts/leak_scan.py" "$HERMES_SYNC_DIR"; then
-  echo "[leak_scan] SENSITIVE DATA DETECTED - PUSH ABORTED. If intentional: export LEAK_SCAN_BYPASS=1 and rerun."
-  exit 1
-fi
-
-# --- 3.5) sync_guard 防误删闸 (传本机 hermes root 启用一致性检测) ---
 if ! bash "$GUARD_SCRIPT" "$HERMES_SYNC_DIR" "$HOME"; then
   echo "[sync_guard] DELETION DETECTED - PUSH ABORTED. If intentional: export SYNC_GUARD_BYPASS=1 and rerun."
   exit 1

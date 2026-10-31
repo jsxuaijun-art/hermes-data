@@ -1,7 +1,12 @@
 ---
 name: notion
+<<<<<<< LOCAL (this PC)
+description: Notion API for creating and managing pages, databases, and blocks via curl. Search, create, update, and query Notion workspaces directly from the terminal.
+version: 1.0.0
+=======
 description: "Notion API + ntn CLI: pages, databases, markdown, Workers."
 version: 2.0.0
+>>>>>>> REPO (github)
 author: community
 license: MIT
 platforms: [linux, macos, windows]
@@ -9,8 +14,14 @@ prerequisites:
   env_vars: [NOTION_API_KEY]
 metadata:
   hermes:
+<<<<<<< LOCAL (this PC)
+    tags: [Notion, Productivity, Notes, Database, API]
+=======
     tags: [Notion, Productivity, Notes, Database, API, CLI, Workers]
+>>>>>>> REPO (github)
     homepage: https://developers.notion.com
+prerequisites:
+  env_vars: [NOTION_API_KEY]
 ---
 
 # Notion
@@ -32,35 +43,126 @@ Talk to Notion two ways. Same integration token works for both — pick by what'
    ```
 4. **Share target pages/databases with the integration** in Notion: page menu `...` → `Connect to` → your integration name. Without this, the API returns 404 for that page even though it exists.
 
-### 2. Install `ntn` (preferred path on macOS / Linux)
+# Notion
 
+Talk to Notion two ways. Same integration token works for both — pick by what's available.
+
+# Notion API
+
+Use the Notion API via curl to create, read, update pages, databases (data sources), and blocks. No extra tools needed — just curl and a Notion API key.
+
+## Prerequisites
+
+1. Create an integration at https://notion.so/my-integrations
+2. Copy the API key (starts with `ntn_` or `secret_`)
+3. Store it in `~/.hermes/.env`:
+   ```
+   NOTION_API_KEY=ntn_your_key_here
+   ```
+4. **Important:** Share target pages/databases with your integration in Notion (click "..." → "Connect to" → your integration name)
+
+## API Basics
+
+`Notion-Version: 2025-09-03` is required on all HTTP requests. `ntn` handles this for you. In this version, what users call "databases" are called **data sources** in the API.
+
+## Path A — `ntn` CLI (preferred, macOS / Linux)
+
+### Raw API calls (shorthand for curl)
 ```bash
-# Recommended
-curl -fsSL https://ntn.dev | bash
-
-# Or via npm (needs Node 22+, npm 10+)
-npm install --global ntn
-
-ntn --version    # verify
+ntn api v1/users                                  # GET
+ntn api v1/pages parent[page_id]=abc123 \         # POST with inline body
+  properties[title][0][text][content]="Notes"
+ntn api v1/pages/abc123 -X PATCH archived:=true   # PATCH; := is non-string (bool/num/null)
 ```
 
-**Skip `ntn login` — use the integration token instead.** This works headlessly, no browser needed:
+Syntax notes:
+- `key=value` — string fields
+- `key[nested]=value` — nested object fields
+- `key:=value` — typed assignment (booleans, numbers, null, arrays)
+
+### Search
 ```bash
-export NOTION_API_TOKEN=$NOTION_API_KEY      # ntn reads NOTION_API_TOKEN
-export NOTION_KEYRING=0                       # don't try to use the OS keychain
+ntn api v1/search query="page title"
 ```
 
-Add those exports to your shell profile (or to `${HERMES_HOME:-~/.hermes}/.env`) so every session inherits them.
+### Read page metadata
+```bash
+ntn api v1/pages/{page_id}
+```
 
-### 3. Choose path at runtime
+### Read page as Markdown (agent-friendly)
+```bash
+ntn api v1/pages/{page_id}/markdown
+```
+
+### Read page content as blocks
+```bash
+ntn api v1/blocks/{page_id}/children
+```
+
+### Create page from Markdown
+```bash
+ntn api v1/pages \
+  parent[page_id]=xxx \
+  properties[title][0][text][content]="Notes from meeting" \
+  markdown="# Agenda
+
+- Q3 roadmap
+- Hiring"
+```
+
+### Patch a page with Markdown
+```bash
+ntn api v1/pages/{page_id}/markdown -X PATCH \
+  markdown="## Update
+
+Shipped the prototype."
+```
+
+### Query a database (data source)
+```bash
+ntn api v1/data_sources/{data_source_id}/query -X POST \
+  filter[property]=Status filter[select][equals]=Active
+```
+
+For complex queries with `sorts`, multiple filter clauses, or compound logic, pipe JSON in:
+```bash
+echo '{"filter": {"property": "Status", "select": {"equals": "Active"}}, "sorts": [{"property": "Date", "direction": "descending"}]}' | \
+  ntn api v1/data_sources/{data_source_id}/query -X POST --json -
+```
+
+### File uploads (one-liner — biggest CLI win)
+```bash
+ntn files create < photo.png
+ntn files create --external-url https://example.com/photo.png
+ntn files list
+```
+
+Compare to the 3-step HTTP flow (create upload → PUT bytes → reference).
+
+### Useful env vars
+| Var | Effect |
+|---|---|
+| `NOTION_API_TOKEN` | Auth token (overrides keychain) — set this to your integration token |
+| `NOTION_KEYRING=0` | File-based creds at `~/.config/notion/auth.json` instead of OS keychain |
+| `NOTION_WORKSPACE_ID` | Skip the workspace picker prompt |
+
+## Path B — HTTP + curl (cross-platform, default on Windows)
+
+All requests use this pattern:
 
 ```bash
-if command -v ntn >/dev/null 2>&1; then
-  # use ntn
-else
-  # fall back to curl
-fi
+curl -s -X GET "https://api.notion.com/v1/..." \
+  -H "Authorization: Bearer $NOTION_API_KEY" \
+  -H "Notion-Version: 2025-09-03" \
+  -H "Content-Type: application/json"
 ```
+
+The `Notion-Version` header is required. This skill uses `2025-09-03` (latest). In this version, databases are called "data sources" in the API.
+
+## Common Operations
+
+### Search
 
 Windows users: skip step 2 entirely until native `ntn` ships — Path B works fine. If you want CLI ergonomics now, install `ntn` inside WSL2.
 
@@ -174,6 +276,17 @@ curl -s -X POST "https://api.notion.com/v1/search" \
 
 ### Read page metadata
 ```bash
+curl -s -X POST "https://api.notion.com/v1/search" \
+  -H "Authorization: Bearer $NOTION_API_KEY" \
+  -H "Notion-Version: 2025-09-03" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "page title"}'
+```
+
+### Get Page
+
+```bash
+curl -s "https://api.notion.com/v1/pages/{page_id}" \
 curl -s "https://api.notion.com/v1/pages/{page_id}" \
   -H "Authorization: Bearer $NOTION_API_KEY" \
   -H "Notion-Version: 2025-09-03"
@@ -188,6 +301,14 @@ curl -s "https://api.notion.com/v1/pages/{page_id}/markdown" \
   -H "Authorization: Bearer $NOTION_API_KEY" \
   -H "Notion-Version: 2025-09-03"
 ```
+
+### Read page as Markdown (agent-friendly)
+
+Easier to feed to a model than block JSON.
+
+### Get Page Content (blocks)
+
+### Read page content as blocks (when you need structure)
 
 ### Read page content as blocks (when you need structure)
 ```bash
@@ -214,12 +335,30 @@ curl -s -X POST "https://api.notion.com/v1/pages" \
 
 ### Patch a page with Markdown
 ```bash
-curl -s -X PATCH "https://api.notion.com/v1/pages/{page_id}/markdown" \
+curl -s "https://api.notion.com/v1/blocks/{page_id}/children" \
+  -H "Authorization: Bearer $NOTION_API_KEY" \
+  -H "Notion-Version: 2025-09-03"
+```
+
+### Create page from Markdown
+
+`POST /v1/pages` accepts a `markdown` body param.
+
+<<<<<<< LOCAL (this PC)
+### Create Page in a Database
+=======
+```bash
+curl -s -X POST "https://api.notion.com/v1/pages" \
   -H "Authorization: Bearer $NOTION_API_KEY" \
   -H "Notion-Version: 2025-09-03" \
   -H "Content-Type: application/json" \
-  -d '{"markdown": "## Update\n\nShipped the prototype."}'
+  -d '{
+    "parent": {"page_id": "xxx"},
+    "properties": {"title": [{"text": {"content": "Notes from meeting"}}]},
+    "markdown": "# Agenda\n\n- Q3 roadmap\n- Hiring\n\n## Decisions\n- Ship MVP Friday"
+  }'
 ```
+>>>>>>> REPO (github)
 
 ### Create page in a database (typed properties)
 ```bash
@@ -236,7 +375,12 @@ curl -s -X POST "https://api.notion.com/v1/pages" \
   }'
 ```
 
+<<<<<<< LOCAL (this PC)
+### Query a Database
+
+=======
 ### Query a database (data source)
+>>>>>>> REPO (github)
 ```bash
 curl -s -X POST "https://api.notion.com/v1/data_sources/{data_source_id}/query" \
   -H "Authorization: Bearer $NOTION_API_KEY" \
@@ -248,7 +392,12 @@ curl -s -X POST "https://api.notion.com/v1/data_sources/{data_source_id}/query" 
   }'
 ```
 
+<<<<<<< LOCAL (this PC)
+### Create a Database
+
+=======
 ### Create a database
+>>>>>>> REPO (github)
 ```bash
 curl -s -X POST "https://api.notion.com/v1/data_sources" \
   -H "Authorization: Bearer $NOTION_API_KEY" \
@@ -265,7 +414,12 @@ curl -s -X POST "https://api.notion.com/v1/data_sources" \
   }'
 ```
 
+<<<<<<< LOCAL (this PC)
+### Update Page Properties
+
+=======
 ### Update page properties
+>>>>>>> REPO (github)
 ```bash
 curl -s -X PATCH "https://api.notion.com/v1/pages/{page_id}" \
   -H "Authorization: Bearer $NOTION_API_KEY" \
@@ -274,7 +428,12 @@ curl -s -X PATCH "https://api.notion.com/v1/pages/{page_id}" \
   -d '{"properties": {"Status": {"select": {"name": "Done"}}}}'
 ```
 
+<<<<<<< LOCAL (this PC)
+### Add Content to a Page
+
+=======
 ### Append blocks to a page
+>>>>>>> REPO (github)
 ```bash
 curl -s -X PATCH "https://api.notion.com/v1/blocks/{page_id}/children" \
   -H "Authorization: Bearer $NOTION_API_KEY" \
@@ -427,8 +586,19 @@ Standard CommonMark plus XML-like tags for Notion-specific blocks. Use **tabs** 
 
 Headings 5/6 collapse to H4. Multiple `>` lines render as separate quote blocks — use `<br>` inside a single `>` for multi-line quotes.
 
+<<<<<<< LOCAL (this PC)
+## Key Differences in API Version 2025-09-03
+=======
 ## Choosing the Right Path
+>>>>>>> REPO (github)
 
+<<<<<<< LOCAL (this PC)
+- **Databases → Data Sources:** Use `/data_sources/` endpoints for queries and retrieval
+- **Two IDs:** Each database has both a `database_id` and a `data_source_id`
+  - Use `database_id` when creating pages (`parent: {"database_id": "..."}`)
+  - Use `data_source_id` when querying (`POST /v1/data_sources/{id}/query`)
+- **Search results:** Databases return as `"object": "data_source"` with their `data_source_id`
+=======
 | Task | mac / Linux | Windows |
 |---|---|---|
 | Read/write pages, search, query databases | `ntn api ...` | curl |
@@ -436,9 +606,18 @@ Headings 5/6 collapse to H4. Multiple `>` lines render as separate quote blocks 
 | Upload a file | `ntn files create < file` | 3-step HTTP flow |
 | One-off API exploration | `ntn api ...` | curl |
 | Build a sync / webhook / agent tool hosted by Notion | `ntn workers ...` | WSL2 + `ntn workers ...` |
+>>>>>>> REPO (github)
 
 ## Notes
 
+<<<<<<< LOCAL (this PC)
+- Page/database IDs are UUIDs (with or without dashes)
+- Rate limit: ~3 requests/second average
+- The API cannot set database view filters — that's UI-only
+- Use `is_inline: true` when creating data sources to embed them in pages
+- Add `-s` flag to curl to suppress progress bars (cleaner output for Hermes)
+- Pipe output through `jq` for readable JSON: `... | jq '.results[0].properties'`
+=======
 - Page/database IDs are UUIDs (with or without dashes — both accepted).
 - Rate limit: ~3 requests/second average. The CLI doesn't bypass this.
 - The API cannot set database **view** filters — that's UI-only.
@@ -446,3 +625,4 @@ Headings 5/6 collapse to H4. Multiple `>` lines render as separate quote blocks 
 - Always pass `-s` to curl to suppress progress bars (cleaner agent output).
 - Pipe JSON through `jq` when reading: `... | jq '.results[0].properties'`.
 - Notion also ships an MCP server now (`Notion MCP`, ~91% more token-efficient on DB ops than the previous version) — wire it via Hermes' MCP support if you want streaming Notion access from inside a session, but the paths above are enough for most one-shot tasks.
+>>>>>>> REPO (github)

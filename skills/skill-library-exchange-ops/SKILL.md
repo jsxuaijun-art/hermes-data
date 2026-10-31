@@ -86,6 +86,24 @@ print(c["/short-video-copywriting"]["skill_md_path"])   # ← 真正加载的那
 
 > 完整实测数据、批量修复脚本与「阻挡-20 个」清单见 `references/same-name-shadowing-2026-10-20.md`。
 
+## ⚠️ 三号陷阱：向 canonical 注入增量时 patch 锚点对不上，其实是 canonical 落后于本机（2026-10-27 实测）
+
+**症状**：本机 skill 已是最新版，向 canonical（skill-library）逐行 patch 注入增量时，`patch` 报 `Could not find a match for old_string`——锚点在 canonical 里找不到。
+
+**根因**：**patch 锚点缺失 ≠ 你的内容错了/过期。** 常是 **canonical 比本机旧**——缺的不是本轮增量，而是更早的会话/脚本早已加进本机的行。本例 canonical 的通用话术模块索引表缺「加微信已发报价…首次巩固跟进」一整行（历史行、非本轮增量），两个 patch 锚点全落空。
+
+**判定 & 安全覆盖（先双向 diff 再决定「打补丁 vs 整体覆盖」）**：
+```bash
+diff <local SKILL.md> <canonical SKILL.md>
+# 若全部差异是「本机独有 <」、没有任何「canonical 独有 >」行
+# → 本机是 canonical 的严格超集 → 直接用 cp 整体覆盖，是安全升级
+cp <local SKILL.md> <canonical SKILL.md>   # 一次性带上历史增量 + 本轮增量，零数据丢失
+diff <local> <canonical> && echo 一致        # 覆盖后 diff 为空 = 落盘一致
+```
+**注意**：仅当 diff 确认**零 canonical 独有行**时整体覆盖才安全；只要存在 `>` 行（canonical 有本机没有的内容），逐行 patch 才是对的。
+
+**教训**：向 canonical 同步前先跑双向 diff 裁定「打补丁 vs 整体覆盖」；补丁打不上先怀疑 canonical 滞后，别怀疑自己的内容。
+
 ### 根治：同名多副本去重（2026-10-20 已执行，用户批准）
 
 **为什么根治**：只要「顶层扁平遗留副本」还在，skilllib 每次只装嵌套版 → 遮蔽必然复发。**已于 2026-10-20 经用户批准执行**：重名组 94 → 4，删除冗余副本本机 88 份 + hermes-data 88 份，全库 396 个唯一 skill，`short-video-copywriting` 等被遮蔽的 skill 恢复加载正确版。
@@ -143,15 +161,23 @@ hd = "/mnt/c/Users/Admin/hermes-sync/skills"
 
 ⚠️ 中途**不要**跑 `拉取.bat` / `sync-pull.sh`（会把还没推的本机改动冲掉）。要拉别机的新内容，先确保本机改动已 push。
 
+⚠️ **hermes-data 的推送顺序有坑（2026-10-27 实测）**：`sync-push.sh` 开头是 `git fetch origin main && git reset --hard origin/main`——**任何「先手动拷/改进 hermes-data 工作区但还没 commit」的文件都会被 reset 冲掉还原成远端旧版**。因此：
+- 手动预拷到 hermes-data 工作区再跑 sync-push.sh 的那一步写入会**静默丢失**（该路径不会出现在新同步 commit 里）。
+- sync-push.sh 只 `cp -rf ~/.hermes/skills/* skills/`，即只刷新「~/.hermes/skills/ 里有的结构」（活动/嵌套版）；**hermes-data 里的扁平遗留副本拷不进去**，不会自动更新。
+- 正确顺序：**先跑 sync-push.sh**，再对需要更新的扁平/其它副本**显式 commit+push**（或先把手动改动 commit 进 hermes-data 再跑同步脚本）。跑完用 `git show HEAD:<路径> | grep` 核对远端 HEAD 里确实含新内容，别只信 `git status` 干净。
+
 ## Pitfalls
 
 - `author: Hermes Agent` frontmatter 不代表 curator-managed；`created_by=None` 即为 user-owned，autonomous 写入必被拒。实测 `cron-job-ops`、`skill-library-consolidation` 都是 frontmatter 像 agent 写、实际 user-owned。
 - hermes-data 仓库与本机都存在多个同名 skill 的扁平/嵌套/归档副本。**搜 md5 / 改 skill 时，一律先用 `scan_skill_commands()` 确认"活动路径"，别想当然认定是嵌套版** ——同名多副本时按路径字典序取第一个，扁平版可能胜出并遮蔽嵌套版。
 - `skill-exchange` 是 `--no-agent --script` cron，有真实文件系统写副作用，但**只新增不覆盖**；真正会覆盖本机已改文件的是 hermes-data 的**拉取脚本 `rsync -a`**（`hermes_pull.sh` / `~/.hermes/sync-pull.sh`）。
 - 别对同步夹跑「把 ~/.hermes 全量 --delete 镜像过去」——同步夹有 .git 等 ~/.hermes 没有的文件会被删。详见 `hermes-data-sync`（user-owned）P11。
+- **`~/.hermes/sync-push.sh` 卡在 `[1/4] Sync ... (fetch+reset)`（git fetch 一直挂着）**：`git ls-remote origin` 秒回 ≠ fetch 会通——ls-remote 只列 ref，fetch 要传对象（远端已前进时对象多、直连慢会挂；`~/.hermes/proxy.sh` 探测到 Clash 7890 端口不通时会保持直连，本次即走此路径）。**别用短前台 timeout 跑同步脚本**——会被杀在半途，留下「已 fetch+reset、文件还没拷入」的中间态（git status 干净 ≠ 同步完成）。改 `background=true + notify_on_complete` 跑完整脚本，结束后 `git log --oneline -3`（应看到新 sync commit）+ 三处 md5 核验。fetch 真卡死可试 `GIT_SSH_COMMAND="ssh -o ConnectTimeout=15"`（沿用 hermes-data-sync 的已验证解法）。
+- **`~/.hermes/sync-push.sh` 开头 `git reset --hard origin/main` 会冲掉「手动先同步进 hermes-data 工作区但未 commit」的改动（2026-10-27 实测）**：想手动把某个扁平/额外副本补进 hermes-data，先跑 sync-push.sh 必然被 reset 还原成远端旧版，那笔改动不会进同步 commit。顺序应为「先跑 sync-push.sh → 再对需补的路径显式 commit+push」，或先 commit 进 hermes-data 再跑同步脚本。且 sync-push.sh 只 cp `~/.hermes/skills/*`（活动/嵌套结构），**flat 遗留副本不会自动更新**——凡要更新的副本都需显式推送 + `git show HEAD:<路径>|grep` 核验远端 HEAD 内容，别只信 `git status` 干净。
 - 备份被遮蔽的旧加载版时，**别把备份目录建在 `~/.hermes/skills/` 内** —— 里面有 SKILL.md 就会被扫描当新 skill，制造新的副本。放 `~/skill-dupes-backup/` 之类目录。
 - 「`skill_view` 读到的内容对」**不等于**「运行加载的就是那份」。同名多副本时两者可能不同 —— 判活动路径只认 `scan_skill_commands()`。
 - **同名副本的匹配/统一/去重一律用 frontmatter `name:`，绝不用目录名**：目录名与技能名不同名真实存在（`agent-prompts/` 装的是 `coze-tax-agent-prompt`），按目录名匹配会错配并覆盖无关技能。
+- **向 hermes-data / canonical 拷文件前，先用 `git ls-files | grep <skill名>` 核对该仓库实际跟踪的路径，只往跟踪路径写**——不要臆测存在嵌套副本就往 `skills/skills/<名>/` 或 `<名>/skills/<名>/` 写（2026-10-27 实测：臆测目标写出了 `skills/skill-library-exchange-ops/skills/skill-library-exchange-ops/` 的冗余副本，`git add -A` 把它裹挟进 commit 推上了远端，凭空制造新的同名多副本/遮蔽隐患）。已误建时清理：`git rm -r --cached <多余路径> && rm -rf <多余路径>`，提交（`delete mode 100644`）重推，再用 `git ls-tree -r HEAD --name-only | grep <skill名>` 核验远端 HEAD 只剩应跟踪的文件。**写盘只应命中 `git ls-files` 列出的路径**；目标仓库没有的副本形态不要自创。
 - **删同名冗余副本时必须同步删 hermes-data 对应副本**，否则 `rsync -a` 会从 hermes-data 还原扁平副本，遮蔽复发。
 - 重名组里**内容不一致的是「真冲突」而不是「待同步」**（两个不同 skill 撞名）——不能按 canonical 强覆盖，报告用户改名。
 - 批量改/删副本前先整目录 tar 备份，且**备份目录不能放在 `~/.hermes/skills/` 内**（会被当新 skill 扫到）。

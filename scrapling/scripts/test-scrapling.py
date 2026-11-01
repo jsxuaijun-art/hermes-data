@@ -6,7 +6,7 @@ Hermes 爬虫工具集 — 环境验证脚本
 用法: 在 Hermes 主环境下 python scripts/test-scrapling.py
 """
 
-import importlib
+from importlib import metadata
 import sys
 
 PKGS = [
@@ -23,13 +23,11 @@ print("=" * 55)
 all_ok = True
 for pkg_name, mod_name, desc in PKGS:
     try:
-        ver = importlib.metadata.version(pkg_name)
+        mod = __import__(mod_name)
+        ver = getattr(mod, "__version__", None) or metadata.version(pkg_name)
         print(f"  ✅ {pkg_name:15s} v{ver:<12s} {desc}")
-    except ImportError:
-        print(f"  ❌ {pkg_name:15s} {'未安装':<14s} {desc}")
-        all_ok = False
-    except importlib.metadata.PackageNotFoundError:
-        print(f"  ❌ {pkg_name:15s} {'未安装':<14s} {desc}")
+    except (ImportError, metadata.PackageNotFoundError):
+        print(f"  ❌ {pkg_name:15s} {'未安装':<12s} {desc}")
         all_ok = False
 
 # 额外检查：DrissionPage 的 Chromium 页面能否导入

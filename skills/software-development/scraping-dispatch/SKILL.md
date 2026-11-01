@@ -27,12 +27,24 @@ description: 爬虫任务自主调度中枢。遇到任何"抓取/爬取/采集/
 | Scrapy | ✅ | 预装 | 大规模 |
 | Playwright | ✅ | 1.60.0 | chromium-1223 缓存 |
 | DrissionPage | ✅ | 4.1.1 | 需 Chrome 二进制，WSL 默认无 |
-| scrapling | ✅ | 0.4.9 | Fetcher + StealthyFetcher 均可导入 |
-| patchright | ✅ | 1.61.2 | chromium build 1228，StealthyFetcher 依赖 |
-| curl_cffi | ✅ | 0.15.0 | TLS 指纹模拟 |
+| scrapling | ✅ | 0.5 | Fetcher + StealthyFetcher 均可导入 |
+| patchright | ✅ | 1.64.3 | chromium build 1248，StealthyFetcher 依赖 |
+| curl_cffi | ✅ | 0.17.0 | TLS 指纹模拟 |
 | curl-impersonate | ✅ | 已装 | 系统二进制 chrome 分支 |
-| msgspec | ✅ | 0.21.1 | scrapling 依赖 |
+| msgspec | ✅ | 0.22 | scrapling 依赖 |
 | agent-reach | ✅ | 0.1.0 | LLM agent 渠道抓取(RSS/YouTube) |
+
+## 工具集维护 / 跨机部署 / 版本核查
+工具集**不是独立仓库，也不是独立技能**：环境与脚本集成在 `hermes-data/scrapling/`（setup.sh 一键装 + activate.sh + scripts/），技能本体走同一仓库 skills/ 目录同步。scrapling 是**库不是技能**（无独立 SKILL.md），由本 skill 与 python-web-scraping-setup 封装调用；用户说"调用 Scrapling 技能"时实际指 `from scrapling.fetchers import StealthyFetcher`，记法：直接告诉用户"点名工具就按指定用，否则自动选"。
+
+**查版本**：本机 `~/.venv-hermes/bin/pip list | grep -iE 'scrapling|patchright|playwright|curl-cffi|drission|scrapy'`；最新版 `curl -x http://172.23.96.1:7890 https://pypi.org/pypi/<pkg>/json`（直连常失败，走代理稳）。
+
+**升级**：直接 `bash /mnt/c/Users/Admin/hermes-sync/scrapling/setup.sh`（机器无关，用 $HOME 定位 Hermes venv，pip 装最新 + Chromium + curl-impersonate），然后跑 test-scrapling.py 验证。
+
+**换机部署**：`git clone git@github.com:jsxuaijun-art/hermes-data.git && bash hermes-data/scrapling/setup.sh`，无需改任何路径。
+
+⚠️ **patchright 与 playwright 是 fork/配套关系，必须一起升**——单独升一个会版本不兼容。
+⚠️ **scrapling 跨大版本可能改 Response API**（本文件 0.4.9 用 `page.text`/`html_content`/`css()`），升到 0.5 后必须先实测 StealthyFetcher，API 变了就同步改本节，勿沿用旧用法。
 
 ## 反爬阶梯（遇强反爬按序尝试，每级最多 3 次，全败→方案B）
 1. **curl_cffi** `impersonate='chrome120'` — 过 TLS 指纹第一层
@@ -51,8 +63,8 @@ page.html_content      # 渲染后完整 HTML
 page.text              # 页面纯文本
 page.css('h1')         # CSS 选择器取节点
 ```
-⚠️ scrapling 0.4.9 的 Response API：用 `page.text` / `page.html_content` / `page.css()`，**没有** `.title` 和 `.html` 属性（实测报 AttributeError）。referer 自动伪装成 google.com，隐身抓取链路已 2026-08-04 端到端验证成功。
-前置依赖：`pip install patchright msgspec`，且 `python -m patchright install chromium` 已装（build 1228，镜像：`PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright`）。
+⚠️ scrapling 0.5 的 Response API：`page.text` 返回 **TextHandler**（取纯文本用 `page.text.extract()`），`page.css()` 返回 **Selectors 可迭代对象**（`page.css('h1')[0].text` 取文本，元素是 Selector 有 `.text` 无 `.html`）；`page.html_content` 为渲染后完整 HTML，`page.status` 为状态码。referer 自动伪装成 google.com，隐身抓取链路已 2026-08-04/2026-11-01 端到端验证成功。
+前置依赖：`pip install patchright msgspec`（patchright 与 playwright 版本需配套），且 `python -m patchright install chromium` 已装（build 1248，镜像：`PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright`）。
 
 ## 代理坑（必须遵守）
 本机存在残留代理配置指向 `172.23.96.1:7890`，但代理经常未就绪，会拖死一切网络操作。

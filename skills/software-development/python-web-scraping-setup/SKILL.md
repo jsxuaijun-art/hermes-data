@@ -39,7 +39,7 @@ python scrapling/scripts/test-scrapling.py         # 验证 4 个工具全部就
 | **Scrapy** | ✅ 核心 | 大规模爬虫框架 | `pip install` |
 | **Playwright** | ✅ 核心 | 浏览器自动化（多浏览器） | pip + 二进制 |
 | **DrissionPage** | 🔧 拓展 | 多线程/多标签浏览器自动化 | pip 直装 |
-| **scrapling** | 🔧 拓展 | 自适应智能爬虫（GitHub ~23K Stars） | pip 直装 |
+| **scrapling** | 🔧 拓展 | 自适应智能爬虫（GitHub ~55K Stars, v0.5） | pip 直装 |
 | **curl_cffi** | 🔧 拓展 | TLS 指纹模拟（Python 版） | pip 直装 |
 | **curl-impersonate** | 🔧 拓展 | 系统级 curl 指纹模拟二进制 | 系统安装 |
 
@@ -265,12 +265,13 @@ czj.sh.gov.cn 首页/文章页可 requests 直抓但栏目列表页返回 `Templ
 
 ## ⚠️ 已知坑点
 
-### scrapling 缺 patchright 依赖
-scrapling 0.4.9 的 `StealthyFetcher` 依赖 `patchright` 包。如果只 `pip install scrapling` 而未同时安装 `patchright`，会报：
-```
-ModuleNotFoundError: No module named 'patchright'
-```
-**修复**：`pip install patchright`（注：patchright 是 Playwright 的 fork，安装前需确认兼容性）
+### scrapling 0.5 API 变化（2026-11-01 升级实测，与 0.4.9 不同）
+- 已装版本：scrapling 0.5 + patchright 1.64.3 + playwright 1.64.1, StealthyFetcher 隐身链路实测 status=200。
+- **`page.text` 由字符串变为 `TextHandler` 对象**：取页面纯文本用 `page.text.extract()`，不要再直接当 str 用。
+- **`page.css(sel)` 由直接取节点改为返回 `Selectors` 可迭代对象**：`page.css('h1')[0].text` 取首个匹配文本；元素是 `Selector`（有 `.text`，无 `.html`）。
+- 保留：`page.status`、`page.html_content`（渲染后完整 HTML）。无 `page.css_text`.
+- StealthyFetcher 用法不变：`StealthyFetcher.fetch(url, headless=True, timeout=30000)`。
+- 前置依赖 patchright 已装（pip install 时若只装 scrapling 会报 `No module named 'patchright'`——必须装 patchright 且与 playwright 版本配套）。
 
 ### DrissionPage 找不到 Chrome 可执行文件
 ```
@@ -287,7 +288,8 @@ DrissionPage 默认自动检测 Chrome 路径。WSL 中如果没有安装 Chrome
 |------|------|------|
 | 2026-06-10 | 核心三件套（Playwright + Scrapy + BS4） | WSL 安装成功，Chromium 超时一次后重试通过 |
 | 2026-06-16 | 状态检查 | Playwright ✅ 已装，DrissionPage/scrapling/curl ❌ |
-| **2026-06-16** | **A方案决策** | **放弃独立 venv，全部装进 Hermes 主环境** |
+| 2026-06-16 | **A方案决策** | **放弃独立 venv，全部装进 Hermes 主环境** |
+| 2026-11-01 | **全量升级** | scrapling 0.4.9→0.5, patchright 1.61→1.64.3, playwright 1.60→1.64.1, curl_cffi 0.15→0.17, bs4→4.15, msgspec→0.22, scrapy→2.19; requests 回退 2.33 保 Hermes/arxiv pin; 重下 Chromium build 1248; 修复 test-scrapling.py importlib.metadata bug |
 
 ## 验证脚本（scripts/verify-crawler-env.py）
 

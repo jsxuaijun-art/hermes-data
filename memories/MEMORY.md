@@ -12,7 +12,7 @@ Obsidian=第二知识库/永久记忆:D盘=/mnt/d/obsidian-vault主库,WSL=git�
 §
 跨机同步:远端唯一真相源,勿盲推/勿force-push;改memories等跨机累积共享文件=合并勿覆盖(cp整文件会清仓,commit rewrite99%/巨量diff=信号);恢复=git show旧commit:path取回远端版→awk按行去重→双grep校验→再推;push前先fetch看与origin/main分叉。.env与config.yaml各机独立勿共享覆盖。
 §
-技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;各端侧是嵌套skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按已知路径定点查。
+技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;各端侧是嵌套skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按已知路径定点查;suzhou-equity-transfer-guide有顶层+嵌套双份,改动须双份同步。
 §
 user-owned技能不可自动改(实测skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、sph-video-downloader、tax-audit-response、short-video-copywriting(根+social-media双份)、llm-longform-generation等),需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。用户财税类skill由vault维护,50-Skills软链~/.hermes/skills,改vault即同步勿双份;tax-audit-response触发词「税务稽查/检查/稽查」已注册,与WorkBuddy共建,改动后写回传说明放桌面;tax-regulation-monitor每月三路交付(vault+桌面+WorkBuddy)。
 §
@@ -58,7 +58,7 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 §
 视觉路由陷阱(2026.10.11定位修复,跨机必读):中转站llm.chudian.site的deepseek-v4-flash实为纯文本,但models.dev在线目录误标supports_vision=True→vision_analyze判定native→把base64图塞进tool-result历史→主模型每轮400『不支持以下输入类型:image』且错误体不匹配恢复短语表(仍判non-retryable)→全会话卡死。修复=能力覆盖:`hermes config set providers.deepseek.models.deepseek-v4-flash.supports_vision false`(config.yaml受保护,改前cp备份),令_model_supports_vision()=False,历史图自动转auxiliary.vision文本描述。换任何『目录说能看图但中转实际纯文本』的模型,先加此provider级覆盖;图片兜底=auxiliary.vision(chudian deepseek-v4-flash-vision-exp)。
 §
-「推送github」=双通道全推(徐总默认两处都要):①统一库skill-library(C:\Users\Administrator\skill-library)②hermes-data(本地仓库=/mnt/c/Users/Admin/hermes-sync,注意用户名是Admin非Administrator)。hermes-data走~/.hermes/sync-push.sh(已修为v5:先fetch+reset再拷贝本地,旧版顺序会静默丢掉已跟踪文件如SKILL.md的改动),跑完必核 local==remote。桌面成品(Word/PDF/PNG)不入库。
+「推送github」=双通道全推(徐总默认两处都要):①统一库skill-library(C:\Users\Administrator\skill-library)②hermes-data(本地仓库=/mnt/c/Users/Admin/hermes-sync,注意用户名是Admin非Administrator)。hermes-data走~/.hermes/sync-push.sh(已修为v5:先fetch+reset再拷贝本地,旧版顺序会静默丢掉已跟踪文件如SKILL.md的改动),跑完必核 local==remote;hermes-sync常处detached HEAD,须先git checkout main再跑sync-push.sh,否则推不上main。桌面成品(Word/PDF/PNG)不入库。
 §
 交付打包铁律(徐总2026.10.12):一任务全部产物先入同名文件夹再压成一个zip,桌面C:\Users\Administrator\Desktop只留压缩包禁零散。实操(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试)详skill内容纪律。
 §

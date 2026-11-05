@@ -29,7 +29,7 @@ retargeting, and debugging a scheduled job. Goes with `cron-data-collection-jobs
 ## CLI quick reference
 
 ```bash
-hermes cron list                     # all jobs: Name / Schedule / Next run / Deliver
+hermes cron list                     # all jobs: Name / Schedule / Next run (Deliver column may be OMITTED)
 hermes cron runs [job_id]            # executions for a job (manual run = source=direct)
 hermes gateway status                # is the gateway up AND are platform creds present?
 ```
@@ -91,11 +91,18 @@ hermes gateway status                # is the gateway up AND are platform creds 
   connected" → pointless re-targeting noise.
 - Source of truth for what's scheduled is `hermes cron list`, not memory or a
   hand-written reference — don't snapshot cron inventory into files.
+- `hermes cron list` may print only Name/Schedule/Next run and omit the `Deliver`
+  column (observed). When you must confirm a job's delivery target actually
+  landed as `wecom:<chat_id>` (or origin/local), read its record from
+  `~/.hermes/cron/jobs.json` and check `deliver` (plus `schedule.expr`, `skill`,
+  `enabled`). Missing "Deliver" in list output ≠ delivery not set.
 
 ## Verification
 
-- [ ] `hermes cron list` shows the expected `Next run` and `Deliver` after any
-      create/edit.
+- [ ] After create/edit, `hermes cron list` shows the expected `Next run`; if
+      the `Deliver` column is absent from list output, confirm the target by
+      reading `deliver` in `~/.hermes/cron/jobs.json` before telling the user
+      delivery is set.
 - [ ] If the job has a skill contract, its cadence/delivery fields match the job.
 - [ ] wecom delivery only asserted when `hermes gateway status` shows the
       platform connected AND `hermes cron runs <id>` shows a completed delivery.

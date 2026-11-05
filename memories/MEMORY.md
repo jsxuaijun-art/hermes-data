@@ -1,6 +1,6 @@
-公众号尾部(2026.10.19徐总定稿):总结+话题标签5-8个+作者落款默认收尾;公司介绍+核心业务+CTA两动作(收藏/转发)每次必带;二维码/电话/免费资料/CTA'关注'除非用户明确说否则一律不放。电话132-2229-7318/180-1262-7126。
+公众号尾部(2026.11.02徐总确认):总结+话题标签5-8个+作者落款默认收尾;公司介绍+核心业务+CTA三动作(收藏/转发/关注'推送财税干货,老板少踩雷')每次必带;二维码/电话/免费资料除非用户明确说否则不放。电话132-2229-7318/180-1262-7126。
 §
-公众号改写/去AI味:出稿前用creative/humanizer去AI味。改写=换措辞+打乱结构顺序+重组角度逻辑链,结构层面不雷同,五大事项类可重排/拆分/调侧重点。排版风格:01安信伯君、02刘润红蓝撞色(红#FF2941蓝#0052FF,风险/警示文数字冲击好)。对外稿不写本行业具体价档(200元/年)→统一'超低价代理记账';他行业官方数字可写;低价四条路含AI代账
+公众号改写/去AI味:出稿前用creative/humanizer去AI味。改写=换措辞+打乱结构顺序+重组角度逻辑链,结构层面不雷同。排版风格:01安信伯君、02刘润红蓝撞色(红#FF2941蓝#0052FF,风险/警示文数字冲击好)。对外稿不写本行业具体价档(200元/年)→统一'超低价代理记账';他行业官方数字可写。
 §
 AI内容纪律(徐总2026.9.21,详Obsidian/AI内容纪律+skill content-evidence-discipline):涉法文案→严禁幻觉先核实带文号依据清单;"法"=全部法律层面不限于税法(非文案等同A严守;B创作文案豁免尽情发挥只守合规红线;交叉:引法规/数据当卖点须有据)。占位规则(2026.10):结构需要可先"编造"但必须显式红标占位(【待填】/⚠待核实)+交付时逐条点名要用户替换;被点名一处编造→立即全篇事实普查,勿只改那一处。
 §
@@ -12,11 +12,11 @@ Obsidian=第二知识库/永久记忆:D盘=/mnt/d/obsidian-vault主库,WSL=git�
 §
 跨机同步:远端唯一真相源,勿盲推/勿force-push;改memories等跨机累积共享文件=合并勿覆盖(cp整文件会清仓,commit rewrite99%/巨量diff=信号);恢复=git show旧commit:path取回远端版→awk按行去重→双grep校验→再推;push前先fetch看与origin/main分叉。.env与config.yaml各机独立勿共享覆盖。
 §
-技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;各端侧是嵌套skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按已知路径定点查;suzhou-equity-transfer-guide有顶层+嵌套双份,改动须双份同步。
+技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;各端侧是嵌套skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按已知路径定点查。
 §
-user-owned技能不可自动改(实测skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、sph-video-downloader、tax-audit-response、business-registration-advisor、short-video-copywriting(根+social-media双份)、llm-longform-generation等),需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。用户财税类skill由vault维护,50-Skills软链~/.hermes/skills,改vault即同步勿双份;tax-audit-response触发词「税务稽查/检查/稽查」已注册,与WorkBuddy共建,改动后写回传说明放桌面;tax-regulation-monitor每月三路交付(vault+桌面+WorkBuddy)。
+user-owned技能不可自动改(实测skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、sph-video-downloader、tax-audit-response、short-video-copywriting(根+social-media双份)、llm-longform-generation等),需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。用户财税类skill由vault维护,50-Skills软链~/.hermes/skills,改vault即同步勿双份;tax-audit-response触发词「税务稽查/检查/稽查」已注册,与WorkBuddy共建,改动后写回传说明放桌面;tax-regulation-monitor每月三路交付(vault+桌面+WorkBuddy)。
 §
-本机Hermes实装=/home/dmin/hermes-agent-v0.20.6,2026.10.29 zip覆盖升v0.22.5,无.git故--version显vunknown(正常);/home/dmin/hermes-agent=另份独立源码副本勿动;venv=.venv-hermes;gateway=用户systemd hermes-gateway.service,代码换新后旧unit过时→『Gateway starting: deadline』,修法=`hermes gateway install`重生unit;hermes alias=~/.hermes/hermes-wsl.sh(企微云端逻辑)。WSL连Windows Clash走172.23.96.1:7890。config.yaml受保护须`hermes config set`(改前cp备份)。GitHub大单文件被节点切断,gh-proxy.com下zip续传(-C -循环+CRC校验)最稳。
+本机Hermes实装=/home/dmin/hermes-agent-v0.20.6,2026.10.29 zip覆盖升v0.22.5,无.git故--version显vunknown(正常);/home/dmin/hermes-agent=另份独立源码副本勿动;venv=.venv-hermes;gateway=用户systemd hermes-gateway.service,代码换新后旧unit过时→『Gateway starting: deadline』,修法=`hermes gateway install`重生unit;hermes alias=~/.hermes/hermes-wsl.sh(企微云端逻辑)。WSL连Windows Clash走172.23.96.1:7890。config.yaml受保护须`hermes config set`(改前cp备份)。GitHub大文件/下载被节点切断→走gh-proxy.com镜像服官方直链(-C-续传);装开源工具先认准正主repo(防同名fork钓鱼,查API实star/fork)+装前比对官方SHA256SUMS验哈希,成品放Windows桌面。
 §
 视觉降级:auxiliary.vision已指向telecom豆包Doubao-Seed-2.1-Pro(aigw.telecomjs.com/v1,${TELECOM_DOUBAO_KEY})=主模型读不了图时自动接管,无需换主模型。探针=skill hermes-free-model-channels/scripts/vprobe.py(发已知随机码图验真伪)。
 §
@@ -36,7 +36,7 @@ hermes cron:prompt是位置参数`hermes cron create <schedule> <prompt>`;create
 §
 人设锚点(identity-anchor/产品手册)共6副本改必全同步,源CRLF,diff tr -d '\r'。
 §
-D:\360MoveData实际存在存用户桌面文件勿默认不存在;另有D:\OneDrive\Desktop找文件先查。默认交付放桌面只报Windows路径不报WSL
+D:\360MoveData 实际存在（360迁移），会存放用户桌面文件；用户给该路径时按实际存在读取勿默认不存在。默认交付仍放 C:\Users\Admin\Desktop，只报Windows路径不报WSL
 §
 对外材料(PPT/方案/公司介绍)事实纪律:具体事实(学历院校届别/评审人数通过率/行业占比/客户数转介绍率/成立年份/资质分)无据一律不得编;确需占位用醒目色#C00000+角标注「待核实」+附《待核实清单》+口头提醒用户核对。配图只用装饰图形/原生图表/占位框,禁用暗示「本公司实景·本团队」的网图或AI图。
 §
@@ -50,22 +50,24 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 §
 用户常处理苏州爱心之家老年公寓(民办非企业)财报格式转换:小企业准则→民间非营利组织。实收资本+未分配利润→非限定性净资产(负数);应收款项=应收+预付+其他应收;应付款项=应付+其他应付。技能=chinese-accounting-format-conversion。
 §
-企微发送:先配回调+可信IP,见wechat-moments-marketing;推XuAiJun须用户确认。企微AI机器人(WebSocket)已通:wecom启用,@yingxin_inner调Hermes;wecom_callback由env启用只刷40001不抢答。
+企微AI机器人(WebSocket)已通:wecom启用,@yingxin_inner调Hermes;wecom_callback由env启用只刷40001不抢答。
 §
 注销话术触发(sales-communication):注销话术/公司注销/注销收费/比注册贵/包注销/捆绑销售/记账就该包注销/清算→通用-注销清算收费异议处理.md。
 §
 为短视频做「话题/标题总结」要'站得更高看得更远'(上帝视角):把具体家务/日常现象上抽到-定义本质-再归纳到更高维核心概念,金句洞察常藏结尾自省句(如'多数家庭更擅长拽下来而非托上去'=内耗是本能的,托举是反本能的)。示例《托举》→主旨「家庭兴旺的底层是'不内耗'——能量单向向外输出 vs 内部对消归零」→标题抓'内耗/能量管理'比抓'托举'更站高。已写入short-video技能「上帝视角·深层主旨提炼」节。
 §
-chudian vision-exp已下架(404)勿指向;检修见office-display-design references/vision-model-repoint.md
+视觉路由陷阱(2026.10.11):chudian的deepseek-v4-flash纯文本但models.dev误标supports_vision=True→vision_analyze判native→base64图入历史→主模型400『不支持image』→会话卡死。修复:config set providers.deepseek.models.deepseek-v4-flash.supports_vision false(改前cp备份)。兜底auxiliary.vision已停用(实测404),需另配视觉模型。
 §
-「推送github」=双通道全推(徐总默认两处都要):①统一库skill-library(C:\Users\Administrator\skill-library)②hermes-data(本地仓库=/mnt/c/Users/Admin/hermes-sync,注意用户名是Admin非Administrator)。hermes-data走~/.hermes/sync-push.sh(已修为v5:先fetch+reset再拷贝本地,旧版顺序会静默丢掉已跟踪文件如SKILL.md的改动),跑完必核 local==remote;hermes-sync常处detached HEAD,须先git checkout main再跑sync-push.sh,否则推不上main。桌面成品(Word/PDF/PNG)不入库。
+「推送github」=双通道全推(徐总默认两处都要):①统一库skill-library(C:\Users\Administrator\skill-library)②hermes-data(本地仓库=/mnt/c/Users/Admin/hermes-sync,注意用户名是Admin非Administrator)。hermes-data走~/.hermes/sync-push.sh(已修为v5:先fetch+reset再拷贝本地,旧版顺序会静默丢掉已跟踪文件如SKILL.md的改动),跑完必核 local==remote。桌面成品(Word/PDF/PNG)不入库。
 §
-交付纪律(徐总2026.11.4):交付成品只给docx/pdf/zip,桌面不留.md源稿(.md可内部生成/跨机同步,除非用户要否则不展示不摆桌面);一任务产物先入同名文件夹压zip桌面只留压缩包禁零散(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试);找非核心素材(外景配图等)耗token即止损直接进草稿箱/用现成资源;详见skill内容纪律。
+交付打包铁律(2026.10.12/2026.11.03徐总):交付文件禁用.md格式(用.txt/Word/PDF,除非用户明确要md);同一任务全部产物先入同名文件夹再压成一个zip,桌面只留压缩包禁零散。实操(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试)详skill deliverable-handoff与内容纪律。
 §
 memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须抄全原条否则静默丢内容;想加内容而用量变小=已丢,立即还原。
 §
-提取脚本待wechat-publish被adopt后入scripts/。读官方教程素材(搜一搜优化等):示例展示在图里,web_extract的[IMAGE]占位≠已读,须vision_analyze(自动回退Doubao,非deepseek)逐张读图再融入skill,长图拆region半读,图多并行delegate(2026.11.10)
+公众号素材坑:『视频来了!』类视频型文章(mp.weixin.qq.com)js_content无正文且无var msg_title/ct,元数据用og:title/og:description兜底,正文从视频本身转写或同批姊妹图文稿取。完整提取脚本待wechat-publish被curator adopt后落位scripts/。
 §
-模型路由铁律(2026.10.29徐总更新):Hermes默认模型=chudian deepseek-v4-flash(provider deepseek, base_url https://llm.chudian.site/v1, key=DEEPSEEK_API_KEY);只有用户专门命令或调用指定skill才切kimi-k3,日常默认不再用kimi。切换/完成任务要报所用模型。视觉:deepseek-v4-flash禁原生视觉,auxiliary.vision=telecom Doubao-Seed-2.1-Pro(chudian vision-exp已下架勿指);短文案/生图旧规则由对应skill触发,不改默认路由。
+模型路由:Hermes默认=chudian deepseek-v4-flash(base_url llm.chudian.site/v1,key DEEPSEEK_API_KEY);kimi-k3原key已401(kimi2.7-code代用),切模型仅在用户/skill指定时;完成任务报模型。附加key qwen3.7/glm5.2/kimi2.7存.env的QWEN37/GLM52/KIMI27三_API_KEY,值勿入记忆/推送;接通前先问清base_url。
 §
-wechat-publish 2026.11.10 新增「吸粉/引导关注（含红线）」章节(开头/正文禁加"如觉得有用可关注"类求关注话术;有效写法=给每个动作具体理由)。本机两份副本已同步(md5 350f2404),尚未推送双通道。徐总2026.11.10指示:此改动等下次有其他推送时一并推,不用单独推。
+公众号配图新法(2026.11.02):正文配图用『官方报道/政策文件截图』——按文中#话题标签去税务总局/政府官网找该新政报道,整页/关键段截图当配图,天然贴题、每篇不同绝不复用;不发AI场景图。详见wechat-publish配图铁律。
+§
+公众号发布链路在阿里云47.103.27.171(/etc/wenyan/.env+wenyan-server:3000不开放,须scp稿件上去跑),本机无该环境;会话同步过来故看着像本机。wenyan的-c主题不内联样式(微信又剥<style>),发完必跑wechat-publish scripts/inline_theme.py(单篇)或backfill_theme.py(批量/修字面**/长句加粗跳红/自动备份)。验收:蓝#0052FF命中数=h2数、红#FF2941≈短加粗数、img与原稿一致、去标签归一化&nbsp;后逐字相等。

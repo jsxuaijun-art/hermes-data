@@ -1,0 +1,10 @@
+{
+  "name": "github",
+  "installedAt": 1774484958583,
+  "source": "marketplace",
+  "iconSource": "github",
+  "version": "1.0.0",
+  "skillId": "skill_2053082027691548672",
+  "skillName": "github",
+  "installedContentHash": "sha256:eed2435a4bc1a79dcdabc1e09893371fc567e7e8c669cc2a0c02cefc7942ede7"
+}

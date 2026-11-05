@@ -32,13 +32,17 @@ author: Hermes Agent (for 江敏/盈信税务)
   ```
   ⚠️ OCR 中文识别有少量错字（如「产业园A座301」识成「产业田A遮301」），转录后需按语义校正，**政策条文以 OCR 文本为底、务必核对官方原文再引用**。
 - **下漫画图**：`curl -A "$UA" -e "https://mp.weixin.qq.com/" -o x.jpg "<完整src URL>"`（必须带 Referer，否则空文件）。
-| 腾讯视频号链接 | `weixin.qq.com/sph/...` 或 `channels.weixin.qq.com/...` | 浏览器工具 navigate → 关闭弹窗 → snapshot读标题/发布者/时间/话题标签（视频号是JS渲染，curl拿不到内容） |
+| 腾讯视频号链接 | `weixin.qq.com/sph/...` 或 `channels.weixin.qq.com/...` | **先 `web_extract` 该链接拿标题+视频简介+发布者/日期/话题标签（免下载、免密钥、免浏览器）**；只有需要逐字口播文案时再走浏览器 snapshot 或 QIYUN 下载+转写（见下） |
 | 抖音视频链接 | `v.douyin.com/短链` 或 `douyin.com/video/<id>` | 见下方「抖音获取步骤」——短链先解析出 video id，再用带完整参数的分享 URL 开浏览器，最后用页面内 fetch 调 aweme detail API 拿 desc/作者/数据 |
 | YouTube链接 | `youtube.com/watch?v=...` 或 `youtu.be/...` | 用 `youtube-content` skill 提取字幕或标题 |
 | 本地文件/截图 | 用户直接发图片或文件路径 | vision_analyze 或 read_file 读取 |
 | 纯主题描述 | 用户只说"写一篇关于XXX的文章" | 直接走模式A标准写作 |
 
-**视频号获取步骤（2026.7.28 验证通过）：**
+**视频号获取步骤：**
+
+**第0步（免密钥轻量路径，2026.11.3 验证）：** 直接 `web_extract("https://weixin.qq.com/sph/<id>")` 即可返回页面里的**标题、视频简介整段（常含发布者的观点+话题标签）、发布者、日期**。只需"确认视频讲什么/受众是谁/要不要写"（常见于：用户同时给了公众号文章+视频号、两者讲同一事件，视频仅作题材佐证）时，这一步就够，**不必调 QIYUN 下载+转写、也不必开浏览器**。仅当你要引用视频**逐字口播文案**才需下载转写（需 QIYUN 密钥；密钥缺失/不在位时，先试本路径拿简介兜底，简介往往已能支撑创作，别在捞密钥上死磕）。
+
+**第1步（需逐字口播/浏览器时）：**
 1. `browser_navigate(url)` — 浏览器打开链接，会跳转到 `channels.weixin.qq.com/finder-preview/pages/sph?id=XXX`
 2. 页面会弹出一个"关闭"按钮 → `browser_click(@e1)` 关闭弹窗
 3. `browser_snapshot(full=true)` — 获取完整快照，找 `StaticText` 中的：
@@ -447,7 +451,7 @@ publish -f /tmp/article.md \
 -c /etc/wenyan/themes/<所选风格.css>   # 替换为实际风格CSS，如01-anxinbojun.css
 ```
 
-**服务器**：阿里云 ECS 47.103.27.171，wenyan-server 端口 3000
+**服务器**：阿里云 ECS 47.103.27.171，`wenyan serve` 绑在服务器本地 `*:3000`（`node .../cli.js serve --port 3000 --env-file /etc/wenyan/.env`）。⚠️ **3000 端口不对公网开放，WSL 直连不通（只有 SSH 22 通）**——发布命令必须在服务器上跑：先在本地 `write_file` 写好 markdown → `scp` 到服务器 `/tmp/` → ssh 进服务器执行 publish（`--server http://127.0.0.1:3000`）。
 
 **排版主题**：`/etc/wenyan/yingxin-theme.css`（已生效，见下节）
 
@@ -731,7 +735,7 @@ publish -f /tmp/article.md \
 ### ⭐ 运营手册三大硬检查项（2026.11.02 徐总钦定，下次写作一律落地，勿再遗漏）
 实践对照《盈信公众号运营手册》与已发文章的差距，徐总要求以下三点每篇必查：
 1. **标题三要素齐全＝人群/地域＋痛点＋数字**，缺一即改。已发文章教训：只用了痛点、缺数字和地域。示例《苏州老板注意：本月起税务罚款全国一把尺，这3类企业最吃亏》。
-2. **封面按运营手册视觉规范**＝品牌绿 #09B83E＋大字标题＋副标题，尺寸 900×383；政策/风险文即便走官方截图/实景，也尽量叠加标题字版，不裸用纯景图。已发文章教训：用了法鎚纯景图，无品牌绿标题版。
+2. **封面按运营手册视觉规范**＝品牌绿 #09B83E＋大字标题＋副标题，尺寸 900×383；政策/风险文即便走官方截图/实景，也尽量叠加标题字版，不裸用纯景图。已发文章教训：用了法鎚纯景图，无品牌绿标题版。缺官方截图且无 AI 生图时，用服务器 ImageMagick＋文泉驿字体直接渲染品牌绿标题版封面/配图（完全离线、零依赖），命令见 `references/imagemagick-brand-cover.md`。
 3. **正文末尾放 1 个互动提问钩子**（如"你公司踩过社保这块的坑吗？评论区聊聊"），挿在 CTA 之前、不占 CTA 位置。已发文章教训：结尾只有 CTA 没有互动提问。
 
 ## 内容素材库：新媒体运营方法论（2026.8.3 新增）

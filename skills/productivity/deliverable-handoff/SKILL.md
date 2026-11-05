@@ -13,6 +13,13 @@ metadata:
 
 Rules for presenting file-based deliverables and operational instructions to the user.
 
+## 交付物格式与打包铁律（2026.11.03 用户再次纠正，最高优先级）
+
+1. **交付文件禁用 `.md` 格式**。用户明确：不要生成 md 格式文件当交付物。文本类交付用 **`.txt`**（或 Word/PDF，视用户要求）。除非用户明确说"要 md"，否则一律不用 md。
+2. **多个文件 → 打包成一个 zip**。同一任务的产物先放进同名文件夹，再压成一个 zip；**桌面只留压缩包，禁止散放零散文件**。
+3. 打包实操（Python，勿用 shell rm）：`folder → zipfile → rmtree`；`shutil.make_archive` 或 `zipfile`。
+4. 交付时只报 Windows 路径（`C:\...`），逐项列出包内内容。
+
 ## File path format
 
 **ALWAYS** give the Windows path with drive letter when the file is on the Windows filesystem (Desktop, Documents, Downloads, etc.):

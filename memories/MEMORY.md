@@ -14,7 +14,7 @@ Obsidian=第二知识库/永久记忆:D盘=/mnt/d/obsidian-vault主库,WSL=git�
 §
 技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;各端侧是嵌套skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按已知路径定点查;suzhou-equity-transfer-guide有顶层+嵌套双份,改动须双份同步。
 §
-user-owned技能不可自动改(实测skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、sph-video-downloader、tax-audit-response、short-video-copywriting(根+social-media双份)、llm-longform-generation等),需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。用户财税类skill由vault维护,50-Skills软链~/.hermes/skills,改vault即同步勿双份;tax-audit-response触发词「税务稽查/检查/稽查」已注册,与WorkBuddy共建,改动后写回传说明放桌面;tax-regulation-monitor每月三路交付(vault+桌面+WorkBuddy)。
+user-owned技能不可自动改(实测skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、sph-video-downloader、tax-audit-response、business-registration-advisor、short-video-copywriting(根+social-media双份)、llm-longform-generation等),需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。用户财税类skill由vault维护,50-Skills软链~/.hermes/skills,改vault即同步勿双份;tax-audit-response触发词「税务稽查/检查/稽查」已注册,与WorkBuddy共建,改动后写回传说明放桌面;tax-regulation-monitor每月三路交付(vault+桌面+WorkBuddy)。
 §
 本机Hermes实装=/home/dmin/hermes-agent-v0.20.6,2026.10.29 zip覆盖升v0.22.5,无.git故--version显vunknown(正常);/home/dmin/hermes-agent=另份独立源码副本勿动;venv=.venv-hermes;gateway=用户systemd hermes-gateway.service,代码换新后旧unit过时→『Gateway starting: deadline』,修法=`hermes gateway install`重生unit;hermes alias=~/.hermes/hermes-wsl.sh(企微云端逻辑)。WSL连Windows Clash走172.23.96.1:7890。config.yaml受保护须`hermes config set`(改前cp备份)。GitHub大单文件被节点切断,gh-proxy.com下zip续传(-C -循环+CRC校验)最稳。
 §
@@ -36,7 +36,7 @@ hermes cron:prompt是位置参数`hermes cron create <schedule> <prompt>`;create
 §
 人设锚点(identity-anchor/产品手册)共6副本改必全同步,源CRLF,diff tr -d '\r'。
 §
-D:\360MoveData 实际存在（360迁移），会存放用户桌面文件；用户给该路径时按实际存在读取勿默认不存在。默认交付仍放 C:\Users\Admin\Desktop，只报Windows路径不报WSL
+D:\360MoveData实际存在存用户桌面文件勿默认不存在;另有D:\OneDrive\Desktop找文件先查。默认交付放桌面只报Windows路径不报WSL
 §
 对外材料(PPT/方案/公司介绍)事实纪律:具体事实(学历院校届别/评审人数通过率/行业占比/客户数转介绍率/成立年份/资质分)无据一律不得编;确需占位用醒目色#C00000+角标注「待核实」+附《待核实清单》+口头提醒用户核对。配图只用装饰图形/原生图表/占位框,禁用暗示「本公司实景·本团队」的网图或AI图。
 §
@@ -56,14 +56,14 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 §
 为短视频做「话题/标题总结」要'站得更高看得更远'(上帝视角):把具体家务/日常现象上抽到-定义本质-再归纳到更高维核心概念,金句洞察常藏结尾自省句(如'多数家庭更擅长拽下来而非托上去'=内耗是本能的,托举是反本能的)。示例《托举》→主旨「家庭兴旺的底层是'不内耗'——能量单向向外输出 vs 内部对消归零」→标题抓'内耗/能量管理'比抓'托举'更站高。已写入short-video技能「上帝视角·深层主旨提炼」节。
 §
-视觉路由陷阱(2026.10.11定位修复,跨机必读):中转站llm.chudian.site的deepseek-v4-flash实为纯文本,但models.dev在线目录误标supports_vision=True→vision_analyze判定native→把base64图塞进tool-result历史→主模型每轮400『不支持以下输入类型:image』且错误体不匹配恢复短语表(仍判non-retryable)→全会话卡死。修复=能力覆盖:`hermes config set providers.deepseek.models.deepseek-v4-flash.supports_vision false`(config.yaml受保护,改前cp备份),令_model_supports_vision()=False,历史图自动转auxiliary.vision文本描述。换任何『目录说能看图但中转实际纯文本』的模型,先加此provider级覆盖;图片兜底=auxiliary.vision(chudian deepseek-v4-flash-vision-exp)。
+chudian vision-exp已下架(404)勿指向;检修见office-display-design references/vision-model-repoint.md
 §
 「推送github」=双通道全推(徐总默认两处都要):①统一库skill-library(C:\Users\Administrator\skill-library)②hermes-data(本地仓库=/mnt/c/Users/Admin/hermes-sync,注意用户名是Admin非Administrator)。hermes-data走~/.hermes/sync-push.sh(已修为v5:先fetch+reset再拷贝本地,旧版顺序会静默丢掉已跟踪文件如SKILL.md的改动),跑完必核 local==remote;hermes-sync常处detached HEAD,须先git checkout main再跑sync-push.sh,否则推不上main。桌面成品(Word/PDF/PNG)不入库。
 §
-交付打包铁律(徐总2026.10.12):一任务全部产物先入同名文件夹再压成一个zip,桌面C:\Users\Administrator\Desktop只留压缩包禁零散。实操(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试)详skill内容纪律。
+交付纪律(徐总2026.11.4):交付成品只给docx/pdf/zip,桌面不留.md源稿(.md可内部生成/跨机同步,除非用户要否则不展示不摆桌面);一任务产物先入同名文件夹压zip桌面只留压缩包禁零散(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试);找非核心素材(外景配图等)耗token即止损直接进草稿箱/用现成资源;详见skill内容纪律。
 §
 memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须抄全原条否则静默丢内容;想加内容而用量变小=已丢,立即还原。
 §
-公众号素材坑:『视频来了!』类视频型文章(mp.weixin.qq.com)js_content无正文且无var msg_title/ct,元数据用og:title/og:description兜底,正文从视频本身转写或同批姊妹图文稿取。完整提取脚本待wechat-publish被curator adopt后落位scripts/。
+提取脚本待wechat-publish被adopt后入scripts/。读官方教程素材(搜一搜优化等):示例展示在图里,web_extract的[IMAGE]占位≠已读,须vision_analyze(自动回退Doubao,非deepseek)逐张读图再融入skill,长图拆region半读,图多并行delegate(2026.11.10)
 §
-模型路由铁律(2026.10.29徐总更新):Hermes默认模型=chudian deepseek-v4-flash(provider deepseek, base_url https://llm.chudian.site/v1, key=DEEPSEEK_API_KEY);只有用户专门命令或调用指定skill才切kimi-k3,日常默认不再用kimi。切换/完成任务要报所用模型。视觉仍按降级链:deepseek-v4-flash禁原生视觉,auxiliary.vision=chudian deepseek-v4-flash-vision-exp;短文案/生图旧规则由对应skill触发,不改默认路由。
+模型路由铁律(2026.10.29徐总更新):Hermes默认模型=chudian deepseek-v4-flash(provider deepseek, base_url https://llm.chudian.site/v1, key=DEEPSEEK_API_KEY);只有用户专门命令或调用指定skill才切kimi-k3,日常默认不再用kimi。切换/完成任务要报所用模型。视觉:deepseek-v4-flash禁原生视觉,auxiliary.vision=telecom Doubao-Seed-2.1-Pro(chudian vision-exp已下架勿指);短文案/生图旧规则由对应skill触发,不改默认路由。

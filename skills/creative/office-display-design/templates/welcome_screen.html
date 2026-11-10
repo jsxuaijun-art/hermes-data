@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 办公欢迎屏模板 — 70寸/商用大屏 1920x1080 (16:9)。
+     改文字/配色后,用 browser_navigate file:// 打开 + browser_vision 截图。
+     竖屏(门牌/立牌)把 body/.screen 的宽高换成 1080x1920 并调整字号。
+     中文真实字体渲染,绝无 AI 生图的乱码问题。 -->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1920px; height:1080px; overflow:hidden;
+         font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif; }
+  .screen {
+    width:1920px; height:1080px; position:relative;
+    background: radial-gradient(1200px 700px at 70% 0%, #123a5e 0%, #0a1a2f 55%, #060f1e 100%);
+    padding:90px 160px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    overflow:hidden;
+  }
+  /* subtle deco */
+  .ring { position:absolute; border-radius:50%; border:1px solid rgba(201,168,106,.18); }
+  .r1 { width:620px; height:620px; right:-180px; top:-160px; }
+  .r2 { width:420px; height:420px; right:60px; top:-40px; }
+  .mountain { position:absolute; right:-120px; bottom:-240px; width:900px; height:900px;
+              background: radial-gradient(circle at 50% 120%, rgba(40,90,140,.45), transparent 65%); }
+
+  .top { position:relative; display:flex; justify-content:space-between; align-items:center;
+         border-bottom:1px solid rgba(201,168,106,.35); padding-bottom:26px; }
+  .brand-cn { color:#e8eef5; font-size:44px; font-weight:700; letter-spacing:6px; }
+  .brand-en { color:#c9a86a; font-size:20px; letter-spacing:9px; margin-top:6px; font-weight:500; }
+
+  .mid { position:relative; }
+  .welcome { color:#f4f7fb; font-size:120px; font-weight:800; line-height:1.15;
+             letter-spacing:12px; text-shadow:0 6px 30px rgba(0,0,0,.35); }
+  .welcome .dot { color:#c9a86a; }
+  .tagline { margin-top:34px; color:#c9a86a; font-size:44px; font-weight:600; letter-spacing:16px; }
+
+  .biz { position:relative; display:flex; align-items:center; justify-content:space-between;
+         background:linear-gradient(90deg,rgba(201,168,106,.10),rgba(201,168,106,.02));
+         border:1px solid rgba(201,168,106,.25); border-radius:18px;
+         padding:34px 56px; }
+  .biz span { color:#dfe8f2; font-size:40px; font-weight:600; letter-spacing:4px; white-space:nowrap; }
+  .sep { color:#c9a86a; font-size:34px; font-weight:700; }
+
+  .end { position:relative; text-align:center; color:#c9a86a;
+         font-size:34px; letter-spacing:22px; font-weight:500; }
+</style>
+</head>
+<body>
+  <!-- 结构: 顶品牌区 → 主标题(最大) → 金色副标题 → 业务一行(｜分隔) → 收尾标语 -->
+  <div class="screen">
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="mountain"></div>
+
+    <div class="top">
+      <div>
+        <div class="brand-cn">盈信企业管理（苏州）有限公司</div>
+        <div class="brand-en">YINGXIN ENTERPRISE MANAGEMENT</div>
+      </div>
+    </div>
+
+    <div class="mid">
+      <div class="welcome">欢迎莅临<span class="dot"> · </span>盈信企业管理</div>
+      <div class="tagline">十六年财税深耕 · 护航企业合规发展</div>
+    </div>
+
+    <div class="biz">
+      <span>公司注册</span><span class="sep">｜</span>
+      <span>代理记账</span><span class="sep">｜</span>
+      <span>税务合规</span><span class="sep">｜</span>
+      <span>高端会计</span>
+    </div>
+
+    <div class="end">专业 · 诚信 · 值得托付</div>
+  </div>
+</body>
+</html>

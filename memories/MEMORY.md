@@ -67,3 +67,5 @@ memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须�
 提取脚本待wechat-publish被adopt后入scripts/。读官方教程素材(搜一搜优化等):示例展示在图里,web_extract的[IMAGE]占位≠已读,须vision_analyze(自动回退Doubao,非deepseek)逐张读图再融入skill,长图拆region半读,图多并行delegate(2026.11.10)
 §
 模型路由铁律(2026.10.29徐总更新):Hermes默认模型=chudian deepseek-v4-flash(provider deepseek, base_url https://llm.chudian.site/v1, key=DEEPSEEK_API_KEY);只有用户专门命令或调用指定skill才切kimi-k3,日常默认不再用kimi。切换/完成任务要报所用模型。视觉:deepseek-v4-flash禁原生视觉,auxiliary.vision=telecom Doubao-Seed-2.1-Pro(chudian vision-exp已下架勿指);短文案/生图旧规则由对应skill触发,不改默认路由。
+§
+wechat-publish 2026.11.10 新增「吸粉/引导关注（含红线）」章节(开头/正文禁加"如觉得有用可关注"类求关注话术;有效写法=给每个动作具体理由)。本机两份副本已同步(md5 350f2404),尚未推送双通道。徐总2026.11.10指示:此改动等下次有其他推送时一并推,不用单独推。

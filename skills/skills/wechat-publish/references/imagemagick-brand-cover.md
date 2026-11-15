@@ -47,3 +47,5 @@ convert -size 900x400 xc:'#C00000' \
 - 品牌绿底配 **白字** 才有对比度；深色底（#0D1B2A/#C00000/#0052FF）同样白字。
 - 文件名带 `cover_/section_<主题>_YYYYMMDD.jpg` 前缀，保证每篇新图不重名、可复核。
 - 顶格/超长标题会被画布截断，中文标题控制在约 12 字以内，超长拆主标题+副句。
+- **出图后用像素宽度实测，不要凭字数估**：`convert x.png -trim info:` 拿 `-trim` 后的 `WxH+offset`，或用 PIL `ImageFont.truetype(<ttc>, pointsize).getbbox(text)[2]` 量单行宽。经验值：900px 宽画布上 WenQuanYi Zen Hei 中文 1 字 ≈ 1.0×pointsize，所以 pointsize 44 的一行**最多约 14 字**（44×14=616，留边后安全）；量出超过画布宽 ×0.8 就降 pointsize 或拆行重渲。
+- 图里有具体金额/份数/罚款数时，**最下面一行小字必须标来源机关**（如「来源：上海市税务局第一稽查局通报」），风险类配图不带来源会被读者当成自媒体编数字。

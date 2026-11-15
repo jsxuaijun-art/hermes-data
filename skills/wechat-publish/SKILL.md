@@ -1,7 +1,7 @@
 ---
 name: wechat-publish
 description: 公众号自动写作→排版→发布工作流。用户说"写一篇关于XXX的公众号文章"，自动完成配图、排版、发布到「盈信税务0」草稿箱。
-version: 1.7.0
+version: 1.9.0
 author: Hermes Agent (for 江敏/盈信税务)
 ---
 
@@ -32,13 +32,17 @@ author: Hermes Agent (for 江敏/盈信税务)
   ```
   ⚠️ OCR 中文识别有少量错字（如「产业园A座301」识成「产业田A遮301」），转录后需按语义校正，**政策条文以 OCR 文本为底、务必核对官方原文再引用**。
 - **下漫画图**：`curl -A "$UA" -e "https://mp.weixin.qq.com/" -o x.jpg "<完整src URL>"`（必须带 Referer，否则空文件）。
-| 腾讯视频号链接 | `weixin.qq.com/sph/...` 或 `channels.weixin.qq.com/...` | 浏览器工具 navigate → 关闭弹窗 → snapshot读标题/发布者/时间/话题标签（视频号是JS渲染，curl拿不到内容） |
+| 腾讯视频号链接 | `weixin.qq.com/sph/...` 或 `channels.weixin.qq.com/...` | **先 `web_extract` 该链接拿标题+视频简介+发布者/日期/话题标签（免下载、免密钥、免浏览器）**；只有需要逐字口播文案时再走浏览器 snapshot 或 QIYUN 下载+转写（见下） |
 | 抖音视频链接 | `v.douyin.com/短链` 或 `douyin.com/video/<id>` | 见下方「抖音获取步骤」——短链先解析出 video id，再用带完整参数的分享 URL 开浏览器，最后用页面内 fetch 调 aweme detail API 拿 desc/作者/数据 |
 | YouTube链接 | `youtube.com/watch?v=...` 或 `youtu.be/...` | 用 `youtube-content` skill 提取字幕或标题 |
 | 本地文件/截图 | 用户直接发图片或文件路径 | vision_analyze 或 read_file 读取 |
 | 纯主题描述 | 用户只说"写一篇关于XXX的文章" | 直接走模式A标准写作 |
 
-**视频号获取步骤（2026.7.28 验证通过）：**
+**视频号获取步骤：**
+
+**第0步（免密钥轻量路径，2026.11.3 验证）：** 直接 `web_extract("https://weixin.qq.com/sph/<id>")` 即可返回页面里的**标题、视频简介整段（常含发布者的观点+话题标签）、发布者、日期**。只需"确认视频讲什么/受众是谁/要不要写"（常见于：用户同时给了公众号文章+视频号、两者讲同一事件，视频仅作题材佐证）时，这一步就够，**不必调 QIYUN 下载+转写、也不必开浏览器**。仅当你要引用视频**逐字口播文案**才需下载转写（需 QIYUN 密钥；密钥缺失/不在位时，先试本路径拿简介兜底，简介往往已能支撑创作，别在捞密钥上死磕）。
+
+**第1步（需逐字口播/浏览器时）：**
 1. `browser_navigate(url)` — 浏览器打开链接，会跳转到 `channels.weixin.qq.com/finder-preview/pages/sph?id=XXX`
 2. 页面会弹出一个"关闭"按钮 → `browser_click(@e1)` 关闭弹窗
 3. `browser_snapshot(full=true)` — 获取完整快照，找 `StaticText` 中的：
@@ -317,12 +321,12 @@ reading_time: X分钟    # 预计阅读时间，根据文章长度估算后填�
 **写公众号 + 生图，一律禁用 deepseek 模型。**
 
 - ❌ **写稿绝不用 deepseek-v4-flash** —— 它擅长观点/罗列，短于细腻文学叙事+金句+宿命感，公众号成稿质量不达标。
-- ✅ **公众号长文成稿 → kimi-k3**（走 delegation 子代理，子代理默认模型已 pin，见 config `delegation.model`）。
+- ✅ **公众号长文成稿 → kimi**（当前模型 `kimi-k2.7-code`、key `KIMI27_API_KEY`，电信中转 aigw.telecomjs.com/v1，见 config `providers.telecom-kimi27`；调用器 `scripts/stream_kimi.py`，脚注会自动从 config.yaml 解析。**原 kimi-k3/TELECOM_KIMI_KEY 已轮换、返回 401，勿再用**）。委派子代理默认模型已 pin，见 config `delegation.model`。
 - ✅ **文案/短内容创作 → doubao（Doubao-Seed-2.1-Pro）**。
 - ✅ **生图 → doubao-seedream-5.0-pro-0724**（经电信中转 aigw.telecomjs.com/v1，见 `creative/image-gen-cn` skill），严禁用 deepseek 生图或做降级替代。
 - 主会话 deepseek 只做**编排/采集/检索/验证**，绝不直接写稿、绝不直接生图。
 - ⚠️ 完成文案创作/公众号写作后，**必须向用户汇报用的是哪个模型**。
-- 需更优文采时在 config `delegation.model` 一行换（kimi-k3 / doubao），不必主会话切换。
+- 需更优文采时在 config `delegation.model` 一行换（kimi 系 / doubao），不必主会话切换。
 
 
 ### 三句话开头公式（2026.8.22 融入，来源：《公众号排版笔记》第8期）
@@ -361,10 +365,15 @@ reading_time: X分钟    # 预计阅读时间，根据文章长度估算后填�
 1. **禁止复用任何历史图片** — 不管是在服务器图库、还是曾经用过的 Unsplash 图，一律不用。每篇全部新图。
 2. **配图主题 = 文中话题标签，不要套用 unsplash-photo-library.md 里的常驻 ID** — 用户明确纠正：references 里那些"已验证"直链 ID（政府大楼 1517245386807、算账 1554224154、报表 1460925895917 等）正是多期文章反复用、导致配图重复的元凶。选图时必须：**① 紧扣本文 `#话题标签` 逐词选主题**（本文标签是哪些，图就配哪些：社保→社保/员工/养老金，处罚→法槌/天秤/罚单/公章，财税合规→账本/报表，自查→放大镜/审核清单）；**② 用全新图片来源（AI 生成或本会话新验证的、非 references 常驻 ID 的直链）**，绝不复用 references 里出现过的 ID 做封面/正文。
 
-⭐ **最推荐：官方报道/政策文件截图法（徐总 2026.11.02 钦定，示例见桌面 D:\\360MoveData\\Users\\Admin\\Desktop\\新华社.png）** — 正文配图直接用官方来源：按文中 `#话题标签` 为线索，到国家税务总局/中国政府网等官网找该新政或该事件的官方文件/新闻，整页或关键段落截图存入 `section_*.jpg` 作配图。官方截图天然贴题、权威、且每篇政策对应不同文件/页面，**绝无重复**。比 AI 生成场景图更适合政策解读/风险预警类文章；AI 生成 / Unsplash 仅作封面或氛围备选。注意此类截图路径常在 D:\\360MoveData\\...\Desktop，先按实际存在读取。
+⭐ **最推荐：官方报道/政策文件截图法（徐总 2026.11.02 钦定，示例见桌面 D:\\360MoveData\\Users\\Admin\\Desktop\\新华社.png）** — 正文配图直接用官方来源：按文中 `#话题标签` 为线索，到国家税务总局/中国政府网等官网找该新政或该事件的官方文件/新闻，整页或关键段落截图存入 `section_*.jpg` 作配图。官方截图天然贴题、权威、且每篇政策对应不同文件/页面，**绝无重复**。比 AI 生成场景图更适合政策解读/风险预警类文章；AI 生成 / Unsplash 仅作封面或氛围备选。注意此类截图路径常在 D:\\360MoveData\\...\\Desktop，先按实际存在读取。
+
+⭐ **用户会追加要"官网报道链接，我去截图"** — 这不是可选项，属于配图交付环节的必做步骤。找链接的搜索顺序（通用搜索→`site:<省>.chinatax.gov.cn`→栏目页 `col/colXXXXX/index.html`）、官网上了瑞数动态验证时的坦白话术与兜底方案、以及分段交付格式，全部见 **`references/official-source-screenshots.md`**。要点：**每条链接必须先自己抓正文核对与文中数字/法条文号一致再给用户**；同一篇涉及多个案件时每案各截各的官方页；抓不到直链就如实说"官网有动态验证抓不到"+给栏目页/转载兜底，**绝不把抓不到包装成找不到、绝不把转载页说成官网页**。
 2. **禁止建图片库/维护图片库** — 不要把图堆到 `/var/www/html/images/` 当"库存"。每次创作临时下载/生成，用完即走。不要检查"已有图片"、不要担心"重复"，因为根本不复用。
 3. **每段配图必须严格对应本段主题** — 段落讲什么，就配什么图。例如：讲"虚开定义"就配发票/合同特写，讲"刑事责任"就配法院/法槌，讲"企业自查"就配办公室/财务报表，讲"政策文件"就配税务局大楼/红头文件。
 4. **图源**：优先 AI 生成（image_gen），生成与主题高度相关的原创图；或用 Unsplash 直链下载匹配主题的图。下载到 /tmp 或临时目录，上传服务器后引用 `http://127.0.0.1:8080/images/xxx.jpg`。
+在「图源」铁律上补一条：**AI 生图不可用（视觉通道挂/密钥缺）时，直接用服务器 ImageMagick + 文泉驿字体离线渲染「色块+大字」数据卡**——红底 #C00000 放案件数字、深蓝 #0D1B2A 放金额、蓝色 #0052FF 放要点清单；封面走品牌绿 #09B83E 900×383 标题版。命令见 `references/imagemagick-brand-cover.md`。这类图完全离线、每篇主题数字不同、天然不复用，也满足「禁 AI 场景图」。
+
+⚠️ 出图必做一步：**逐行 `identify -format` / PIL 量文字像素宽度**，一行最长值必须 < 画布宽度的 ~80%，否则缩字号或换行重渲，别把截断图发进草稿箱。
 5. **配图数量**：每篇 2~3 张正文配图即可，token 成本很低，不要为了省事少配或不配。
 
 根据文章**中心思想**匹配图片，不是固定配外贸图：
@@ -438,13 +447,75 @@ curl -L -o /tmp/cover_article.jpg "https://images.unsplash.com/photo-XXXX?w=400&
 - [ ] 公司落款：文章尾部必须写「**苏州盈信企业管理有限公司**」（主体全称，与作者字段不同）
 - [ ] **话题标签（最高频遗忘项，2026.8.6 用户明确要求必须加）：** 正文末尾「一句话总结」段落之后、公司介绍块之前，必须插入 5~8 个 `#标签`（第一个=核心话题，再延伸话题/地域/行业热词）。例：`#对公账户 #税务稽查 #未如实申报 #公转私 #企业所得税 #发票合规 #税法风险 #苏州财税`。**发布前逐字检查这一行是否存在，缺失则补上再发，绝不发无标签文章。**
 
+**⚠️ 关键坑（2026.11.15 实测，必修）：`-c` 自定义主题 CSS 不会被内联进正文。**
+wenyan 本版 publish/render 用 `-c <css>` 时既不生成 `<style>` 块、也不产出内联样式（回读草稿 0 个 style、标题纯 `<h2>`）；微信侧还会剥离 `<style>`，结果就是**刘润 02 等自定义风格在后台预览里完全不生效**（标题不蓝、重点数字不红）。补救：发布成功后跑 `scripts/inline_theme.py <media_id> [css路径]` —— 用 lxml 把 CSS 规则逐条写进每个元素的 `style=""`，再 `draft/update` 回写同一草稿，回读校验（颜色命中数/图片数）才算完成。
+
+**补旧稿（多篇/含历史 bug）用 `scripts/backfill_theme.py <media_id>...`**：批量补内联，额外做两件事——①先把正文里残留的字面 `**xxx**` 修成 `<strong>`（旧稿 markdown 没渲染的可见 bug）；②**>28 字的 `<strong>` 不染红**（02 会把所有 strong 变红，旧稿里整句加粗的导语/金句整段红字反而难读，这类保持黑色加粗）。改前自动备份原始 JSON 到 `/root/draft_backup/<media_id>.json` 可回滚。⚠️ 校验「文字一致」必须先把 `&nbsp;` 与 `\xa0` 归一化，lxml 会把 `&nbsp;` 转成 `\xa0`，否则逐字比对会报假失败。
+
+**⚠️ token 冲突坑（同一个坑必踩）：** 自己写脚本取 token 一律用 `cgi-bin/stable_token`（`force:false`）。用老的 `cgi-bin/token` 或不带 force 的调用会把 `wenyan serve` 进程内缓存的 token 顶掉，之后 publish 一直报 `40001 invalid credential ... not latest`，且删 `/root/.config/wenyan-md/token.json` 无效（缓存在进程内存）——修法：`systemctl restart wenyan-server.service` 后再 publish。
+
+**⚠️ markdown 里出现字面反斜杠引号（`\"`）会让渲染整体失败**，报 `Can't find handler for document`（MathJax 抛的，与实际原因无关）。从会话历史/JSON 里恢复稿件时最常见，发布前先 `grep -c '\\"'` 自查并替换成正常引号。
+
 **发布命令：**
 ```bash
 NODE_OPTIONS='--experimental-require-module' \
 node /usr/lib/node_modules/@wenyan-md/cli/dist/cli.js \
 publish -f /tmp/article.md \
 --server http://127.0.0.1:3000 \
--c /etc/wenyan/themes/<所选风格.css>   # 替换为实际风格CSS，如01-anxinbojun.css
+--app-id <AppID> \
+-c /etc/wenyan/themes/<所选风格.css>   # 替换为实际风格CSS，如02-liurun-honglan.css
+```
+
+### ⚠️ 发布后必须回读验证（不许只看「发布成功」四个字）
+
+**验收口径（四项全中才算完，缺一项都是样式没生效）：**
+1. 蓝 `color:#0052FF` 命中数 **= 正文 h2 个数**（一个不多一个不少；多于 h2 说明容器级规则被内联了）
+2. 红 `color:#FF2941` 命中数 ≈ 短加粗 `<strong>` 个数（>28 字的整句加粗应跳红，否则算超额）
+3. `<img>` 数与原稿一致（丢图最常见在 lxml 序列化或二维码图）
+4. 去标签后文本 **逐字相等**（先归一化 `&nbsp;`/`\xa0`，否则报假失败）
+
+以上任一不满足→按 `scripts/inline_theme.py` / `scripts/backfill_theme.py` 重修，不要靠肉眼判断。
+
+wenyan 打日志说成功 ≠ 草稿内容/样式正确。每篇发布完，用微信 draft 接口回读一次再向用户汇报：
+
+```bash
+# 1) 取 access_token（凭据在服务器 /etc/wenyan/.env 的 WECHAT_APP_ID / WECHAT_APP_SECRET）
+TOK=$(curl -s "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=$APPID&secret=$SECRET" | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+# 2) 列草稿（batchget：total_count + 每篇 media_id/标题/摘要/封面/更新时间）
+curl -s -X POST "https://api.weixin.qq.com/cgi-bin/draft/batchget?access_token=$TOK" -H 'Content-Type: application/json' -d '{"offset":0,"count":20,"no_content":1}'
+# 3) 取单篇正文（draft/get：news_item[0].content），统计 style 块/inline style/配色/img 数量
+curl -s -X POST "https://api.weixin.qq.com/cgi-bin/draft/get?access_token=$TOK" -H 'Content-Type: application/json' -d '{"media_id":"<id>"}'
+# 4) 清理测试草稿（排查通道时留下的「测试发布连通性」类草稿必须删掉，别留给用户）
+curl -s -X POST "https://api.weixin.qq.com/cgi-bin/draft/delete?access_token=$TOK" -H 'Content-Type: application/json' -d '{"media_id":"<id>"}'
+```
+
+回读要看的四项：标题/摘要/封面非空、正文图片数符合预期、配色命中（如 02 应有 #FF2941/#0052FF）、结尾 CTA 三动作在。**任何一项不符，如实告诉用户并给修法，不许报「已按要求完成」。**
+
+### ✅ 发布后只改单篇元数据（标题/摘要/封面）的安全做法
+
+微信没有单独的「改摘要」接口，`draft/update` 必须整篇回传 `articles`。步骤：
+1. `draft/get` 取 `news_item[0]`，**`content` 原样回传**（一个字符都不要重排版/清洗/转义），只替换 `digest`（或 `title`/`thumb_media_id`），带 `index:0`。
+2. update 返回 `errcode:0` 后立刻 `draft/get` 再比：`content` 必须与改前**字符串全等**（不是「看起来差不多」），inline style 数、img 数、配色命中数一字不差，才向用户报「已改」。
+3. 同步改本地成稿（`~/公众号素材/*.md`）frontmatter 里的同字段，别让磁盘稿与草稿箱对不上。
+
+**摘要不是可以自动填充的字段**——分享卡片第二行字、决定别人点不点。自动取首段当摘要是默认行为，但**摘要里凡出现数字/金额/处罚倍数，必须回正文逐条核账**：多笔罚没是否要相加、是否含「没收违法所得」、是「罚款」还是「追缴税费+滞纳金+罚款合计」。口径写错（把 34 万余元写成「近30万」）在涉法文案里等同失实，必须改准再报。
+
+**草稿箱旧稿顺手体检**：`batchget` 时看每篇的 inline 数 / 蓝 / 红命中数。命中数为 1~3 且 h2 是裸 `<h2>` → 那篇当初样式压根没内联（老版 publish 的已知缺陷），用户后台预览看到的是纯黑加粗。发现就主动报给用户，并给「用 `scripts/inline_theme.py <media_id> [css]` 补内联样式（只改样式、不动文字）再回读校验」的选项，别等用户自己发现。
+
+**自定义 CSS 是否真的生效，用 `render` 单独验证，别靠猜：**
+```bash
+NODE_OPTIONS='--experimental-require-module' node /usr/lib/node_modules/@wenyan-md/cli/dist/cli.js \
+  render -f /tmp/article.md -c /etc/wenyan/themes/02-liurun-honglan.css > /tmp/rendered.html
+grep -c '<style' /tmp/rendered.html; grep -o '<h2[^>]*>' /tmp/rendered.html | head -2
+```
+判定口径（实测）：正文 HTML 里**不含 `<style>` 块、标题是裸 `<h2>`、配色只在少量 inline style 上出现** → 说明 wenyan 只内联了部分样式，主题未整篇套用。此时**不要向用户宣称「已按 02 刘润排版」**，改为：告诉用户去草稿箱预览看标题是否蓝、重点数字是否红，并说明「若显示为纯黑加粗即为未生效，需改内联注入后覆盖重发」。
+
+### ⚠️ 渲染前清掉恢复稿里的字面反斜杠引号
+
+从会话记录/日志里恢复出来的 markdown，引号常被存成字面 `\"`（34 处量级）。wenyan 渲染时会把它当数学定界符，报 `Can't find handler for document` 直接失败。发布前先清洗：
+```bash
+python3 -c "import re,sys;p=sys.argv[1];s=open(p).read();s=s.replace('\\\\\"','\"');open(p,'w').write(s)" /tmp/article.md
+grep -c '\\\\"' /tmp/article.md   # 应为 0 再发布
 ```
 
 **服务器**：阿里云 ECS 47.103.27.171，wenyan-server 端口 3000
@@ -1027,6 +1098,8 @@ publish -f /tmp/article.md \
 
 ## 注意事项
 
+- ⚠️ **本 skill 在本机有两个副本**（`~/.hermes/skills/wechat-publish/` 与 `~/.hermes/skills/skills/wechat-publish/`），`skill_view(name)` 会报「Ambiguous name」拒载。用 `skill_view(name='skills/wechat-publish')` 加载；改动类库时两份同步 md5 一致。
+- 编辑器/写作、发布、回读验证的**模型路由**：主会话 deepseek 只做编排/采集/验证，**长文成稿走 kimi 流式直连**（`scripts/stream_kimi.py`），第三方网关非流式有 ~90s 上限会断稿。
 - 封面图和正文中至少需要一张图（微信要求）
 - 无需用户二次排版，wenyan + 自定义CSS自动渲染完成
 - 封面图路径必须是服务器本地绝对路径或 HTTP(S) URL

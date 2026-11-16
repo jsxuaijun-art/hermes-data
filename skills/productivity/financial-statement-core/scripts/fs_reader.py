@@ -95,6 +95,33 @@ def _is_numeric(v):
         return False
 
 
+def _fix_text(s):
+    """修复老式 .xls 的内码乱码：财务软件导出的 xls 常以 GBK(CP936) 存中文，
+    但内码记录指向 Latin-1，xlrd 按 Latin-1 解码 → 全变乱码（如
+    'ÒøÐÐ´æ¿î'=银行存款）。策略：若字符串无中文且含疑似 Latin-1 扩展字符，
+    尝试 latin-1 编码还原字节 → gbk 解码；修复结果含中文才采用。"""
+    if not isinstance(s, str):
+        return str(s) if s is not None else ""
+    if not s:
+        return s
+    if any("\u4e00" <= ch <= "\u9fff" for ch in s):
+        return s  # 已是中文，无需修复
+    try:
+        fixed = s.encode("latin-1").decode("gbk")
+        if any("\u4e00" <= ch <= "\u9fff" for ch in fixed):
+            return fixed
+    except Exception:
+        pass
+    return s
+
+
+def _xlrd_open(path):
+    """打开 xlrd workbook。老 .xls 会在打开时向默认 logfile（绑定到 stdout 的文件对象）打
+    'OLE2 inconsistency...' 警告，污染 fs_reader 的 JSON 输出。这里显式把 logfile 指向
+    stderr，保证 stdout 纯净。"""
+    return xlrd.open_workbook(path, logfile=sys.stderr)
+
+
 # ---------------------------------------------------------------------------
 # 科目余额表 (xlsx)
 # ---------------------------------------------------------------------------
@@ -216,13 +243,13 @@ def _read_subject_balance_xlsx(path, period="end"):
 def _read_subject_balance_xls(path, period="end"):
     if xlrd is None:
         raise RuntimeError("缺少 xlrd（读取 .xls 需要）")
-    wb = xlrd.open_workbook(path)
+    wb = _xlrd_open(path)
     ws = wb.sheet_by_index(0)
     nrows, ncols = ws.nrows, ws.ncols
     # 找含「科目名称/科目编码」的表头行
     header_row = None
     for r in range(min(nrows, 12)):
-        rowtxt = "|".join(str(ws.cell_value(r, c)) for c in range(ncols))
+        rowtxt = "|".join(_fix_text(ws.cell_value(r, c)) for c in range(ncols))
         if "科目名称" in rowtxt or "科目编码" in rowtxt or "科目编号" in rowtxt:
             header_row = r
             break
@@ -232,7 +259,7 @@ def _read_subject_balance_xls(path, period="end"):
             "begin_debit": None, "begin_credit": None,
             "end_debit": None, "end_credit": None}
     data_start = header_row + 1
-    subvals = [str(ws.cell_value(data_start, c)).strip() for c in range(ncols)]
+    subvals = [_fix_text(ws.cell_value(data_start, c)).strip() for c in range(ncols)]
     if "借方" in "".join(subvals) or "贷方" in "".join(subvals):
         db, cr = [], []
         for c in range(ncols):
@@ -247,10 +274,29 @@ def _read_subject_balance_xls(path, period="end"):
             cols["begin_credit"], cols["end_credit"] = cr[0], cr[-1]
         data_start += 1
     if cols["name"] is None:
+        # 单行表头：显式列名（如 期初余额(借方)/期末余额(贷方)），直接按表头文字识别
         for c in range(ncols):
-            h = str(ws.cell_value(header_row, c)).strip()
+            h = _fix_text(ws.cell_value(header_row, c)).strip()
             if "科目名称" in h or h == "科目":
-                cols["name"] = c
+                if cols["name"] is None:
+                    cols["name"] = c
+            elif "科目代码" in h or "科目编码" in h or "科目编号" in h:
+                if cols["code"] is None:
+                    cols["code"] = c
+            elif "期末余额" in h or ("期末" in h and ("借" in h or "贷" in h)):
+                if "借" in h:
+                    cols["end_debit"] = c
+                elif "贷" in h:
+                    cols["end_credit"] = c
+            elif "期初余额" in h or ("期初" in h and ("借" in h or "贷" in h)):
+                if "借" in h and cols["begin_debit"] is None:
+                    cols["begin_debit"] = c
+                elif "贷" in h and cols["begin_credit"] is None:
+                    cols["begin_credit"] = c
+            elif "借方余额" in h or "借方" == h:
+                cols["end_debit"] = c
+            elif "贷方余额" in h or "贷方" == h:
+                cols["end_credit"] = c
     if cols["name"] is None:
         raise ValueError("未找到科目名称列")
     use_begin = period in ("begin", "both")
@@ -260,7 +306,7 @@ def _read_subject_balance_xls(path, period="end"):
 
     detail = []
     for r in range(data_start, nrows):
-        name = str(ws.cell_value(r, cols["name"])).strip()
+        name = _fix_text(ws.cell_value(r, cols["name"])).strip()
         if not name or "合计" in name or "总计" in name:
             continue
         code = str(ws.cell_value(r, cols["code"])).strip() if cols["code"] is not None else ""
@@ -331,23 +377,24 @@ def _read_statements_xlsx(path, period="end"):
 def _read_statements_xls(path, period="end"):
     if xlrd is None:
         raise RuntimeError("缺少 xlrd")
-    wb = xlrd.open_workbook(path)
+    wb = _xlrd_open(path)
     sheets_seen, sheets_skipped = [], []
     bs_end, bs_begin = {}, {}
     pl_annual = {}
     for ws in wb.sheets():
-        sheets_seen.append(ws.name)
-        if "现金流量表" in ws.name:
-            sheets_skipped.append(ws.name)
+        sname = _fix_text(ws.name)
+        sheets_seen.append(sname)
+        if "现金流量表" in sname:
+            sheets_skipped.append(sname)
             continue
-        is_bs = "资产负债表" in ws.name
-        is_pl = "利润表" in ws.name
+        is_bs = "资产负债表" in sname
+        is_pl = "利润表" in sname
         if not is_bs and not is_pl:
             continue
         for r in range(ws.nrows):
             if is_bs:
                 # 左栏 [A名称|B行次|C期末|D年初]
-                name = str(ws.cell_value(r, 0)).strip()
+                name = _fix_text(ws.cell_value(r, 0)).strip()
                 if name and name not in ("资产", "流动资产：", "非流动资产："):
                     if ws.ncols >= 3 and _is_numeric(ws.cell_value(r, 2)):
                         bs_end[name] = float(ws.cell_value(r, 2))
@@ -355,14 +402,14 @@ def _read_statements_xls(path, period="end"):
                         bs_begin[name] = float(ws.cell_value(r, 3))
                 # 右栏 [E名称|F行次|G期末|H年初]
                 if ws.ncols >= 7:
-                    rname = str(ws.cell_value(r, 4)).strip()
+                    rname = _fix_text(ws.cell_value(r, 4)).strip()
                     if rname and rname not in ("负债和所有者权益", "流动负债：", "非流动负债："):
                         if _is_numeric(ws.cell_value(r, 6)):
                             bs_end[rname] = float(ws.cell_value(r, 6))
                         if ws.ncols >= 8 and _is_numeric(ws.cell_value(r, 7)) and period in ("begin", "both"):
                             bs_begin[rname] = float(ws.cell_value(r, 7))
             elif is_pl:
-                name = str(ws.cell_value(r, 0)).strip()
+                name = _fix_text(ws.cell_value(r, 0)).strip()
                 if name and ws.ncols >= 3 and _is_numeric(ws.cell_value(r, 2)):
                     pl_annual[name] = float(ws.cell_value(r, 2))
     return {"balance_sheet": {"end": bs_end, "begin": bs_begin},
@@ -414,10 +461,10 @@ def _looks_like_subject_balance_xls(path):
     if xlrd is None:
         return False
     try:
-        wb = xlrd.open_workbook(path)
+        wb = _xlrd_open(path)
         ws = wb.sheet_by_index(0)
         for r in range(min(ws.nrows, 12)):
-            rowtxt = "|".join(str(ws.cell_value(r, c)) for c in range(ws.ncols))
+            rowtxt = "|".join(_fix_text(ws.cell_value(r, c)) for c in range(ws.ncols))
             if "科目名称" in rowtxt or "科目编码" in rowtxt or "科目编号" in rowtxt:
                 return True
         return False
@@ -493,7 +540,7 @@ def _print_rows(path, max_rows=25):
     """打印行列结构，用于排查（不生成正式结果）。"""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".xls":
-        wb = xlrd.open_workbook(path)
+        wb = _xlrd_open(path)
         ws = wb.sheet_by_index(0)
         print(f"sheet='{ws.name}' rows={ws.nrows} cols={ws.ncols}")
         for r in range(min(ws.nrows, max_rows)):

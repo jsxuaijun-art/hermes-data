@@ -14,7 +14,7 @@ Obsidian=第二知识库/永久记忆:D盘=/mnt/d/obsidian-vault主库,WSL=git�
 §
 技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;各端侧是嵌套skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按已知路径定点查;suzhou-equity-transfer-guide有顶层+嵌套双份,改动须双份同步。skilllib install只新增冲突SKIP:更新四工具已有共享技能后,claude/codex/workbuddy旧拷贝须manual copyfile同步(勿--force全库,会误伤她工具原生版)。
 §
-user-owned技能不可自动改(实测skill-library-sync、github-tool-vetting、scraping-dispatch、github-repo-access、sph-video-downloader、tax-audit-response、business-registration-advisor、short-video-copywriting(根+social-media双份)、llm-longform-generation等),需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。用户财税类skill由vault维护,50-Skills软链~/.hermes/skills,改vault即同步勿双份;tax-audit-response触发词「税务稽查/检查/稽查」已注册,与WorkBuddy共建,改动后写回传说明放桌面;tax-regulation-monitor每月三路交付(vault+桌面+WorkBuddy)。
+需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。坑:本session刚新建的skill(如financial-statement-core)在.usage.json尚未登记(created_by=None),即便frontmatter标agent_created:true,首次auto-cura编辑仍会被拒——须先`hermes curator adopt`。用户财税类skill由vault维护
 §
 本机Hermes实装=/home/dmin/hermes-agent-v0.20.6,2026.10.29 zip覆盖升v0.22.5,无.git故--version显vunknown(正常);/home/dmin/hermes-agent=另份独立源码副本勿动;venv=.venv-hermes;gateway=用户systemd hermes-gateway.service,代码换新后旧unit过时→『Gateway starting: deadline』,修法=`hermes gateway install`重生unit;hermes alias=~/.hermes/hermes-wsl.sh(企微云端逻辑)。WSL连Windows Clash走172.23.96.1:7890。config.yaml受保护须`hermes config set`(改前cp备份)。GitHub大单文件被节点切断,gh-proxy.com下zip续传(-C -循环+CRC校验)最稳。
 §

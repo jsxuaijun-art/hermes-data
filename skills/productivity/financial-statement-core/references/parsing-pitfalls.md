@@ -47,3 +47,24 @@
 ## 9. 合并单元格写入
 - openpyxl 对已合并单元格的非顶格单元写值会报 `MergedCell object attribute 'value' is read-only`。
   生成测试样本时，先写值再合并，或避免向合并区非顶格写值。
+
+## 10. 老式 .xls 中文内码 GBK 乱码（真实：坤出 2026.9 科余表）
+- 财务软件导出的 .xls，内码记录指向 Latin-1/1252，但实际单元格以 **GBK(CP936)** 存中文。
+  xlrd 按内码读出全乱码：`银行存款` → `ÒøÐÐ´æ¿î`，表头 `科目名称` 匹配不上 → 「未找到科目名称列」。
+- **口径**：读 xls 文本统一过 `_fix_text()` —— `s.encode('latin-1').decode('gbk')`，
+  修复后含 CJK 才采用，否则保留原串（避免误伤本就正确的中文/ASCII）。
+- 影响面：sheet 名、表头、科目名都可能是乱码，三处都要过 `_fix_text`。
+
+## 11. xlrd 的 'OLE2 inconsistency' 警告污染 stdout（真实：坤出 .xls）
+- 老 .xls 打开时 xlrd 向**默认 logfile**（import 时绑定的 sys.stdout 对象）打印
+  `WARNING *** OLE2 inconsistency: SSCS size is 0 but SSAT size is non-zero`。
+  该警告打到的是 **fd1 / 早绑定的 stdout 文件对象**，运行时 `sys.stdout=` 重定向、
+  甚至 `os.dup2(2,1)` 都拦不住 → 污染 fs_reader 的 JSON stdout，导致 json 解析失败。
+- **口径**：`open_workbook(path, logfile=sys.stderr)`——显式把 logfile 指向 stderr，干净根治。
+
+## 12. 单行表头显式列（真实：坤出 2026.9 科余表）
+- 有的科余表是**单行表头**，列名直接是：
+  `期间|科目代码|科目名称|币别|期初余额(借方)|期初余额(贷方)|本期发生额(借方)|本期发生额(贷方)|本年累计发生额(借方)|本年累计发生额(贷方)|期末余额(借方)|期末余额(贷方)`。
+- 无 R5 子行。识别靠表头文字：「期初/期末」+「借/贷」；
+  「本期发生额」「本年累计发生额」不含「期初/期末」，自动被忽略，不会误当期末。
+- 科目代码列取「科目代码/科目编码/科目编号」；顶层科目 = 编码 len==4。

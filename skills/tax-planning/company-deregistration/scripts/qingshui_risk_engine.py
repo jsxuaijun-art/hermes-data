@@ -15,12 +15,47 @@
   python 注销清税解析引擎_v2.py --资产负债表 路径.xlsx --利润表 路径.xlsx
   python 注销清税解析引擎_v2.py --科目余额表 a.xlsx --自动诊断   # 一键诊断
 """
-import sys, os, re
+import sys, os, re, json, subprocess
 from collections import OrderedDict
 try:
     import openpyxl
 except ImportError:
     sys.exit("需要 openpyxl: ~/.venv-hermes/bin/pip install openpyxl")
+
+# ═══════════════════════════════════════════
+# 统一读表桥接 —— 委托共享底座 financial-statement-core/scripts/fs_reader.py
+# ═══════════════════════════════════════════
+def _find_fs_reader():
+    env = os.environ.get("FS_READER")
+    if env and os.path.isfile(env):
+        return env
+    here = os.path.dirname(os.path.abspath(__file__))
+    d = os.path.dirname(here)
+    for _ in range(6):
+        cand = os.path.join(d, "financial-statement-core", "scripts", "fs_reader.py")
+        if os.path.isfile(cand):
+            return cand
+        d = os.path.dirname(d)
+    # 兜底：常见工具 skills 根
+    for base in [os.path.join(os.path.expanduser("~"), ".hermes", "skills"),
+                 "/mnt/c/Users/Administrator/skill-library/skills",
+                 "/mnt/c/Users/Administrator/.workbuddy/skills",
+                 os.path.join(os.path.expanduser("~"), ".codex", "skills"),
+                 "/mnt/c/Users/Administrator/.claude/skills",
+                 os.path.join(os.path.expanduser("~"), ".hermes", "skills", "productivity")]:
+        cand = os.path.join(base, "financial-statement-core", "scripts", "fs_reader.py")
+        if os.path.isfile(cand):
+            return cand
+    raise FileNotFoundError("未找到共享底座 financial-statement-core/scripts/fs_reader.py（请安装 financial-statement-core skill）")
+
+
+def _run_fs_reader(path, period="end"):
+    fs = _find_fs_reader()
+    p = subprocess.run([sys.executable, fs, "--input", path, "--period", period],
+                       capture_output=True, text=True)
+    if p.returncode != 0:
+        raise RuntimeError(f"fs_reader 解析失败: {p.stderr}")
+    return json.loads(p.stdout)
 
 # ═══════════════════════════════════════════
 # 雷区规则库 v2.0（科目关键词 → 风险+处理+红线）
@@ -148,153 +183,44 @@ def _find_header_row(ws, max_col):
     return None
 
 def parse_subject_balance(path):
-    """解析科目余额表(xlsx/xls)，返回 {科目名称: 期末余额(借贷净值)} + 明细"""
-    if path.lower().endswith(".xls"):
-        return parse_subject_balance_xls(path)
-    wb = openpyxl.load_workbook(path, data_only=True)
-    ws = wb.active
-    max_col = ws.max_column
-    header_row = _find_header_row(ws, max_col)
-    if not header_row:
-        header_row = 1
-    cols = {"name": None, "code": None, "debit_end": None, "credit_end": None}
-    for c in range(1, max_col + 1):
-        h = str(ws.cell(header_row, c).value or "").strip()
-        if "科目名称" in h or h == "科目":
-            cols["name"] = c
-        elif "科目编码" in h or "科目编号" in h:
-            cols["code"] = c
-        elif "期末余额" in h:
-            if "借方" in h: cols["debit_end"] = c
-            elif "贷方" in h: cols["credit_end"] = c
-        elif "借方余额" in h or ("借方" in h and "期末" in h):
-            cols["debit_end"] = c
-        elif "贷方余额" in h or ("贷方" in h and "期末" in h):
-            cols["credit_end"] = c
-    if not cols["name"]:
-        raise ValueError("未找到科目名称列")
-    # 若表头行下方有子行(如"借方|贷方"第二行)，数据从再下一行开始，且借贷列以子行为准
-    data_start = header_row + 1
-    subvals = [str(ws.cell(data_start, c).value or "").strip() for c in range(1, max_col + 1)]
-    if "借方" in "".join(subvals) or "贷方" in "".join(subvals):
-        # 借/贷列从子行识别（表头行是合并表头）
-        # 关键：表头可能是「期初/本期/本年/期末」多组借贷子行（如 R5: 借方|贷方 借方|贷方 借方|贷方 借方|贷方）
-        # 雷区诊断要用【期末余额】列的借贷，即【最后一组】"借方/贷方"（覆盖式取尾），而非第一组（那是期初）。
-        cols["debit_end"] = cols["credit_end"] = None
-        for c in range(1, max_col + 1):
-            sv = subvals[c-1]
-            if sv == "借方":
-                cols["debit_end"] = c      # 覆盖式：总是取最后一个"借方"
-            elif sv == "贷方":
-                cols["credit_end"] = c     # 覆盖式：总是取最后一个"贷方"
-        data_start = header_row + 2
+    """解析科目余额表(xlsx/xls)。委托共享底座 fs_reader，返回 {科目名称:期末净值} + 明细 + cols(兼容)。"""
+    data = _run_fs_reader(path)
+    sb = data.get("subject_balance") or {}
+    detail = sb.get("detail") or []
     subjects = OrderedDict()
-    detail = []
-    for r in range(data_start, ws.max_row + 1):
-        name = str(ws.cell(r, cols["name"]).value or "").strip()
-        if not name or name.startswith("合计") or name.startswith("总计"):
-            continue
-        debit = _clean(ws.cell(r, cols["debit_end"]).value) if cols["debit_end"] else 0.0
-        credit = _clean(ws.cell(r, cols["credit_end"]).value) if cols["credit_end"] else 0.0
-        code = str(ws.cell(r, cols["code"]).value or "").strip() if cols["code"] else ""
-        is_top = (len(code) == 4) if code else True
-        net = debit - credit
-        if is_top and name not in subjects:
-            subjects[name] = net
-        detail.append({"code": code, "name": name, "debit_end": debit, "credit_end": credit, "net": net})
-    return subjects, detail, cols
+    detail_out = []
+    for x in detail:
+        if x.get("is_top"):
+            subjects[x["name"]] = x["net"]
+        detail_out.append({"code": x["code"], "name": x["name"],
+                           "debit_end": x["debit_end"], "credit_end": x["credit_end"],
+                           "net": x["net"]})
+    return subjects, detail_out, {}
+
+
 
 def parse_subject_balance_xls(path):
-    """解析 xls 老格式科目余额表（表头合并行 + 借方/贷方子行）"""
-    import xlrd
-    wb = xlrd.open_workbook(path)
-    ws = wb.sheet_by_index(0)
-    header_row = None
-    for r in range(ws.nrows):
-        rowvals = "".join(str(ws.cell_value(r, c)) for c in range(ws.ncols))
-        if "科目编码" in rowvals or "科目名称" in rowvals:
-            header_row = r
-            break
-    if header_row is None:
-        raise ValueError("xls科目余额表未找到表头")
-    data_start = header_row + 1
-    nxt = "".join(str(ws.cell_value(data_start, c)) for c in range(ws.ncols))
-    if "借方" in nxt or "贷方" in nxt:
-        data_start = header_row + 2
-    cols = {"name": None, "code": None, "debit_end": None, "credit_end": None}
-    for c in range(ws.ncols):
-        h = str(ws.cell_value(header_row, c)).strip()
-        if "科目名称" in h or h == "科目":
-            cols["name"] = c
-        elif "科目编码" in h or "科目编号" in h:
-            cols["code"] = c
-        elif "借方" in h:
-            cols["debit_end"] = c
-        elif "贷方" in h:
-            cols["credit_end"] = c
-    if not cols["name"]:
-        cols["name"] = 1; cols["code"] = 0
-        cols["debit_end"] = ws.ncols - 2; cols["credit_end"] = ws.ncols - 1
-    subjects = OrderedDict()
-    detail = []
-    for r in range(data_start, ws.nrows):
-        name = str(ws.cell_value(r, cols["name"])).strip()
-        if not name or name.startswith("合计") or name.startswith("总计"):
-            continue
-        debit = float(ws.cell_value(r, cols["debit_end"]) or 0)
-        credit = float(ws.cell_value(r, cols["credit_end"]) or 0)
-        code = str(ws.cell_value(r, cols["code"])).strip() if cols["code"] else ""
-        is_top = (len(code) == 4) if code else True
-        net = debit - credit
-        if is_top and name not in subjects:
-            subjects[name] = net
-        detail.append({"code": code, "name": name, "debit_end": debit, "credit_end": credit, "net": net})
-    return subjects, detail, cols
+    """解析 xls 老格式科目余额表，委托 fs_reader（与 xlsx 统一口径）。"""
+    return parse_subject_balance(path)
+
+
 
 def parse_bs_and_pl(bs_path=None, pl_path=None):
-    """解析资产负债表/利润表（xlsx/xls，两表合一）"""
+    """解析资产负债表/利润表，委托 fs_reader，返回 {科目名:金额} 平铺 dict（兼容旧接口）。"""
     result = {}
-    for label, path in [("资产负债表", bs_path), ("利润表", pl_path)]:
-        if not path:
+    for p in (bs_path, pl_path):
+        if not p:
             continue
-        if path.lower().endswith(".xls"):
-            import xlrd
-            wb = xlrd.open_workbook(path)
-            for ws in wb.sheets():
-                # 只处理资产负债表和利润表，排除现金流量表（行名会误匹配雷区关键词）
-                if "资产负债表" not in ws.name and "利润表" not in ws.name:
-                    continue
-                # 资产负债表为左右双栏：A名称|B行次|C期末|D年初|E负债名|F行次|G期末|H年初
-                # 左栏取C(期末)，右栏取G(期末)；利润表取"本年累计金额"
-                is_bs = "资产负债表" in ws.name
-                for r in range(ws.nrows):
-                    # 左栏
-                    name = str(ws.cell_value(r, 0)).strip()
-                    if name and name not in ("资产", "流动资产：", "非流动资产：", "资产负债表"):
-                        if is_bs and ws.ncols >= 4 and isinstance(ws.cell_value(r, 2), (int, float)):
-                            result[name] = float(ws.cell_value(r, 2))
-                        elif not is_bs and ws.ncols >= 3 and isinstance(ws.cell_value(r, 2), (int, float)):
-                            result[name] = float(ws.cell_value(r, 2))
-                    # 右栏（负债和所有者权益）
-                    if is_bs and ws.ncols >= 7:
-                        rname = str(ws.cell_value(r, 4)).strip()
-                        if rname and rname not in ("负债和所有者权益", "流动负债：", "非流动负债："):
-                            if isinstance(ws.cell_value(r, 6), (int, float)):
-                                result[rname] = float(ws.cell_value(r, 6))
-            continue
-        wb = openpyxl.load_workbook(path, data_only=True)
-        for ws in wb.worksheets:
-            for r in range(1, ws.max_row + 1):
-                name = str(ws.cell(r, 1).value or "").strip()
-                vals = [_clean(ws.cell(r, c).value) for c in range(2, ws.max_column + 1)]
-                non_zero = [v for v in vals if abs(v) > 0.01]
-                if non_zero:
-                    result[name] = non_zero[-1]
+        data = _run_fs_reader(p)
+        st = data.get("statement") or {}
+        bs = (st.get("balance_sheet") or {}).get("end") or {}
+        pl = (st.get("income_statement") or {}).get("annual") or {}
+        result.update(bs)
+        result.update(pl)
     return result
 
-# ═══════════════════════════════════════════
-# 雷区诊断引擎
-# ═══════════════════════════════════════════
+
+
 def diagnose(subjects, bs_pl=None, thresholds=None):
     """匹配雷区规则，返回诊断结果列表"""
     if bs_pl is None:

@@ -1,0 +1,20 @@
+{
+  "name": "superpowers-dev",
+  "description": "Development marketplace for the superpowers-prefixed meta-skills adaptation",
+  "owner": {
+    "name": "Jesse Vincent",
+    "email": "jesse@fsck.com"
+  },
+  "plugins": [
+    {
+      "name": "superpowers",
+      "description": "Superpowers-prefixed skill library: TDD, debugging, collaboration patterns, planning, review, and delivery workflows",
+      "version": "5.1.0-meta.1",
+      "source": "./",
+      "author": {
+        "name": "Jesse Vincent",
+        "email": "jesse@fsck.com"
+      }
+    }
+  ]
+}

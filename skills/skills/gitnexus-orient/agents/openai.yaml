@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Repo Orient"
+  short_description: "DeepWiki-first repo analysis with GitNexus mode checks"
+  default_prompt: "Use $github-repo-orient to clone this GitHub repository locally, return a structured Chinese report, explain what it is for, tell me how to use it, assess whether it is worth building on or learning from, detect whether GitNexus is in semantic-enhanced or keyword/graph mode, and then ask whether deeper GitNexus analysis is needed."

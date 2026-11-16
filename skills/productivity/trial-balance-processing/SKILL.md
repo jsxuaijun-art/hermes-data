@@ -29,6 +29,9 @@ When the user asks to:
    ```
    A 科目余额表 typically has title rows (1-2), a unit/currency row, a header block with merged cells, then data rows, then a `=SUM(...)`/合计 row at the end. Identify the exact data row range and skip the total row when grouping.
 
+   > **读表层优先共享底座**：`financial-statement-core` 的 `scripts/fs_reader.py` 统一处理列识别/期初→期末/老式 GBK 内码 .xls/OLE 警告，输出标准化科目明细与期末净额。合并前后用它做权威净额交叉核对：
+   > `python3 <base>/scripts/fs_reader.py --input <file> --period both`（`<base>` = 当前工具的 `financial-statement-core` skill 目录）。本 skill 的**原地编辑/合并仍用 xlsx skill 的 load_workbook 保留样式**，fs_reader 只读，不替代编辑。
+
 3. **Group by exact 科目名称 and net 借/贷.** Load with `data_only=True`, iterate the data rows, and aggregate into an OrderedDict keyed by the name (column 2). Sum 借方 (col 3) and 贷方 (col 4) for every row sharing that name. Net = 借 − 贷:
    - net > 0 → write net into 借方, leave 贷方 blank
    - net < 0 → write −net into 贷方, leave 借方 blank

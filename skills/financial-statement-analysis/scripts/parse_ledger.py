@@ -22,12 +22,36 @@ parse_ledger.py — 科目余额表解析 + 资产负债表平衡检查 + 科目
 import argparse
 import json
 import re
+import subprocess
 import sys
+import os
+import pathlib
 
 try:
     from openpyxl import load_workbook
 except ImportError:
     sys.exit("缺少 openpyxl：请先 `pip install openpyxl`")
+
+
+def _find_fs_reader():
+    """定位共享底座 financial-statement-core/scripts/fs_reader.py（跨工具无共享 python 路径，按路径搜索）。"""
+    env = os.environ.get("FS_READER")
+    if env and os.path.isfile(env):
+        return env
+    here = pathlib.Path(__file__).resolve().parent
+    for anc in [here, *here.parents]:
+        cand = anc / "financial-statement-core" / "scripts" / "fs_reader.py"
+        if cand.exists():
+            return str(cand)
+    for root in [pathlib.Path.home() / ".hermes" / "skills",
+                 pathlib.Path("/mnt/c/Users/Administrator/skill-library") / "skills",
+                 pathlib.Path("/home/administrator/.codex") / "skills",
+                 pathlib.Path("/mnt/c/Users/Administrator/.claude") / "skills",
+                 pathlib.Path("/mnt/c/Users/Administrator/.workbuddy") / "skills"]:
+        cand = root / "financial-statement-core" / "scripts" / "fs_reader.py"
+        if cand.exists():
+            return str(cand)
+    raise FileNotFoundError("未找到共享底座 financial-statement-core/scripts/fs_reader.py")
 
 
 # ---- 科目口径映射（按关键词归类，用于提取关键指标）----
@@ -129,62 +153,54 @@ def main():
                     help="本期覆盖月数（用于年化，如 12）；留空由 report_generator 提示")
     args = ap.parse_args()
 
-    wb = load_workbook(args.input, data_only=True, read_only=True)
-    ws = wb.active
-    rows = list(ws.iter_rows(values_only=True))
-    wb.close()
-
-    # 探测表头：取前两行中"科目名称/编码"出现的一行
-    header_row_idx = 0
-    for ridx in range(min(3, len(rows))):
-        joined = " ".join(str(c) for c in rows[ridx] if c is not None)
-        if "科目名称" in joined or "科目" in joined:
-            header_row_idx = ridx
-            break
-    header = rows[header_row_idx]
-    pos = detect_columns(header)
-
+    # ── 读表层：委托共享底座 fs_reader（统一列识别/期初期末/GBK内码/OLE警告处理）──
+    fs_reader = _find_fs_reader()
+    fs_cmd = [sys.executable, fs_reader, "--input", args.input, "--period", "both"]
     if args.print_rows:
-        print(f"[结构] 表头行={header_row_idx+1}，探测列={pos}")
-        for i, r in enumerate(rows[:20]):
-            print(i, [("" if c is None else c) for c in r][:10])
-
-    if "name" not in pos:
-        sys.exit("未定位到'科目名称'列，请用 --print-rows 检查表结构后调整。")
+        proc = subprocess.run(fs_cmd + ["--print-rows"], capture_output=True, text=True)
+        print(proc.stdout or proc.stderr)
+        return
+    proc = subprocess.run(fs_cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        sys.exit(f"读表失败（fs_reader）: {proc.stderr[:800]}")
+    data = json.loads(proc.stdout)
+    sb = data.get("subject_balance") or {}
+    if sb.get("type") == "unknown" or not (sb.get("detail")):
+        sys.exit("未识别为科目余额表，请用 --print-rows 检查表结构。")
+    detail = sb.get("detail") or []
+    pos = {}
+    print(f"经共享底座 fs_reader 读取：{len(detail)} 行科目明细", file=sys.stderr)
 
     accounts = []
-    for r in rows[header_row_idx + 1:]:
-        name = r[pos["name"]] if pos["name"] < len(r) else None
-        if name is None:
+    for d_ in detail:
+        name = str(d_.get("name") or "").strip()
+        if not name:
             continue
-        name = str(name).strip()
-        if name == "":
+        code = str(d_.get("code") or "").strip()
+        end_balance = d_.get("net") or 0.0
+        begin_balance = d_.get("net_begin") or 0.0
+        # 跳过汇总/合计行：无余额且无编码
+        if end_balance == 0.0 and begin_balance == 0.0 and not code:
             continue
-        # 跳过"科目标题"整行：期末借贷均为空且名称像汇总
-        eb = end_balance_of(r, pos)
-        if eb == 0.0 and begin_balance_of(r, pos) == 0.0:
-            # 可能是无余额科目或汇总行；保留有编码的，丢弃纯标题
-            code = r[pos["code"]] if ("code" in pos and pos["code"] < len(r)) else None
-            if code is None or str(code).strip() == "":
-                continue
-        code = r[pos["code"]] if ("code" in pos and pos["code"] < len(r)) else ""
         accounts.append({
-            "code": str(code).strip(),
+            "code": code,
             "name": name,
-            "begin_debit": to_float(r[pos["begin_debit"]]) if "begin_debit" in pos and pos["begin_debit"] < len(r) else None,
-            "begin_credit": to_float(r[pos["begin_credit"]]) if "begin_credit" in pos and pos["begin_credit"] < len(r) else None,
-            "end_debit": to_float(r[pos["end_debit"]]) if "end_debit" in pos and pos["end_debit"] < len(r) else None,
-            "end_credit": to_float(r[pos["end_credit"]]) if "end_credit" in pos and pos["end_credit"] < len(r) else None,
-            "end_balance": eb,
-            "begin_balance": begin_balance_of(r, pos),
+            "begin_debit": d_.get("debit_begin") or 0.0,
+            "begin_credit": d_.get("credit_begin") or 0.0,
+            "end_debit": d_.get("debit_end") or 0.0,
+            "end_credit": d_.get("credit_end") or 0.0,
+            "end_balance": end_balance,
+            "begin_balance": begin_balance,
+            "is_top": d_.get("is_top", True),
         })
 
-    # 平衡检查：全部科目 期末借方合计 - 期末贷方合计 应≈0
-    end_debit_total = sum(a["end_debit"] or 0.0 for a in accounts)
-    end_credit_total = sum(a["end_credit"] or 0.0 for a in accounts)
+    # 平衡检查：全部科目 期末借方合计 - 期末贷方合计 应≈0（仅顶层科目，避免子科目重复计入）
+    top_accts = [a for a in accounts if a.get("is_top", True)]
+    end_debit_total = sum(a["end_debit"] or 0.0 for a in top_accts)
+    end_credit_total = sum(a["end_credit"] or 0.0 for a in top_accts)
     end_diff = round(end_debit_total - end_credit_total, 2)
-    begin_debit_total = sum(a["begin_debit"] or 0.0 for a in accounts)
-    begin_credit_total = sum(a["begin_credit"] or 0.0 for a in accounts)
+    begin_debit_total = sum(a["begin_debit"] or 0.0 for a in top_accts)
+    begin_credit_total = sum(a["begin_credit"] or 0.0 for a in top_accts)
     begin_diff = round(begin_debit_total - begin_credit_total, 2)
 
     # 关键指标口径映射（期末余额取数，带方向）
@@ -203,15 +219,15 @@ def main():
         key_metrics.setdefault(cat, 0.0)
         key_metrics[cat] += val
 
-    # 固定资产净值 = 固定资产 - 累计折旧
+    # 固定资产净值 = 固定资产 - 累计折旧（累计折旧为贷方负余额，取其绝对值）
     fa = key_metrics.get("fixed_asset", 0.0)
-    ad = sum(a["end_balance"] for a in accounts if classify(a["name"]) == "accum_depr")
+    ad = abs(sum(a["end_balance"] for a in accounts if classify(a["name"]) == "accum_depr"))
     if fa or ad:
         key_metrics["fixed_asset_net"] = round(fa - ad, 2)
 
-    # 聚合：资产总计 / 负债合计 / 所有者权益（按余额方向）
-    asset_total = sum(a["end_balance"] for a in accounts if a["end_balance"] > 0)
-    liab_equity_total = -sum(a["end_balance"] for a in accounts if a["end_balance"] < 0)
+    # 聚合：资产总计 / 负债合计 / 所有者权益（按余额方向，仅顶层科目）
+    asset_total = sum(a["end_balance"] for a in top_accts if a["end_balance"] > 0)
+    liab_equity_total = -sum(a["end_balance"] for a in top_accts if a["end_balance"] < 0)
     key_metrics = {k: round(v, 2) for k, v in key_metrics.items()}
 
     flags = []

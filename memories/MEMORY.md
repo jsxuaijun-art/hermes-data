@@ -14,7 +14,7 @@ Obsidian=第二知识库/永久记忆:D盘=/mnt/d/obsidian-vault主库,WSL=git�
 §
 技能统一库:四工具(Hermes/Claude/Codex/WorkBuddy)同读SKILL.md零转换;canonical=C:\Users\Administrator\skill-library(扁平skills/<名>),管理器~/skill-library-ops/{skilllib.py,exchange.sh},cron周日23:00;各端侧是嵌套skills/<类>/<名>,改完用md5比对全同。hermes-data仓库=/mnt/c/Users/Admin/hermes-sync(git@github.com:jsxuaijun-art/hermes-data),推送~/.hermes/sync-push.sh。找副本/仓库别扫全盘(慢到超时),按已知路径定点查;suzhou-equity-transfer-guide有顶层+嵌套双份,改动须双份同步。skilllib install只新增冲突SKIP:更新四工具已有共享技能后,claude/codex/workbuddy旧拷贝须manual copyfile同步(勿--force全库,会误伤她工具原生版)。
 §
-需先`hermes curator adopt <name>`;agent建过的(powerpoint、compliant-accounting)可自动改。坑:本session刚新建的skill(如financial-statement-core)在.usage.json尚未登记(created_by=None),即便frontmatter标agent_created:true,首次auto-cura编辑仍会被拒——须先`hermes curator adopt`。用户财税类skill由vault维护
+坑:未adopt的agent建skill在.usage.json为created_by=None(本session新建financial-statement-core与既有financial-statement-analysis皆如此),即便frontmatter标agent_created:true,auto-cura编辑仍被拒——须先`hermes curator adopt`。
 §
 本机Hermes实装=/home/dmin/hermes-agent-v0.20.6,2026.10.29 zip覆盖升v0.22.5,无.git故--version显vunknown(正常);/home/dmin/hermes-agent=另份独立源码副本勿动;venv=.venv-hermes;gateway=用户systemd hermes-gateway.service,代码换新后旧unit过时→『Gateway starting: deadline』,修法=`hermes gateway install`重生unit;hermes alias=~/.hermes/hermes-wsl.sh(企微云端逻辑)。WSL连Windows Clash走172.23.96.1:7890。config.yaml受保护须`hermes config set`(改前cp备份)。GitHub大单文件被节点切断,gh-proxy.com下zip续传(-C -循环+CRC校验)最稳。
 §
@@ -56,8 +56,6 @@ pptxgenjs行距陷阱:lineSpacing单位是磅(写spcPts),写1.05=行距1.05磅�
 §
 为短视频做「话题/标题总结」要'站得更高看得更远'(上帝视角):把具体家务/日常现象上抽到-定义本质-再归纳到更高维核心概念,金句洞察常藏结尾自省句(如'多数家庭更擅长拽下来而非托上去'=内耗是本能的,托举是反本能的)。示例《托举》→主旨「家庭兴旺的底层是'不内耗'——能量单向向外输出 vs 内部对消归零」→标题抓'内耗/能量管理'比抓'托举'更站高。已写入short-video技能「上帝视角·深层主旨提炼」节。
 §
-chudian vision-exp已下架(404)勿指向;检修见office-display-design references/vision-model-repoint.md
-§
 「推送github」=双通道全推(徐总默认两处都要):①统一库skill-library(C:\Users\Administrator\skill-library)②hermes-data(本地仓库=/mnt/c/Users/Admin/hermes-sync,注意用户名是Admin非Administrator)。hermes-data走~/.hermes/sync-push.sh(已修为v5:先fetch+reset再拷贝本地,旧版顺序会静默丢掉已跟踪文件如SKILL.md的改动),跑完必核 local==remote;hermes-sync常处detached HEAD,须先git checkout main再跑sync-push.sh,否则推不上main。桌面成品(Word/PDF/PNG)不入库。
 §
 交付纪律(徐总2026.11.4):交付成品只给docx/pdf/zip,桌面不留.md源稿(.md可内部生成/跨机同步,除非用户要否则不展示不摆桌面);一任务产物先入同名文件夹压zip桌面只留压缩包禁零散(folder→zipfile→rmtree勿shell rm;Word占用报PermissionError勿重试);找非核心素材(外景配图等)耗token即止损直接进草稿箱/用现成资源;详见skill内容纪律。
@@ -67,3 +65,5 @@ memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须�
 提取脚本待wechat-publish被adopt后入scripts/。读官方教程素材(搜一搜优化等):示例展示在图里,web_extract的[IMAGE]占位≠已读,须vision_analyze(自动回退Doubao,非deepseek)逐张读图再融入skill,长图拆region半读,图多并行delegate(2026.11.10)
 §
 模型路由铁律(2026.10.29徐总更新):Hermes默认模型=chudian deepseek-v4-flash(provider deepseek, base_url https://llm.chudian.site/v1, key=DEEPSEEK_API_KEY);只有用户专门命令或调用指定skill才切kimi-k3,日常默认不再用kimi。切换/完成任务要报所用模型。视觉:deepseek-v4-flash禁原生视觉,auxiliary.vision=telecom Doubao-Seed-2.1-Pro(chudian vision-exp已下架勿指);短文案/生图旧规则由对应skill触发,不改默认路由。
+§
+财务读表共享底座skill=financial-statement-core(scripts/fs_reader.py):统一列识别/期初期末/GBK内码乱码修复/xlrd OLE警告(logfile=stderr);company-deregistration、financial-statement-analysis的读表已委托它,新财务读表需求先复用该底座勿重写解析。

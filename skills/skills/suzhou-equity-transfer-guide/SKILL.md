@@ -149,6 +149,7 @@ linked_files:
 ## 四、税务处理核心知识点
 
 ### 4.1 个人所得税
+> 税率/计算用共享底座 `tax-base`（财产转让所得 20%、印花税按税目；涉优惠先 `verify_rates.py` + `cn-regulation-verification` 核验现行性）。
 
 | 项目 | 内容 |
 |------|------|

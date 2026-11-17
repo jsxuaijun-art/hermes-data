@@ -57,6 +57,7 @@ agent_created: true
 
 - 各子 skill 含 `references/全文.md`（维基文库转录的官方法条全文），引用条号以全文为准。
 - 具体优惠比例、起征点、留抵退税条件等政策性口径，随国务院/税务总局文件动态调整，本群 skill 不替代现行有效规范性文件，须结合最新文件。
+- **取税率/算税用共享底座 `tax-base`**（`scripts/rates.json` 现行税率速查 + `calc.py` 计算 + `references/qualitative-checklist.md` 定性清单；涉优惠先 `verify_rates.py` + `cn-regulation-verification` 核验现行性，勿凭记忆报税率）。
 - 暂行条例（土地增值税、消费税）仍有效；增值税法 2026-01-01 起取代增值税暂行条例，引用时注意时间效力。
 - 公司法相关问题不在本群，路由至 `company-law`。
 

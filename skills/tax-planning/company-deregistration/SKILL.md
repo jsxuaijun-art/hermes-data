@@ -13,6 +13,7 @@ category: tax-planning
 ## 🔴 启动门禁（必须先做！调用本 skill 第一步必做）
 
 > **每次调用本 skill 服务客户，首先必须提示用户提供"注销清税采集清单"，拿到信息后才做诊断。绝不要只拿报表就出方案。** 没有股东名单等信息，无法判断股东借款是否视同分红、无法算股东个税，结论可能错。
+> **税率/个税·清税计算用共享底座 `tax-base`**（`rates.json` 现行税率 + `calc.py` + `qualitative-checklist.md`；涉优惠先 `verify_rates.py` + `cn-regulation-verification` 核验现行性）。
 
 **提示话术（直接发给客户，让一次发全）：**
 ```

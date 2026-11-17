@@ -125,10 +125,10 @@ def build_form(output_path):
     r.font.bold = True
     r.font.size = Pt(12)
     doc.add_paragraph(
-        '1. 请逐项填写，不清楚的留空标注"待确认"\n'
-        '2. 带"*"为必填项，其余有则填\n'
-        '3. 每个字段的"用途说明"列告诉你为什么问这个，帮助你理解我们的专业判断逻辑\n'
-        '4. ⚠️ 两套财务报表请同时提供：上年度末（汇算清缴年报）+ 最近一个月末的资产负债表+利润表\n'
+        '1. 请逐项填写，不清楚的留空标注"待确认"\\n'
+        '2. 带"*"为必填项，其余有则填\\n'
+        '3. 每个字段的"用途说明"列告诉你为什么问这个，帮助你理解我们的专业判断逻辑\\n'
+        '4. ⚠️ 两套财务报表请同时提供：上年度末（汇算清缴年报）+ 最近一个月末的资产负债表+利润表\\n'
         '5. 如有章程、股权转让协议草案等附件材料可一并打包'
     )
     doc.add_paragraph('—' * 60)
@@ -236,6 +236,11 @@ def build_form(output_path):
     r_check.font.size = Pt(10)
     r_check.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
 
+    checks = doc.add_table(rows=8, cols=3)
+    checks.style = 'Table Grid'
+    checks.alignment = WD_TABLE_ALIGNMENT.CENTER
+    add_header_row(checks, ['校验项目', '常见异常', '影响'], 'CC0000')
+
     check_data = [
         ('净资产是否为正？', '净资产为负 + 零元转让 → 可能个税=0（需看评估结果）', '★★★'),
         ('两期资产结构变化是否超20%？', '变化超20% → 类型C非即时办结，审核延长', '★★★'),
@@ -246,11 +251,6 @@ def build_form(output_path):
         ('是否2019年前成立？', '是 → 需提供最近一次股转的旧材料', '★☆☆'),
         ('转让方是否曾任职/任法人？', '曾任职 → 可能涉及离职收入另算个税', '★☆☆'),
     ]
-    checks = doc.add_table(rows=len(check_data) + 1, cols=3)
-    checks.style = 'Table Grid'
-    checks.alignment = WD_TABLE_ALIGNMENT.CENTER
-    add_header_row(checks, ['校验项目', '常见异常', '影响'], 'CC0000')
-
     for idx, (item, desc, level) in enumerate(check_data, 1):
         checks.rows[idx].cells[0].text = item
         set_cell_font(checks.rows[idx].cells[0], 10, bold=True)

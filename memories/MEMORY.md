@@ -26,7 +26,7 @@ Obsidian=第二知识库/永久记忆:D盘=/mnt/d/obsidian-vault主库,WSL=git�
 §
 长文出稿铁律:第三方网关(telecom aigw)非流式调用有~90s响应上限,长稿会中途断/整单超时→必须stream=true流式直连。delegate_task走非流式,委派写长稿(文案/文章)易整体失败,要如实说+改流式重试。通用调用器=skill llm-longform-generation/scripts/stream_chat.py(密钥走环境变量名传入,勿内联)。
 §
-hermes cron:prompt是位置参数`hermes cron create <schedule> <prompt>`;create/remove触发确认门超时BLOCKED——用户明确授权后写.sh脚本bash执行可成功,勿直接重试,删建分开;查执行`hermes cron runs <id>`;生命周期create→run→runs→remove。苏州政策监控已部署(cron'苏州城市破播'周二五9点投企微内部群'徐江机器人'wecom:wrBqtFBgAAFbj6ydc54nuVdDcLmMxgIg,gateway在线才自动触发,手动run不投递;细节见short-video-copywriting类型五)。.lazy-refresh-incomplete警告是噪音,venv健康。
+;细节见short-video-copywriting类型五)。tax-base优惠时效核验cron每两月1日9点(0 9 1 */2 *,月字段*/2=奇数月隔月,短语'every 2 months'不支持须用cron)挂tax-base投同群,过期跑verify_rates.py核验+同步四工具双仓;CLI会话cron list显wecom'not configured/enabled'是正常噪音,网关在线才投)。
 §
 法规核验以fgk政策法规库状态标签为准(全文有效/已修改/全文废止,已修改≠废止如2015-97号);fgk附件xls反爬走省级解读页;二手站标注不可信(shui5 WAF、tfcjtax误标28号);anysearch batch_search可直抓官文。pip清华。
 §
@@ -66,4 +66,4 @@ memory工具陷阱:replace的content=整条覆盖(old_text仅定位),补句须�
 §
 模型路由铁律(2026.10.29徐总更新):Hermes默认模型=chudian deepseek-v4-flash(provider deepseek, base_url https://llm.chudian.site/v1, key=DEEPSEEK_API_KEY);只有用户专门命令或调用指定skill才切kimi-k3,日常默认不再用kimi。切换/完成任务要报所用模型。视觉:deepseek-v4-flash禁原生视觉,auxiliary.vision=telecom Doubao-Seed-2.1-Pro(chudian vision-exp已下架勿指);短文案/生图旧规则由对应skill触发,不改默认路由。
 §
-财务读表共享底座skill=financial-statement-core(scripts/fs_reader.py):统一列识别/期初期末/GBK内码乱码修复/xlrd OLE警告(logfile=stderr);company-deregistration、financial-statement-analysis的读表已委托它,新财务读表需求先复用该底座勿重写解析。
+财务读表共享底座skill=financial-statement-core(scripts/fs_reader.py):统一列识别/期初期末/GBK内码乱码修复/xlrd OLE警告(logfile=stderr);company-deregistration、financial-statement-analysis已委托它,新读表需求复用勿重写。算税底座=tax-base(scripts/rates.json+calc.py+qualitative-checklist,涉优惠先verify_rates.py+coldregulation核验现行性),已挂引用tax-law/tax-policy-qa/company-deregistration/suzhou-equity-transfer-guide;财税新skill按'读表用fs_reader+算税用tax-base'建。

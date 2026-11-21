@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "_comment": "客户年度作业实例（实例持久原则）。存为 clients/<客户代码>/<年度>.json。跨会话续作与三年滚动都靠它。字段说明见 TESTS/说明 或 SKILL.md §2。客户身份按脱敏规则处理。",
+    "client_code": "JYBD(SZ)",
+    "year": 2026,
+    "last_updated": "2026-11-19",
+    "path_decision": "A_高企客户 | B_非高企",
+    "conclusion": "可直接做 | 整改后做 | 不做",
+    "revision_note": "每次运行 decide/calc 后更新，形成审计轨迹"
+  },
+  "profile": {
+    "collection_method": "查账",
+    "industry": "制造业-专用设备",
+    "has_hte_cert": true,
+    "cert_expiry": "2027-12-31",
+    "negative_activity": false,
+    "neg_revenue": null,
+    "total_revenue": null,
+    "nontax_income": null,
+    "investment_income": null,
+    "evidence": {
+      "lixiang": true,
+      "ledger": true,
+      "attendance": true,
+      "materials": true
+    },
+    "is_ic_machine": false,
+    "is_tech_sme": true,
+    "tech_sme_code": "入库编号",
+    "last_year_sales": 0
+  },
+  "hte_indicators_3yr": {
+    "_comment": "三年滚动，每年更新（hte_certification.md §三）",
+    "rnd_3yr_total": 0,
+    "sales_3yr_total": 0,
+    "last_year_sales": 0,
+    "ht_income": 0,
+    "total_income": 0,
+    "sci_staff": 0,
+    "total_staff": 0
+  },
+  "calc_input": {
+    "_comment": "喂给 gxrd_engine.py calc --json-text",
+    "ratio_type": "100",
+    "projects": [
+      {"name": "RD-01", "base_five": 0, "other_actual": 0}
+    ],
+    "entrust": {"domestic": 0, "overseas": 0},
+    "cap_new": 0,
+    "amort_years": 10,
+    "amort_months": 12
+  },
+  "calc_output": {
+    "_comment": "calc 运行结果存档（40行/加计总额/限额/委托），用于跨会话钩稽复算",
+    "a107012_40": null,
+    "super_total": null,
+    "other_limit": null,
+    "entrust": null
+  },
+  "deliverables": {
+    "_comment": "交付物与签收状态（service_workflow 日历）",
+    "辅助账汇总表": "done",
+    "口径差异说明": "pending",
+    "A107012底稿": "pending",
+    "钩稽校验表": "pending",
+    "留存备查清单+签收单": "pending",
+    "风险提示函": "pending"
+  },
+  "risks": {
+    "_comment": "risk_checklist 命中项存档（量化预警指标）",
+    "hit_indicators": [],
+    "selfcheck_date": null
+  },
+  "notes": []
+}

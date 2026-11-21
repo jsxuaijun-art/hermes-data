@@ -1,0 +1,105 @@
+{
+  "case_id": "甲公司-2023-例4-1",
+  "as_of": "2023-12-31",
+  "year": 2023,
+  "_source": "吴健等《研发费用加计扣除与高新技术企业优惠实务及案例》例4-1，PDF p199–208；数字仅采信文字解析页 p204/p206（表格页 p201–203/p205 的 OCR 数字倒置乱码，不采信）",
+  "_note": "本文件只放原始明细，不放任何预先汇总的结论数字；全部由 engine/rnd_engine.py 复算。p204 有疑似原书笔误（B项目第7.2列写成252380.95），按同页分摊公式应为42063.49，v2 以可复算公式结果为准。",
+  "client": {
+    "name": "甲公司",
+    "region": "未注明",
+    "qualification": "非高企",
+    "hte_certificate": false,
+    "collection_method": "查账征收",
+    "industry_negative_list": false,
+    "negative_list_revenue": 0,
+    "revenue_total_for_negative": 0
+  },
+  "finance": {
+    "rnd_3y": null,
+    "sales_3y": null,
+    "sales_last_year": null,
+    "domestic_rnd_ratio": null,
+    "hte_income": null,
+    "total_income": null,
+    "taxable_income": null,
+    "profit_before_tax": null
+  },
+  "staff": {"total_avg": null, "sci_tech_avg": null, "sci_tech_days_min": null},
+  "projects": [
+    {
+      "id": "A",
+      "name": "A项目（自主研发，费用化，当年未完成）",
+      "form": "自主研发",
+      "expense_type": "费用化",
+      "completed": false,
+      "expenses": {
+        "personnel": 1000000,
+        "direct_input": 500000,
+        "depreciation": 100000,
+        "amortization": 50000,
+        "design": 50000,
+        "other_related": 300000,
+        "building_depreciation": 0,
+        "equipment_commissioning": 0,
+        "ip_amortization_other": 0
+      },
+      "_detail": "工资800000+五险一金200000=人员人工1000000；材料300000+燃料100000+动力100000=直接投入500000；设备折旧100000；专利权摊销50000；新产品设计费50000；其他相关费用差旅200000+会议100000=300000。五项合计1700000，总发生2000000。"
+    },
+    {
+      "id": "B",
+      "name": "B项目（自主研发，资本化，7月10日结转无形资产）",
+      "form": "自主研发",
+      "expense_type": "资本化",
+      "completed": true,
+      "expenses": {
+        "personnel": 700000,
+        "direct_input": 100000,
+        "depreciation": 50000,
+        "amortization": 50000,
+        "design": 50000,
+        "other_related": 50000,
+        "building_depreciation": 0,
+        "equipment_commissioning": 0,
+        "ip_amortization_other": 0
+      },
+      "capitalization": {
+        "start": "2023-01-01",
+        "end": "2023-07-10",
+        "amort_years": 10,
+        "amort_months_in_year": 6
+      },
+      "_detail": "工资600000+五险一金100000=700000；材料50000+燃料30000+动力20000=100000；设备折旧50000；软件摊销50000；新产品设计费50000；资料翻译费50000。五项合计950000，总发生1000000。直线法10年摊销，本年按半年计。"
+    },
+    {
+      "id": "C",
+      "name": "C项目（委托研发，费用化，当年未完成）",
+      "form": "委托研发",
+      "expense_type": "费用化",
+      "completed": false,
+      "expenses": {
+        "personnel": 0,
+        "direct_input": 0,
+        "depreciation": 0,
+        "amortization": 0,
+        "design": 0,
+        "other_related": 0
+      },
+      "entrusted_domestic": 700000,
+      "entrusted_overseas": 300000,
+      "domestic_qualifying_rnd_total": 2000000,
+      "contract_registered": true,
+      "_detail": "委托研发费用总额1000000，其中300000委托境外机构。境内符合条件研发费用总额2000000（用于委托境外2/3上限）。"
+    }
+  ],
+  "evidence": {
+    "project_resolution": true,
+    "auxiliary_ledger": true,
+    "timesheet": true,
+    "material_records": true,
+    "equipment_log": true,
+    "contract_registration": true,
+    "hte_special_audit": false
+  },
+  "filing": {"a107012_line51": 2801984.12, "prepay_window_used": "汇算清缴"},
+  "flags": ["制造业", "非高企", "委托境外", "资本化项目", "多项目统一限额"]
+}

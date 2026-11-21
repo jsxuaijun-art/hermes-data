@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "ga-xin-accounting-ops-v2/client_case.schema.json",
+  "title": "客户研发税务实例（ClientCase）",
+  "description": "v2 的唯一真相源。一次建实例，跨会话续读；所有结论由 engine/rnd_engine.py 从本实例复算，不把结论写死在文档里。金额单位：元。",
+  "type": "object",
+  "required": ["case_id", "as_of", "year", "client", "projects"],
+  "properties": {
+    "case_id": {"type": "string", "description": "实例唯一编号，建议 <客户简称>-<年度>"},
+    "as_of": {"type": "string", "format": "date", "description": "政策时点，引擎据此过滤规则生效期。默认取本字段；可用 --as-of 覆盖做时效模拟"},
+    "year": {"type": "integer", "description": "纳税年度"},
+    "client": {
+      "type": "object",
+      "description": "主体资格与准入要素",
+      "properties": {
+        "name": {"type": "string"},
+        "region": {"type": "string", "description": "地区，预留地方执行差异层"},
+        "qualification": {"type": "string", "enum": ["一般", "非高企", "高企", "科技型中小企业", "集成电路", "工业母机"], "description": "决定加计比例与双路径分叉"},
+        "hte_certificate": {"type": "boolean", "description": "是否持有效高企证书"},
+        "collection_method": {"type": "string", "enum": ["查账征收", "核定征收"], "description": "核定征收不适用加计扣除"},
+        "industry_negative_list": {"type": "boolean", "description": "是否属于负面清单行业"},
+        "negative_list_revenue": {"type": ["number", "null"], "description": "负面清单业务收入，用于 50% 兼营判定"},
+        "revenue_total_for_negative": {"type": ["number", "null"], "description": "收入总额 − 不征税收入 − 投资收益"}
+      },
+      "required": ["qualification", "collection_method"]
+    },
+    "finance": {
+      "type": "object",
+      "description": "高企三项硬指标与税率择一的输入；非高企客户可只填 taxable_income",
+      "properties": {
+        "rnd_3y": {"type": ["number", "null"], "description": "近三年研发费用总额（高企认定口径）"},
+        "sales_3y": {"type": ["number", "null"], "description": "同期销售收入总额"},
+        "sales_last_year": {"type": ["number", "null"], "description": "【最近一年销售收入】——研发费占比分档的唯一依据，勿用 sales_3y 代替"},
+        "domestic_rnd_ratio": {"type": ["number", "null"], "description": "境内研发费占全部研发费比例，需 ≥0.6"},
+        "hte_income": {"type": ["number", "null"]},
+        "total_income": {"type": ["number", "null"]},
+        "taxable_income": {"type": ["number", "null"], "description": "应纳税所得额，用于 15% 与小微择一测算"},
+        "profit_before_tax": {"type": ["number", "null"]}
+      }
+    },
+    "staff": {
+      "type": "object",
+      "properties": {
+        "total_avg": {"type": ["number", "null"], "description": "职工总数全年月平均数"},
+        "sci_tech_avg": {"type": ["number", "null"], "description": "科技人员全年月平均数"},
+        "sci_tech_days_min": {"type": ["integer", "null"], "description": "兼职/临时聘用人员累计实际工作天数，需 ≥183"}
+      }
+    },
+    "projects": {
+      "type": "array",
+      "description": "研发项目明细。引擎从这里复算五项费用、限额分摊、委托研发、费用化/资本化与摊销，不读预先汇总的结论数字",
+      "items": {
+        "type": "object",
+        "required": ["id", "form", "expense_type"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "form": {"type": "string", "enum": ["自主研发", "合作研发", "集中研发", "委托研发"], "description": "委托研发走 80% / 2-3 规则"},
+          "expense_type": {"type": "string", "enum": ["费用化", "资本化"]},
+          "completed": {"type": "boolean"},
+          "expenses": {
+            "type": "object",
+            "description": "加计扣除口径六类；前五项构成其他相关费用限额的计算基数",
+            "properties": {
+              "personnel": {"type": "number", "default": 0},
+              "direct_input": {"type": "number", "default": 0},
+              "depreciation": {"type": "number", "default": 0},
+              "amortization": {"type": "number", "default": 0},
+              "design": {"type": "number", "default": 0},
+              "other_related": {"type": "number", "default": 0, "description": "其他相关费用实际发生额，受 10% 限额约束"},
+              "building_depreciation": {"type": "number", "default": 0, "description": "房屋折旧/租赁费：加计口径不计入，高企口径可计入"},
+              "equipment_commissioning": {"type": "number", "default": 0, "description": "装备调试费：仅高企口径"},
+              "ip_amortization_other": {"type": "number", "default": 0, "description": "非专利权知识产权摊销：仅高企口径"}
+            }
+          },
+          "entrusted_domestic": {"type": "number", "default": 0, "description": "委托境内机构或个人研发费用（实际发生额）"},
+          "entrusted_overseas": {"type": "number", "default": 0, "description": "委托境外机构研发费用（实际发生额）"},
+          "domestic_qualifying_rnd_total": {"type": "number", "default": 0, "description": "境内符合条件研发费用总额，用于委托境外 2/3 上限"},
+          "contract_registered": {"type": ["boolean", "null"], "description": "委托/合作合同是否经科技行政主管部门登记"},
+          "capitalization": {
+            "type": "object",
+            "description": "仅资本化项目需要；本年摊销额 = 资本化金额/摊销年限/12×本年摊销月数",
+            "properties": {
+              "start": {"type": "string"},
+              "end": {"type": "string"},
+              "amort_years": {"type": "number"},
+              "amort_months_in_year": {"type": "number"}
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "description": "证据完备度。引擎输出 evidence_gaps；缺辅助账即不得加计（R001）",
+      "additionalProperties": {"type": "boolean"},
+      "examples": [{"project_resolution": true, "auxiliary_ledger": true, "timesheet": true, "material_records": true, "equipment_log": true, "contract_registration": true, "hte_special_audit": false}]
+    },
+    "filing": {
+      "type": "object",
+      "description": "申报表已填数据，用于风险指标比对（如 A107012 第51行）",
+      "properties": {
+        "a107012_line51": {"type": ["number", "null"]},
+        "prepay_window_used": {"type": ["string", "null"]}
+      }
+    },
+    "flags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "交叉条件标签，如 亏损 / 委托境外 / 复审年 / 追溯3年，供状态机裁决"
+    }
+  }
+}

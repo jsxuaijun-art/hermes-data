@@ -1,0 +1,66 @@
+{
+  "audit_id": "XGGJ-audit-2025",
+  "as_of": "2026-11-19",
+  "year": 2025,
+  "client": {
+    "name": "鑫光高新材料(苏州)有限公司",
+    "region": "苏州",
+    "qualification": "高企",
+    "hte_certificate": true,
+    "collection_method": "查账征收",
+    "industry_negative_list": false
+  },
+  "accounting": {
+    "monthly_bookkeeping": true,
+    "book_voucher_consistent": true,
+    "rnd_subject_set": true,
+    "auxiliary_ledger_2021": true,
+    "hte_special_ledger": false,
+    "hte_special_audited": false,
+    "tax_options_accounting_sound": true
+  },
+  "collection": {
+    "six_categories_clean": true,
+    "mixed_post_allocated": true,
+    "non_rnd_excluded": true,
+    "special_income_offset": false,
+    "gov_subsidy_treated": true,
+    "other_limit_check": true,
+    "capitalization_justified": true,
+    "entrusted_contract_registered": true
+  },
+  "hte_indicators": {
+    "sales_last_year": 30000000,
+    "rnd_3y": 12000000,
+    "sales_3y": 260000000,
+    "hte_income": 52000000,
+    "total_income": 58000000,
+    "sci_tech_avg": 18,
+    "total_avg": 138,
+    "sci_tech_days_min": 220,
+    "ip_owned": true,
+    "ip_type_valid": true,
+    "field_in_eight": true,
+    "innovation_score": 78
+  },
+  "tax_filing": {
+    "a107012_filed": true,
+    "a107041_filed": true,
+    "prepay_utilized": true,
+    "line40_reconciled": true,
+    "annual_report_submitted": true,
+    "rates_consistent": true
+  },
+  "evidence": {
+    "financial_statements": true,
+    "subject_balance": true,
+    "auxiliary_ledger": true,
+    "project_archive": true,
+    "staff_roster": true,
+    "input_evidence": true,
+    "income_evidence": true,
+    "ip_cert": true,
+    "filed_returns": true
+  },
+  "flags": ["复审临近"]
+}

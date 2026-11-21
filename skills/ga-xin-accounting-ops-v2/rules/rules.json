@@ -1,0 +1,582 @@
+{
+  "schema": "ga-xin-rules/2.0",
+  "version": "2.0.0",
+  "generated": "2026-11-19",
+  "source_skill": "ga-xin-accounting-ops v1 (2026-11-18)",
+  "source_book": "吴健等《研发费用加计扣除与高新技术企业优惠实务及案例》(2024.3)",
+  "as_of_semantics": "引擎按 as_of（默认取 case.as_of）过滤规则：effective_from <= as_of 且 (effective_to 为空或 as_of <= effective_to)。失效规则不删除，输出到 expired_rules_excluded 供审计。",
+  "authority_discipline": "本表是已审核的政策快照，不是政策本身。裁决顺序：现行政策原文 > 源书 > OCR 文本 > 规则表 > 引擎输出。涉及税率/比例/金额/文号须回查官方原文或原 PDF 页面图像。",
+  "scope_values": [
+    "通用",
+    "加计扣除",
+    "高企认定",
+    "双口径",
+    "申报",
+    "风险",
+    "流程"
+  ],
+  "operators": {
+    "admission_gate": "准入闸门：征收方式/负面清单/研发活动/辅助账证据",
+    "negative_list_50": "负面清单兼营判定：该业务收入/(收入总额-不征税收入-投资收益)>50%",
+    "scope_divergence": "口径差异标注：同一费用在加计与高企口径下处理相反",
+    "limit_other_10": "加计扣除其他相关费用限额：全部项目前五项之和×10%/(1-10%)，按项目实际发生额占比分摊",
+    "limit_other_20": "高企认定其他费用上限：一般不超过总研发费用20%",
+    "entrust_domestic_80": "委托境内研发费用按80%计入委托方加计基数",
+    "entrust_overseas_2_3": "委托境外按80%计入，且不超过境内符合条件研发费用的2/3",
+    "superded_rate": "按主体资格与生效期确定加计比例（100% / 120%）",
+    "amortization_cap": "资本化项目本年摊销额：资本化金额/摊销年限/12×本年摊销月数",
+    "a107012_line40": "A107012 第40行 = 2 + 36×80% + 38（38已是限额后数，不再乘80%）",
+    "a107012_line51": "本年加计扣除总额 = 本年允许加计扣除研发费用合计 × 加计比例",
+    "hte_ratio_band": "高企研发费占比：近三年研发费/同期销售收入，分档依据【最近一年销售收入】",
+    "hte_income_60": "高新技术产品服务收入/总收入 >= 60%",
+    "hte_staff_10": "科技人员/职工总数 >= 10%，且科技人员累计实际工作>=183天",
+    "rate_choice": "高企15%与小微优惠择一，研发加计扣除可叠加",
+    "risk_threshold": "金税量化预警指标命中判定，输出处置动作与待补证据",
+    "filing_prepay_3": "预缴享受三时点（7月/10月/汇缴），未选择可后续统一享受"
+  },
+  "rules": [
+    {
+      "id": "R001",
+      "kernel_id": 11,
+      "title": "优惠办理方式与辅助账硬要求",
+      "category": "admission",
+      "scope": "通用",
+      "op": "admission_gate",
+      "params": {
+        "require": [
+          "查账征收",
+          "研发活动界定",
+          "辅助账",
+          "立项决议"
+        ],
+        "forbid": [
+          "事后补账"
+        ],
+        "self_determination": "真实发生、自行判别、申报享受、相关资料留存备查"
+      },
+      "effective_from": "2018-01-01",
+      "effective_to": null,
+      "priority": 1000,
+      "authority": "国家税务总局公告2018年第23号；财税〔2015〕119号",
+      "source": "书p191–192、p206；v1 SKILL.md 红线3/5",
+      "assertion": "无辅助账或事后补账 → 不得加计扣除；自主研发无须事前鉴定，委托/合作合同须科技部门登记",
+      "note": "引擎输出 evidence_gaps，不作为计算前提而是结论闸门"
+    },
+    {
+      "id": "R002",
+      "kernel_id": 12,
+      "title": "负面清单行业兼营判定（50%口径）",
+      "category": "admission",
+      "scope": "通用",
+      "op": "negative_list_50",
+      "params": {
+        "threshold": 0.5,
+        "formula": "该业务收入 / (收入总额 - 不征税收入 - 投资收益)",
+        "negative_industries": [
+          "烟草制造业",
+          "住宿和餐饮业",
+          "批发和零售业",
+          "房地产业",
+          "租赁和商务服务业",
+          "娱乐业"
+        ]
+      },
+      "effective_from": "2015-01-01",
+      "effective_to": null,
+      "priority": 990,
+      "authority": "财税〔2015〕119号第一条第（二）项",
+      "source": "书p80–83；v1 policy_basis.md §二",
+      "assertion": "比值>50% 则不适用加计扣除"
+    },
+    {
+      "id": "R003",
+      "kernel_id": 1,
+      "title": "其他相关费用限额：全部研发项目统一计算（2021年起）",
+      "category": "limit",
+      "scope": "加计扣除",
+      "op": "limit_other_10",
+      "params": {
+        "ratio": 0.1,
+        "base_fields": [
+          "personnel",
+          "direct_input",
+          "depreciation",
+          "amortization",
+          "design"
+        ],
+        "formula": "全部项目前五项之和 × 10% / (1 - 10%)",
+        "allocation": "按各项目其他相关费用实际发生额占比分摊",
+        "basis": "全部项目统一计算，不再分项目"
+      },
+      "effective_from": "2021-01-01",
+      "effective_to": null,
+      "priority": 900,
+      "authority": "国家税务总局公告2021年第28号第三条",
+      "source": "书p109（复核原文）、p204 例4-1、p110 例2-33",
+      "supersedes": "国家税务总局公告2015年第97号（按每一研发项目分别计算，2021年起废止）",
+      "assertion": "允许扣除的其他相关费用 = min(实际发生额合计, 限额)；例4-1 = 294,444.44",
+      "conflicts_with": [
+        "R004"
+      ],
+      "note": "与高企认定口径 R004 的 20% 是两套独立上限，不可互相替代"
+    },
+    {
+      "id": "R004",
+      "kernel_id": 5,
+      "title": "高企认定口径：其他费用一般不超过研发总费用20%",
+      "category": "limit",
+      "scope": "高企认定",
+      "op": "limit_other_20",
+      "params": {
+        "ratio": 0.2,
+        "basis": "按全部项目汇总计算"
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": null,
+      "priority": 895,
+      "authority": "国科发火〔2016〕195号《高新技术企业认定管理工作指引》",
+      "source": "书p323–330、表7-16 p332–333",
+      "assertion": "高企口径其他费用上限20%，且含在用建筑物折旧、装备调试费、知识产权摊销",
+      "conflicts_with": [
+        "R003"
+      ]
+    },
+    {
+      "id": "R005",
+      "kernel_id": 5,
+      "title": "四类口径差异：三项费用处理相反",
+      "category": "scope",
+      "scope": "双口径",
+      "op": "scope_divergence",
+      "params": {
+        "divergences": [
+          {
+            "item": "房屋折旧/租赁费",
+            "加计扣除": "不计入",
+            "高企认定": "可计入（在用建筑物折旧）"
+          },
+          {
+            "item": "装备调试费与田间试验费",
+            "加计扣除": "不单列",
+            "高企认定": "可计入"
+          },
+          {
+            "item": "知识产权摊销",
+            "加计扣除": "仅专利权",
+            "高企认定": "含知识产权摊销"
+          },
+          {
+            "item": "其他费用上限",
+            "加计扣除": "10%",
+            "高企认定": "20%"
+          }
+        ]
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": null,
+      "priority": 890,
+      "authority": "财税〔2015〕119号 / 国家税务总局公告2017年第40号 / 国科发火〔2016〕195号",
+      "source": "书p331–333 表7-16；v1 hte_certification.md §四",
+      "assertion": "同一笔费用在两口径下不得混用，引擎输出 cross_scope_warnings"
+    },
+    {
+      "id": "R006",
+      "kernel_id": 4,
+      "title": "高企客户两套辅助账",
+      "category": "scope",
+      "scope": "双口径",
+      "op": "scope_divergence",
+      "params": {
+        "ledgers": [
+          "加计扣除：2021版研发支出辅助账",
+          "高企认定：企业年度研究开发费用结构明细表（表7-8，近三年分年、按RD项目）"
+        ],
+        "audit": "高企认定专用账须由有资质中介机构专项审计或鉴证"
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": null,
+      "priority": 885,
+      "authority": "国科发火〔2016〕195号 / 国科发火〔2016〕32号",
+      "source": "书p323（复核原文）、表7-8",
+      "assertion": "高企客户须同时维护两套账，缺高企专用账 → 复审/专项审计不达标"
+    },
+    {
+      "id": "R007",
+      "kernel_id": 9,
+      "title": "委托境内研发按80%计入",
+      "category": "entrust",
+      "scope": "加计扣除",
+      "op": "entrust_domestic_80",
+      "params": {
+        "ratio": 0.8
+      },
+      "effective_from": "2015-01-01",
+      "effective_to": null,
+      "priority": 800,
+      "authority": "财税〔2015〕119号第二条",
+      "source": "书p126–141、p204 例4-1",
+      "assertion": "委托境内 700,000 × 80% = 560,000（例4-1 汇总表第8.2列）"
+    },
+    {
+      "id": "R008",
+      "kernel_id": 9,
+      "title": "委托境外研发：80%且不超过境内符合条件研发费用2/3",
+      "category": "entrust",
+      "scope": "加计扣除",
+      "op": "entrust_overseas_2_3",
+      "params": {
+        "ratio": 0.8,
+        "cap_ratio": 0.6666666666666666
+      },
+      "effective_from": "2018-01-01",
+      "effective_to": null,
+      "priority": 795,
+      "authority": "财税〔2018〕64号",
+      "source": "书p126–141、p204 例4-1",
+      "assertion": "例4-1：300,000×80%=240,000 ≤ 2,000,000×2/3=1,333,333.33 → 可计入 240,000",
+      "note": "委托/合作研发合同须经科技行政主管部门登记（书p136）"
+    },
+    {
+      "id": "R009",
+      "kernel_id": 8,
+      "title": "A107012 第40行勾稽：2 + 36×80% + 38",
+      "category": "filing",
+      "scope": "申报",
+      "op": "a107012_line40",
+      "params": {
+        "formula": "line2 + line36×80% + line38",
+        "line2_from": "自主研发/合作/集中：五项费用 + 第34行经限额调整后其他相关费用",
+        "no_double_80": "第38行已是限额后可加计扣除的委托境外费用，不得再乘80%"
+      },
+      "effective_from": "2021-01-01",
+      "effective_to": null,
+      "priority": 700,
+      "authority": "A107012《研发费用加计扣除优惠明细表》（2021版辅助账对应表样）",
+      "source": "书p234 表5-6 行次（复核）、p204 例4-1、p206 表4-8",
+      "assertion": "例4-1：2,944,444.44 + 560,000 + 240,000 = 3,744,444.44",
+      "note": "第34行填限额调整后数、第28行填实际发生数；34与38是两个独立限额。表版本每年可能调整，以电子税务局当年表样为准"
+    },
+    {
+      "id": "R010",
+      "kernel_id": 8,
+      "title": "资本化项目本年摊销额",
+      "category": "filing",
+      "scope": "申报",
+      "op": "amortization_cap",
+      "params": {
+        "formula": "资本化金额 / 摊销年限 / 12 × 本年摊销月数"
+      },
+      "effective_from": "2015-01-01",
+      "effective_to": null,
+      "priority": 690,
+      "authority": "财税〔2015〕119号 / 《企业会计准则第6号——无形资产》",
+      "source": "书p87、p191、p204 例4-1",
+      "assertion": "例4-1：992,063.49 / 10 / 2 = 49,603.17（7月结转，按半年摊销）"
+    },
+    {
+      "id": "R011",
+      "kernel_id": 6,
+      "title": "全行业100%加计 / 无形资产200%摊销",
+      "category": "rate",
+      "scope": "加计扣除",
+      "op": "superded_rate",
+      "params": {
+        "rate": 1.0,
+        "amortization_rate": 2.0,
+        "applies_to": [
+          "一般",
+          "非高企",
+          "高企",
+          "科技型中小企业",
+          "集成电路",
+          "工业母机"
+        ]
+      },
+      "effective_from": "2023-01-01",
+      "effective_to": null,
+      "priority": 600,
+      "authority": "财政部 税务总局公告2023年第7号",
+      "source": "书p65–88；v1 policy_basis.md §一",
+      "assertion": "2023.1.1起全行业费用化100%加计、无形资产200%摊销；非高企同样适用；集成电路/工业母机120%到期后自动回落本规则100%"
+    },
+    {
+      "id": "R012",
+      "kernel_id": 6,
+      "title": "集成电路·工业母机120%加计 / 220%摊销（2023–2027）",
+      "category": "rate",
+      "scope": "加计扣除",
+      "op": "superded_rate",
+      "params": {
+        "rate": 1.2,
+        "amortization_rate": 2.2,
+        "applies_to": [
+          "集成电路",
+          "工业母机"
+        ],
+        "list_managed": true,
+        "capitalization_judge_by": "摊销时点"
+      },
+      "effective_from": "2023-01-01",
+      "effective_to": "2027-12-31",
+      "priority": 610,
+      "authority": "财政部 税务总局 国家发展改革委 工业和信息化部公告2023年第44号",
+      "source": "书p67–76；v1 policy_basis.md §一",
+      "assertion": "清单管理；2027-12-31到期后引擎自动排除本规则，回落 R011 的100%",
+      "note": "年度复核提醒：到期改 effective_to，不要删除规则，保留沿革"
+    },
+    {
+      "id": "R013",
+      "kernel_id": 8,
+      "title": "本年加计扣除总额（A107012 第51行）",
+      "category": "filing",
+      "scope": "申报",
+      "op": "a107012_line51",
+      "params": {
+        "formula": "本年费用化金额 + 本年资本化摊销额 = 本年允许加计扣除研发费用合计；× 加计比例 = 加计扣除总额"
+      },
+      "effective_from": "2021-01-01",
+      "effective_to": null,
+      "priority": 590,
+      "authority": "A107012（2021版辅助账对应表样）",
+      "source": "书p204 例4-1、p206–208 表4-8",
+      "assertion": "例4-1：2,752,380.95 + 49,603.17 = 2,801,984.12；×100% = 2,801,984.12"
+    },
+    {
+      "id": "R014",
+      "kernel_id": 2,
+      "title": "高企研发费占比分档：依据【最近一年销售收入】",
+      "category": "indicator",
+      "scope": "高企认定",
+      "op": "hte_ratio_band",
+      "params": {
+        "formula": "近三年研发费用总额 / 同期销售收入总额",
+        "band_field": "最近一年销售收入",
+        "bands": [
+          {
+            "max": 50000000,
+            "required": 0.05,
+            "label": "≤5000万 → ≥5%"
+          },
+          {
+            "max": 200000000,
+            "required": 0.04,
+            "label": "5000万~2亿(含) → ≥4%"
+          },
+          {
+            "max": null,
+            "required": 0.03,
+            "label": ">2亿 → ≥3%"
+          }
+        ],
+        "domestic_ratio_min": 0.6
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": null,
+      "priority": 500,
+      "authority": "国科发火〔2016〕32号第十一条 / 国科发火〔2016〕195号",
+      "source": "书p297（复核原文）、p288–322",
+      "assertion": "分档依据为最近一年销售收入，不是近三年销售收入合计；境内研发费占比≥60%",
+      "note": "v1 曾按三年合计分档，属实质错误；本规则是 G02 回归锚点的守卫"
+    },
+    {
+      "id": "R015",
+      "kernel_id": 2,
+      "title": "高新技术产品服务收入占比 ≥60%",
+      "category": "indicator",
+      "scope": "高企认定",
+      "op": "hte_income_60",
+      "params": {
+        "threshold": 0.6
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": null,
+      "priority": 495,
+      "authority": "国科发火〔2016〕32号第十一条",
+      "source": "书p288–322",
+      "assertion": "高新收入/总收入 ≥60%"
+    },
+    {
+      "id": "R016",
+      "kernel_id": 2,
+      "title": "科技人员占比 ≥10% 且累计工作 ≥183天",
+      "category": "indicator",
+      "scope": "高企认定",
+      "op": "hte_staff_10",
+      "params": {
+        "threshold": 0.1,
+        "days_min": 183,
+        "method": "全年月平均数",
+        "includes": [
+          "在职",
+          "兼职",
+          "临时聘用"
+        ]
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": null,
+      "priority": 490,
+      "authority": "国科发火〔2016〕32号第十一条 / 195号工作指引",
+      "source": "书p297（复核原文）",
+      "assertion": "科技人员/职工总数≥10%；兼职临时聘用须累计实际工作≥183天"
+    },
+    {
+      "id": "R017",
+      "kernel_id": 3,
+      "title": "高企15%与小微优惠择一，加计扣除可叠加",
+      "category": "rate",
+      "scope": "通用",
+      "op": "rate_choice",
+      "params": {
+        "hte_rate": 0.15,
+        "small_rate_param": 0.05,
+        "stackable": [
+          "研发费用加计扣除"
+        ]
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": null,
+      "priority": 480,
+      "authority": "企业所得税法第二十八条 / 小微企业优惠相关规定",
+      "source": "书p274–275；v1 SKILL.md 红线2",
+      "assertion": "二者不得同时享受，取税负低者；研发加计扣除可与任一叠加",
+      "note": "具体档位以电子税务局申报系统当年带出为准，参数仅为测算"
+    },
+    {
+      "id": "R018",
+      "kernel_id": 7,
+      "title": "预缴享受三时点，未选择可后续统一享受",
+      "category": "process",
+      "scope": "流程",
+      "op": "filing_prepay_3",
+      "params": {
+        "windows": [
+          "7月（上半年）",
+          "10月（前三季度）",
+          "汇算清缴"
+        ],
+        "no_waiver": true
+      },
+      "effective_from": "2023-01-01",
+      "effective_to": null,
+      "priority": 470,
+      "authority": "国家税务总局 财政部公告2023年第11号",
+      "source": "书p221–230；v1 policy_basis.md §一",
+      "assertion": "未在7月/10月选择享受，不作废，可在后续时点或汇缴统一享受"
+    },
+    {
+      "id": "R019",
+      "kernel_id": 10,
+      "title": "金税量化预警指标与处置动作",
+      "category": "risk",
+      "scope": "风险",
+      "op": "risk_threshold",
+      "params": {
+        "indicators": [
+          {
+            "id": "K1",
+            "name": "研发费用结构占比异常",
+            "threshold": 0.7,
+            "cmp": ">=",
+            "action": "核查人员人工与直接投入占比、工时与领料记录",
+            "need_evidence": [
+              "工时表",
+              "领料单",
+              "设备使用记录"
+            ]
+          },
+          {
+            "id": "K2",
+            "name": "研发费用年度波动",
+            "threshold": 0.5,
+            "cmp": ">=",
+            "action": "说明项目增减与立项/结题时点，准备项目台账",
+            "need_evidence": [
+              "立项书",
+              "结题报告"
+            ]
+          },
+          {
+            "id": "K3",
+            "name": "加计扣除额规模",
+            "threshold": 5000000,
+            "cmp": ">=",
+            "action": "提前准备专项说明与完整备查包",
+            "need_evidence": [
+              "辅助账汇总表",
+              "A107012",
+              "专项审计说明"
+            ]
+          },
+          {
+            "id": "K4",
+            "name": "高企证书非空但A107012第51行过小",
+            "threshold": 10000,
+            "cmp": "<",
+            "action": "核实是否误填或当年未实际享受，出具情况说明",
+            "need_evidence": [
+              "高企证书",
+              "A107012"
+            ]
+          }
+        ]
+      },
+      "effective_from": "2023-01-01",
+      "effective_to": null,
+      "priority": 300,
+      "authority": "书p258–261、p352–355 税务机关风险识别指标（非规范性文件，属征管实践）",
+      "source": "书p258–261、p352–355；v1 risk_checklist.md §一/§二",
+      "assertion": "命中≠违法，但必须提前备证；输出 risk_hits 带 action 与 need_evidence",
+      "note": "阈值为源书所述征管实践，非法定标准；实际以主管税务机关风险模型为准"
+    },
+    {
+      "id": "R020",
+      "kernel_id": 11,
+      "title": "委托/合作研发合同科技部门登记",
+      "category": "admission",
+      "scope": "通用",
+      "op": "admission_gate",
+      "params": {
+        "require_if": [
+          "委托研发",
+          "合作研发"
+        ],
+        "require": [
+          "科技行政主管部门登记"
+        ]
+      },
+      "effective_from": "2015-01-01",
+      "effective_to": null,
+      "priority": 980,
+      "authority": "财税〔2015〕119号 / 技术合同认定登记管理办法",
+      "source": "书p136；v1 SKILL.md 红线5",
+      "assertion": "自主研发无须事前鉴定或立项备案；委托/合作合同未登记 → 证据缺口"
+    },
+    {
+      "id": "R021",
+      "kernel_id": 1,
+      "title": "沿革：97号逐项目计算（已废止，仅供历史年度复算）",
+      "category": "limit",
+      "scope": "加计扣除",
+      "op": "limit_other_10",
+      "params": {
+        "ratio": 0.1,
+        "basis": "按每一研发项目分别计算",
+        "allocation": "项目间不可调剂",
+        "base_fields": [
+          "personnel",
+          "direct_input",
+          "depreciation",
+          "amortization",
+          "design"
+        ]
+      },
+      "effective_from": "2016-01-01",
+      "effective_to": "2020-12-31",
+      "priority": 850,
+      "authority": "国家税务总局公告2015年第97号（2021年度起废止）",
+      "source": "书p110 例2-34",
+      "assertion": "2020年及以前按项目分别计算；多项目限额不得调剂",
+      "note": "保留沿革规则，供追溯 3 年或历史年度复核时自动按 as_of 命中"
+    }
+  ]
+}

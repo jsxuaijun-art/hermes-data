@@ -1,0 +1,66 @@
+{
+  "audit_id": "CBJY-audit-2025",
+  "as_of": "2026-11-19",
+  "year": 2025,
+  "client": {
+    "name": "测试批发商贸有限公司",
+    "region": "苏州",
+    "qualification": "高企",
+    "hte_certificate": true,
+    "collection_method": "查账征收",
+    "industry_negative_list": true
+  },
+  "accounting": {
+    "monthly_bookkeeping": false,
+    "book_voucher_consistent": false,
+    "rnd_subject_set": false,
+    "auxiliary_ledger_2021": false,
+    "hte_special_ledger": false,
+    "hte_special_audited": false,
+    "tax_options_accounting_sound": false
+  },
+  "collection": {
+    "six_categories_clean": false,
+    "mixed_post_allocated": false,
+    "non_rnd_excluded": false,
+    "special_income_offset": false,
+    "gov_subsidy_treated": false,
+    "other_limit_check": false,
+    "capitalization_justified": false,
+    "entrusted_contract_registered": false
+  },
+  "hte_indicators": {
+    "sales_last_year": 999999000,
+    "rnd_3y": 500000,
+    "sales_3y": 5800000,
+    "hte_income": 300000,
+    "total_income": 1000000000,
+    "sci_tech_avg": 2,
+    "total_avg": 500,
+    "sci_tech_days_min": 90,
+    "ip_owned": false,
+    "ip_type_valid": false,
+    "field_in_eight": false,
+    "innovation_score": 55
+  },
+  "tax_filing": {
+    "a107012_filed": false,
+    "a107041_filed": false,
+    "prepay_utilized": false,
+    "line40_reconciled": false,
+    "annual_report_submitted": false,
+    "rates_consistent": false
+  },
+  "evidence": {
+    "financial_statements": true,
+    "subject_balance": false,
+    "auxiliary_ledger": false,
+    "project_archive": false,
+    "staff_roster": false,
+    "input_evidence": false,
+    "income_evidence": false,
+    "ip_cert": false,
+    "filed_returns": false
+  },
+  "flags": ["负面清单行业"]
+}

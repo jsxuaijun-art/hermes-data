@@ -1,0 +1,12 @@
+{
+  "name": "去AI味",
+  "installedAt": 1775007418363,
+  "source": "marketplace",
+  "iconSource": "humanizer",
+  "version": "2.1.1",
+  "skillId": "skill_2053082097175687168",
+  "skillName": "humanizer",
+  "description_zh": "去除文本中的 AI 写作痕迹",
+  "description_en": "Remove AI writing patterns from text",
+  "installedContentHash": "sha256:f825f066c8f96420aedfd7fdb1d34d53ccfaefc1aef7ff6861494fda1bdd370d"
+}

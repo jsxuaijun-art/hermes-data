@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "ga-xin-accounting-ops-v2/audit_case.schema.json",
+  "title": "高企账务诊断实例（AuditCase）",
+  "description": "诊断一家高新技术企业账务处理质量与合规程度的输入契约。区别于运营用 client_case（算研发费用），本实例是「体检输入」：只采集事实与证据完备度，引擎据此按五大维度打分、出整改清单与承接结论。金额单位：元。",
+  "type": "object",
+  "required": ["audit_id", "as_of", "year", "client", "accounting", "collection", "hte_indicators", "tax_filing"],
+  "properties": {
+    "audit_id": {"type": "string", "description": "诊断实例唯一编号，建议 <客户简称>-audit-<年度>"},
+    "as_of": {"type": "string", "format": "date"},
+    "year": {"type": "integer", "description": "被诊断的纳税年度（近三年之一为主）"},
+    "client": {
+      "type": "object",
+      "description": "主体与现有资格状态",
+      "required": ["qualification"],
+      "properties": {
+        "name": {"type": "string"},
+        "region": {"type": "string"},
+        "qualification": {"type": "string", "enum": ["一般", "非高企", "高企", "科技型中小企业", "集成电路", "工业母机"]},
+        "hte_certificate": {"type": "boolean", "description": "是否持有效高企证书"},
+        "collection_method": {"type": "string", "enum": ["查账征收", "核定征收"]},
+        "industry_negative_list": {"type": "boolean", "description": "是否属6类负面清单行业；命中则直接不承接加计"}
+      }
+    },
+    "accounting": {
+      "type": "object",
+      "description": "【维度1·账务处理合规 权重25】账套、科目、账实相符、两套账",
+      "properties": {
+        "monthly_bookkeeping": {"type": "boolean", "description": "是否按月及时记账，无长期挂账/账外经营"},
+        "book_voucher_consistent": {"type": "boolean", "description": "账账、账证、账实相符（抽凭证核对）"},
+        "rnd_subject_set": {"type": "boolean", "description": "是否设「研发支出」科目（费用化/资本化分设）并按项目核算"},
+        "auxiliary_ledger_2021": {"type": "boolean", "description": "是否建 2021 版研发支出辅助账"},
+        "hte_special_ledger": {"type": "boolean", "description": "高企客户是否另建认定专用辅助账（表7-8，近三年分年按RD项目）——两套账"},
+        "hte_special_audited": {"type": "boolean", "description": "高企专用账是否经有资质中介专项审计/鉴证"},
+        "tax_options_accounting_sound": {"type": "boolean", "description": "小企业/企业会计准则选择一致，研发支出资本化/费用化判断有依据"}
+      }
+    },
+    "collection": {
+      "type": "object",
+      "description": "【维度2·研发费用归集口径 权重30】六类归集、口径防混、特殊处理",
+      "properties": {
+        "six_categories_clean": {"type": "boolean", "description": "人工/直接投入/折旧/摊销/设计费等/其他 是否按6类明细归集"},
+        "mixed_post_allocated": {"type": "boolean", "description": "兼岗人员、共用材料设备等混用项是否按合理方法(工时等)分摊"},
+        "non_rnd_excluded": {"type": "boolean", "description": "纯管理/后勤费用、非研发费用是否未误计入研发"},
+        "special_income_offset": {"type": "boolean", "description": "下脚料/残次品/中间试制品/研发形成产品销售等特殊收入是否冲减当年研发"},
+        "gov_subsidy_treated": {"type": "boolean", "description": "政府补助/财政性资金：作不征税收入的部分是否未计入加计基数"},
+        "other_limit_check": {"type": "boolean", "description": "其他相关费用是否按全部项目统一10%限额（2021年28号）；高企口径20%未混用"},
+        "capitalization_justified": {"type": "boolean", "description": "资本化/费用化划分与资本化时点是否有依据（准则+税法）"},
+        "entrusted_contract_registered": {"type": "boolean", "description": "委托/合作研发合同是否经科技部门登记；境外委托是否按80%与2/3限额"}
+      }
+    },
+    "hte_indicators": {
+      "type": "object",
+      "description": "【维度3·高企资格维持指标 权重25】三硬指标+知识产权+领域+创新能力",
+      "properties": {
+        "sales_last_year": {"type": ["number", "null"], "description": "最近一年销售收入（分档依据）"},
+        "rnd_3y": {"type": ["number", "null"], "description": "近三年研发费用总额（高企认定口径）"},
+        "sales_3y": {"type": ["number", "null"], "description": "近三年销售收入总额"},
+        "hte_income": {"type": ["number", "null"]},
+        "total_income": {"type": ["number", "null"]},
+        "sci_tech_avg": {"type": ["number", "null"], "description": "科技人员全年月平均数"},
+        "total_avg": {"type": ["number", "null"], "description": "职工总数全年月平均数"},
+        "sci_tech_days_min": {"type": ["integer", "null"], "description": "兼职/临时人员累计实际工作天数，需>=183"},
+        "ip_owned": {"type": "boolean", "description": "是否拥有有效知识产权并缴纳年费"},
+        "ip_type_valid": {"type": "boolean", "description": "II类（实用新型/软著/外观）是否按规定仅用一次、未被重复计入"},
+        "field_in_eight": {"type": "boolean", "description": "是否属《国家重点支持的高新技术领域》八大领域"},
+        "innovation_score": {"type": ["number", "null"], "description": "创新能力评价自评/机构评分，需>70"}
+      }
+    },
+    "tax_filing": {
+      "type": "object",
+      "description": "【维度4·税务申报合规 权重15】历年申报是否齐全、口径勾稽",
+      "properties": {
+        "a107012_filed": {"type": "boolean", "description": "汇缴是否填 A107012（研发费加计扣除优惠明细表）"},
+        "a107041_filed": {"type": ["boolean", "null"], "description": "高企是否填 A107041（高新技术企业优惠情况及明细表）"},
+        "prepay_utilized": {"type": "boolean", "description": "是否曾预缴享受（7月/10月三时点）"},
+        "line40_reconciled": {"type": ["boolean", "null"], "description": "A107012 第40行是否=2+36×80%+38，未重复乘80%（勾稽）"},
+        "annual_report_submitted": {"type": "boolean", "description": "是否按时报高企年度发展情况报表（累计两年未报取消资格）"},
+        "rates_consistent": {"type": "boolean", "description": "15%优惠、加计叠加是否与申报表一致，未虚构/错用"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "description": "【维度5·证据链完整 权重5】材料齐全度（诊断前客户须准备，见 assets/高企账务诊断材料清单.md）",
+      "additionalProperties": {"type": "boolean"},
+      "examples": [{"financial_statements": true, "subject_balance": true, "auxiliary_ledger": true, "project_archive": true, "staff_roster": true, "input_evidence": true, "income_evidence": true, "ip_cert": true, "filed_returns": true}]
+    },
+    "flags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "标签：复审年 / 资格期将满 / 稽查征兆 / IPO规范 等"
+    }
+  }
+}

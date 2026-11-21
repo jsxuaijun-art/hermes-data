@@ -1,0 +1,293 @@
+{
+  "schema": "ga-xin-golden/1.0",
+  "version": "2.0.0",
+  "created": "2026-11-19",
+  "description": "CARE 框架回归评估集。任何框架/规则/引擎改动必须先跑 tests/run_tests.py 全绿。数字来源：源书例4-1（PDF p204/p206 文字解析页）、例2-33（p110）、p297、p109、p234；表格页 OCR 数字一律不采信。",
+  "conventions": {
+    "case_file": "相对技能根目录的实例 JSON 路径",
+    "case_patch": "在 case_file 基础上递归深合并，用于只改少数字段的对照实验",
+    "case": "内联完整实例（与 case_file 二选一）",
+    "as_of": "覆盖实例 as_of，用于政策生效期模拟",
+    "assertions": [
+      "equals: 路径值相等（数值容差 0.01，布尔严格）",
+      "gte / lte: 数值比较",
+      "contains: 字符串或列表中包含指定值",
+      "rule_active / rule_expired: 规则是否在生效/失效清单",
+      "not_empty: 路径值非空"
+    ]
+  },
+  "cases": [
+    {
+      "id": "G01",
+      "name": "例4-1 全链复算（从项目明细，不抄结论）",
+      "kernel_ids": [1, 8, 9, 11],
+      "case_file": "schema/cases/example_4_1.json",
+      "assertions": [
+        {"path": "limits.other_related.base_five_items", "equals": 2650000},
+        {"path": "limits.other_related.cap", "equals": 294444.44},
+        {"path": "limits.other_related.allowed", "equals": 294444.44},
+        {"path": "limits.other_related.by_project.A", "equals": 252380.95},
+        {"path": "limits.other_related.by_project.B", "equals": 42063.49},
+        {"path": "entrusted.domestic_allowed", "equals": 560000},
+        {"path": "entrusted.overseas_allowed", "equals": 240000},
+        {"path": "filing.a107012.line2", "equals": 2944444.44},
+        {"path": "filing.a107012.line40_年度研发费用小计", "equals": 3744444.44},
+        {"path": "filing.a107012.consistent", "equals": true},
+        {"path": "accounting.amortization_current", "equals": 49603.17},
+        {"path": "filing.a107012.line45_本年允许加计扣除研发费用合计", "equals": 2801984.12},
+        {"path": "filing.a107012.line51_本年加计扣除总额", "equals": 2801984.12},
+        {"path": "admission.eligible", "equals": true}
+      ]
+    },
+    {
+      "id": "G02",
+      "name": "高企占比分档必须按【最近一年销售收入】",
+      "kernel_ids": [2],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {
+        "client": {"qualification": "高企", "hte_certificate": true},
+        "finance": {"rnd_3y": 3000000, "sales_3y": 80000000, "sales_last_year": 30000000, "domestic_rnd_ratio": 0.8},
+        "staff": {"total_avg": 120, "sci_tech_avg": 15}
+      },
+      "assertions": [
+        {"path": "indicators.rnd_ratio.value", "equals": 0.0375},
+        {"path": "indicators.rnd_ratio.band_basis", "equals": 30000000},
+        {"path": "indicators.rnd_ratio.required", "equals": 0.05},
+        {"path": "indicators.rnd_ratio.pass", "equals": false},
+        {"path": "indicators.hte_staff.value", "equals": 0.125},
+        {"path": "rule_active", "value": "R014"}
+      ],
+      "_note": "若有人误把 8000 万（近三年合计）当分档依据，required 会变成 0.04，本用例即失败"
+    },
+    {
+      "id": "G03",
+      "name": "例2-33 统一计算限额（两项目）",
+      "kernel_ids": [1],
+      "case": {
+        "case_id": "甲企业-2023-例2-33",
+        "as_of": "2023-12-31",
+        "year": 2023,
+        "client": {"qualification": "非高企", "hte_certificate": false, "collection_method": "查账征收"},
+        "projects": [
+          {"id": "C", "form": "自主研发", "expense_type": "费用化", "expenses": {"personnel": 880000, "other_related": 120000}},
+          {"id": "D", "form": "自主研发", "expense_type": "费用化", "expenses": {"personnel": 840000, "other_related": 80000}}
+        ],
+        "evidence": {"auxiliary_ledger": true, "project_resolution": true},
+        "filing": {}, "finance": {}, "staff": {}, "flags": []
+      },
+      "assertions": [
+        {"path": "limits.other_related.cap", "equals": 191111.11},
+        {"path": "limits.other_related.allowed", "equals": 191111.11},
+        {"path": "limits.other_related.allocation_method", "contains": "全部项目统一计算"},
+        {"path": "filing.a107012.line2", "equals": 1911111.11},
+        {"path": "filing.a107012.line51_本年加计扣除总额", "equals": 1911111.11}
+      ],
+      "_note": "书 p110 记为 19.11 万元 / 191.11 万元（以万元保留两位），引擎按元精确到分"
+    },
+    {
+      "id": "G04a",
+      "name": "政策时效：2026 年集成电路仍享 120%",
+      "kernel_ids": [6],
+      "case_file": "schema/cases/example_4_1.json",
+      "as_of": "2026-12-31",
+      "case_patch": {"client": {"qualification": "集成电路"}},
+      "assertions": [
+        {"path": "rule_active", "value": "R012"},
+        {"path": "rate.value", "equals": 1.2},
+        {"path": "rate.rule_id", "equals": "R012"},
+        {"path": "filing.a107012.line51_本年加计扣除总额", "equals": 3362380.94}
+      ]
+    },
+    {
+      "id": "G04b",
+      "name": "政策时效：2028 年 44号到期后自动回落 100%",
+      "kernel_ids": [6],
+      "case_file": "schema/cases/example_4_1.json",
+      "as_of": "2028-06-30",
+      "case_patch": {"client": {"qualification": "集成电路"}},
+      "assertions": [
+        {"path": "rule_expired", "value": "R012"},
+        {"path": "rate.value", "equals": 1.0},
+        {"path": "rate.rule_id", "equals": "R011"},
+        {"path": "filing.a107012.line51_本年加计扣除总额", "equals": 2801984.12}
+      ],
+      "_note": "v1 只能把 2027 到期写在 TODO 里；v2 由 effective_to 自动排除，这是 5.4 的直接证据"
+    },
+    {
+      "id": "G05",
+      "name": "多条件交叉裁决：高企+集成电路+亏损+委托境外+复审年",
+      "kernel_ids": [2, 3, 6, 9],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {
+        "client": {"qualification": "集成电路", "hte_certificate": true},
+        "flags": ["高企", "集成电路", "亏损", "委托境外", "复审年"],
+        "finance": {"taxable_income": 2500000, "rnd_3y": 5000000, "sales_3y": 80000000, "sales_last_year": 30000000}
+      },
+      "assertions": [
+        {"path": "admission.path", "equals": "A 高企"},
+        {"path": "rate.value", "equals": 1.2},
+        {"path": "entrusted.overseas_allowed", "equals": 240000},
+        {"path": "indicators.rate_choice.choose", "equals": "小微优惠"},
+        {"path": "indicators.rnd_ratio.required", "equals": 0.05},
+        {"path": "filing.a107012.consistent", "equals": true}
+      ],
+      "_note": "高优先级 R012(120%) 先于 R011(100%) 命中；择一与占比各自独立裁决，无冲突"
+    },
+    {
+      "id": "G06",
+      "name": "负面清单兼营 50% 判定",
+      "kernel_ids": [12],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {
+        "client": {"industry_negative_list": true, "negative_list_revenue": 600000, "revenue_total_for_negative": 1000000}
+      },
+      "assertions": [
+        {"path": "admission.negative_list.ratio", "equals": 0.6},
+        {"path": "admission.negative_list.hit", "equals": true},
+        {"path": "admission.eligible", "equals": false},
+        {"path": "admission.blocked_by", "contains": "负面清单业务收入占比 >50%，不适用加计扣除"}
+      ]
+    },
+    {
+      "id": "G07",
+      "name": "双口径差异告警（房屋折旧仅高企口径）",
+      "kernel_ids": [5],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {
+        "projects": [
+          {"id": "A", "expenses": {"building_depreciation": 120000}},
+          {"id": "B", "expenses": {"equipment_commissioning": 30000}}
+        ]
+      },
+      "assertions": [
+        {"path": "cross_scope_warnings", "not_empty": true},
+        {"path": "limits.other_related.cap", "equals": 294444.44},
+        {"path": "collection.加计扣除.五项费用合计", "equals": 2650000}
+      ],
+      "_note": "口径相反字段存在，但不得污染加计扣除限额基数"
+    },
+    {
+      "id": "G08",
+      "name": "证据缺口：无辅助账即不得加计",
+      "kernel_ids": [11],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {"evidence": {"auxiliary_ledger": false}},
+      "assertions": [
+        {"path": "admission.eligible", "equals": false},
+        {"path": "evidence_gaps", "contains": "无研发支出辅助账 → 不得加计扣除"}
+      ]
+    },
+    {
+      "id": "G09",
+      "name": "风险阈值命中并给出处置动作",
+      "kernel_ids": [10],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {
+        "client": {"hte_certificate": true},
+        "filing": {"a107012_line51": 5000}
+      },
+      "assertions": [
+        {"path": "risk_hits", "not_empty": true},
+        {"path": "risk_hits", "contains": "K4"}
+      ],
+      "_note": "K4：高企证书非空但 A107012 第51行 < 1万；命中不等于违法，须输出 action 与 need_evidence"
+    },
+    {
+      "id": "G10",
+      "name": "高企15%与小微择一、加计可叠加",
+      "kernel_ids": [3],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {
+        "client": {"qualification": "高企", "hte_certificate": true},
+        "finance": {"taxable_income": 2500000}
+      },
+      "assertions": [
+        {"path": "indicators.rate_choice.hte_15_tax", "equals": 375000},
+        {"path": "indicators.rate_choice.small_tax", "equals": 125000},
+        {"path": "indicators.rate_choice.choose", "equals": "小微优惠"},
+        {"path": "indicators.rate_choice.stackable", "contains": "研发费用加计扣除"}
+      ]
+    },
+    {
+      "id": "G11",
+      "name": "科技人员 183 天硬约束",
+      "kernel_ids": [2],
+      "case_file": "schema/cases/example_4_1.json",
+      "case_patch": {
+        "client": {"qualification": "高企", "hte_certificate": true},
+        "staff": {"total_avg": 120, "sci_tech_avg": 15, "sci_tech_days_min": 180}
+      },
+      "assertions": [
+        {"path": "indicators.hte_staff.value", "equals": 0.125},
+        {"path": "indicators.hte_staff.pass", "equals": true},
+        {"path": "indicators.hte_staff.days_pass", "equals": false}
+      ]
+    },
+    {
+      "id": "G12",
+      "name": "A107012 第40行：38行不得重复乘 80%",
+      "kernel_ids": [8, 9],
+      "case_file": "schema/cases/example_4_1.json",
+      "assertions": [
+        {"path": "entrusted.note", "contains": "不得再乘80%"},
+        {"path": "filing.a107012.line36", "equals": 700000},
+        {"path": "filing.a107012.line38", "equals": 240000},
+        {"path": "filing.a107012.line40_年度研发费用小计", "equals": 3744444.44},
+        {"path": "filing.a107012.formula", "contains": "line38"}
+      ]
+    },
+    {
+      "id": "G13",
+      "name": "沿革规则：2019 年自动命中 97 号逐项目计算",
+      "kernel_ids": [1],
+      "case": {
+        "case_id": "甲企业-2019-沿革",
+        "as_of": "2019-12-31",
+        "year": 2019,
+        "client": {"qualification": "非高企", "hte_certificate": false, "collection_method": "查账征收"},
+        "projects": [
+          {"id": "C", "form": "自主研发", "expense_type": "费用化", "expenses": {"personnel": 880000, "other_related": 120000}},
+          {"id": "D", "form": "自主研发", "expense_type": "费用化", "expenses": {"personnel": 840000, "other_related": 80000}}
+        ],
+        "evidence": {"auxiliary_ledger": true, "project_resolution": true},
+        "filing": {}, "finance": {}, "staff": {}, "flags": []
+      },
+      "assertions": [
+        {"path": "rule_expired", "value": "R003"},
+        {"path": "rule_active", "value": "R021"},
+        {"path": "limits.other_related.allocation_method", "contains": "分别计算"},
+        {"path": "limits.other_related.allowed", "equals": 177777.78}
+      ],
+      "_note": "C 限额 97,777.78（实际 12 万→取限额）；D 限额 93,333.33（实际 8 万→取实际）；合计 177,777.78。保留沿革规则供追溯 3 年或历史年度复核自动命中"
+    },
+    {
+      "id": "G14",
+      "name": "高企账务诊断：合格案（可承接）",
+      "mode": "audit",
+      "case_file": "schema/cases/audit_example_good.json",
+      "assertions": [
+        {"path": "total_score", "gte": 70},
+        {"path": "dimension_scores.hte_indicators.score", "equals": 100},
+        {"path": "dimension_scores.tax_filing.score", "equals": 100},
+        {"path": "verdict", "contains": "合格"},
+        {"path": "evidence_gaps", "equals": []},
+        {"path": "risk_hits", "not_empty": true}
+      ],
+      "_note": "缺高企专用辅助账与专项审计时账务维度扣分，但整体仍合格；研发占比4.6%<5%触发风险命中"
+    },
+    {
+      "id": "G15",
+      "name": "高企账务诊断：负面清单/高风险案（禁接）",
+      "mode": "audit",
+      "case_file": "schema/cases/audit_example_blocked.json",
+      "assertions": [
+        {"path": "total_score", "lte": 30},
+        {"path": "verdict", "contains": "高风险"},
+        {"path": "blocked_admission", "contains": "负面清单"},
+        {"path": "risk_hits", "not_empty": true},
+        {"path": "evidence_gaps", "not_empty": true}
+      ],
+      "_note": "负面清单行业直接禁接；证据链几乎全缺、资格指标全不达 → 高风险，出风险提示函"
+    }
+  ]
+}
